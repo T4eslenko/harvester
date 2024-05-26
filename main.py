@@ -83,7 +83,6 @@ async def get_code(message: types.Message):
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
     user_chat_id = message.from_user.id
-    phone = input('Введите номер')
     try:
         await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash)
         await message.reply("Успешная авторизация!")
