@@ -99,6 +99,7 @@ async def get_code(message: types.Message):
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
     finally:
+        client.log_out()
         await client.disconnect()
         user_state.pop(message.from_user.id, None)
 
