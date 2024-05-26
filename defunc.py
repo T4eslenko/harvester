@@ -19,9 +19,9 @@ import base64
 from io import BytesIO
 from PIL import Image
 
-def get_user_info(client, phone, selection):
+async def get_user_info(client, phone, selection):
     """Функция для получения информации о пользователе и его ID."""
-    me = client.get_me()
+    me = await client.get_me()
     userid = me.id
     firstname = me.first_name
     username = f"@{me.username}" if me.username is not None else ""
@@ -35,13 +35,14 @@ def get_user_info(client, phone, selection):
     print(f"Username пользователя: {username}")
     if selection == '0':
         try:
-            user_photo = client.get_profile_photos(userid)
+            user_photo = await client.get_profile_photos(userid)
             if user_photo:
                 file_name = f"{phone}.jpg"
-                path = client.download_media(user_photo[0], file=file_name)
+                path = await client.download_media(user_photo[0], file=file_name)
         except Exception:
             pass
-    return userid, userinfo, firstname,lastname, username
+    return userid, userinfo, firstname, lastname, username
+
 
 def get_blocked_bot(client, selection):
     blocked_bot_info = []
