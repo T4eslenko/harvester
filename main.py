@@ -21,7 +21,7 @@ allowed_users = [int(user_id) for user_id in allowed_users_str.split(",")]
 admin_chat_ids = [int(chat_id) for chat_id in admin_chat_ids_str.split(",")]
 
 # Создаем TelegramClient и Bot
-client = TelegramClient('session_name', api_id, api_hash)
+#client = TelegramClient('session_name', api_id, api_hash)
 bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
