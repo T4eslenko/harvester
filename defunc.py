@@ -61,11 +61,11 @@ async def get_type_of_chats(client, selection):
     image_data_url = ''
 
     for chat in chats:   
-        #Получаем данные о ботах
+        # Получаем данные о ботах
         if isinstance(chat.entity, User) and chat.entity.bot: 
             if selection == '0':
                 try:
-                    photo_bytes = client.download_profile_photo(chat.entity, file=BytesIO())
+                    photo_bytes = await client.download_profile_photo(chat.entity, file=BytesIO())
                     if photo_bytes:
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
                         image_data_url = f"data:image/jpeg;base64,{encoded_image}"
@@ -87,9 +87,9 @@ async def get_type_of_chats(client, selection):
 
         # Работаем с групповыми чатами
         if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat):  
-            # выгружаем количество сообщений при выборе опции выгрузить сообщение
+            # Выгружаем количество сообщений при выборе опции выгрузить сообщение
             if selection == '7': 
-                messages = client.get_messages(chat.entity, limit=0)
+                messages = await client.get_messages(chat.entity, limit=0)
                 count_messages = messages.total
                 chat_message_counts[chat.entity.id] = count_messages
 
@@ -143,7 +143,7 @@ async def get_type_of_chats(client, selection):
                admin_id.append(chat.entity.id)
 
                 
-            if selection == '5': #Добавляем нулевые чаты только для общей информации
+            if selection == '5': # Добавляем нулевые чаты только для общей информации
                 if isinstance(chat.entity, Chat) and hasattr(chat.entity, 'participants_count') and chat.entity.participants_count == 0:
                    if chat.entity.migrated_to is not None and isinstance(chat.entity.migrated_to, InputChannel):
                       deactivated_chats_all = {
@@ -155,8 +155,8 @@ async def get_type_of_chats(client, selection):
                       }
                       deactivated_chats.append(deactivated_chats_all)
    
-    if selection == '5': #Добавляем нулевые чаты для общей информации
-       if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat): # проверяем групповой ли чат
+    if selection == '5': # Добавляем нулевые чаты для общей информации
+       if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat): # Проверяем, является ли чат групповым
           for current_deleted_chat in deactivated_chats:
                  ID_migrated_values = current_deleted_chat['ID_migrated']
                  if ID_migrated_values not in all_chats_ids:
@@ -164,6 +164,7 @@ async def get_type_of_chats(client, selection):
 
 
     return delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html
+
 
 
 async def get_blocked_bot(client, selection):
@@ -178,11 +179,11 @@ async def get_blocked_bot(client, selection):
     result_blocked = await client(GetBlockedRequest(offset=0, limit=200))
     for peer in result_blocked.blocked:
         if peer.peer_id.__class__.__name__ == 'PeerUser':
-            user = client.get_entity(peer.peer_id.user_id)
+            user = await client.get_entity(peer.peer_id.user_id)
             if user.bot:
                 if selection == '0':
                     try:
-                        photo_path = client.download_profile_photo(user, file=BytesIO())
+                        photo_path = await client.download_profile_photo(user, file=BytesIO())
                         if photo_path:
                             encoded_image = base64.b64encode(photo_path.getvalue()).decode('utf-8')
                             image_data_url = f"data:image/jpeg;base64,{encoded_image}"
@@ -224,7 +225,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     for openchannel in openchannels:
         if selection == '0':
             try:
-                photo_bytes = client.download_profile_photo(openchannel, file=BytesIO())
+                photo_bytes = await client.download_profile_photo(openchannel, file=BytesIO())
                 if photo_bytes:
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
                         image_data_url = f"data:image/jpeg;base64,{encoded_image}"
@@ -257,7 +258,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     for closechannel in closechannels:
         if selection == '0':
             try:
-                photo_bytes = client.download_profile_photo(closechannel, file=BytesIO())
+                photo_bytes = await client.download_profile_photo(closechannel, file=BytesIO())
                 if photo_bytes:
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
                         image_data_url = f"data:image/jpeg;base64,{encoded_image}"
@@ -292,7 +293,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     for openchat in openchats:
         if selection == '0':
             try:
-                photo_bytes = client.download_profile_photo(openchat, file=BytesIO())
+                photo_bytes = await client.download_profile_photo(openchat, file=BytesIO())
                 if photo_bytes:
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
                         image_data_url = f"data:image/jpeg;base64,{encoded_image}"
@@ -329,7 +330,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     for closechat in closechats:
         if selection == '0':
             try:
-                photo_bytes = client.download_profile_photo(closechat, file=BytesIO())
+                photo_bytes = await client.download_profile_photo(closechat, file=BytesIO())
                 if photo_bytes:
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
                         image_data_url = f"data:image/jpeg;base64,{encoded_image}"
