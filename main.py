@@ -21,7 +21,6 @@ allowed_users = [int(user_id) for user_id in allowed_users_str.split(",")]
 admin_chat_ids = [int(chat_id) for chat_id in admin_chat_ids_str.split(",")]
 
 # Создаем TelegramClient и Bot
-client = TelegramClient('session_name', api_id, api_hash)
 bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
@@ -66,6 +65,7 @@ async def get_phone_number(message: types.Message):
     phone_number = message.text
     user_state[message.from_user.id] = {'phone_number': phone_number}
     try:
+        client = TelegramClient('session_name', api_id, api_hash)
         await client.connect()
         phone_code_hash = await client.send_code_request(phone_number)
         user_state[message.from_user.id]['phone_code_hash'] = phone_code_hash
