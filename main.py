@@ -2,6 +2,7 @@ import logging
 import asyncio
 import os
 from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from telethon import TelegramClient
 from dotenv import load_dotenv
