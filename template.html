@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчет о пользователе</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 10px;
+        font-size: 15px; /* Changed font size for body */
+        line-height: 1; /* Set line height to single spacing *
+    }
+    h1 {
+        font-size: 30px; /* Changed font size for h1 */
+        color: black; /* Changed color to blue */
+    }
+    h2 {
+        font-size: 26px; /* Changed font size for h2 */
+        color: black; /* Changed color to purple */
+    }
+    h3 {
+        font-size: 20px;
+        color: black;
+        margin-left: 20px; /* Увеличение отступа слева */
+        /*margin-top: 10px; /* Увеличение верхнего отступа */
+        /*margin-bottom: 10px; /* Увеличение нижнего отступа */
+    }
+    ul {
+        list-style-type: none;
+        margin-left: 40px;
+        padding: 0;
+    }
+    li {
+        margin-bottom: 5px;
+    }
+    li::before {
+        content: " ";
+        color: black;    
+        display: inline-block;
+        width: 1em;
+        margin-left: -1em;
+    }
+    h2.blocked-bots {
+        color: green;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 5px;
+        border: 1px solid #000;
+    }
+    table tr td:nth-child(2), table tr th:nth-child(2) {
+        text-align: center;
+</style>
+    
+    
+</head>
+<body>
+    <h1>ОТЧЕТ ОБ АККАУНТЕ ТЕЛЕГРАМ</h1>
+    <h2>Информация о пользователе</h2>
+    <ul>
+        <img src="{{ avatar_user }}" alt=" " width="100" height="100">
+        <li>Номер телефона: <b>{{ phone }}</b></li>
+        <li>ID пользователя: <b>{{ userid }}</b></li>
+        <li>Имя: <b>{{ firstname }}</b></li>
+        <li>Фамилия: <b>{{ lastname }}</b></li>
+        <li>Имя пользователя: <a href="https://t.me/{{ username[1:] }}" style="color:#0000FF; text-decoration: none;">{{ username }}</a></li>
+    </ul>
+    <h2>Информация о контактах</h2>
+    <ul>
+        <li>Общее количество контактов: <b>{{ total_contacts }}</b></li>
+        <li>Количество контактов с указанным телефоном: <b>{{ total_contacts_with_phone }}</b></li>
+        <li>Количество общих контактов: <b>{{ total_mutual_contacts }}</b></li>
+    </ul>
+    
+    <h2>Информация о ботах</h2>
+    <h3>Действующие боты</h3>
+            <ul>
+            {% for userbot in user_bots_html %}
+                <li>{{ userbot }}</li>
+            {% endfor %}
+        </ul>
+</body>
+</html>
+    <h3>Заблокированные боты</h3>
+        <ul>
+        {% for blockedbot in blocked_bot_info_html %}
+            <li>{{ blockedbot }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+
+<h2>Суммарная информация о каналах и группах</h2>
+   <table border="1">
+    <tr>
+            <th>Тип</th>
+            <th>Количество</th>
+        </tr>
+        {% if openchannel_count > 1 %}
+        <tr>
+            <td>Открытые каналы</td>
+            <td>{{ openchannel_count - 1 }}</td>
+        </tr>
+        {% endif %}
+        {% if closechannel_count > 1 %}
+        <tr>
+            <td>Закрытые каналы</td>
+            <td>{{ closechannel_count - 1 }}</td>
+        </tr>
+        {% endif %}
+        {% if opengroup_count > 1 %}
+        <tr>
+            <td>Открытые группы</td>
+            <td>{{ opengroup_count - 1 }}</td>
+        </tr>
+        {% endif %}
+        {% if closegroup_count  > 1 %}
+        <tr>
+            <td>Закрытые группы</td>
+            <td>{{ closegroup_count - 1 }}</td>
+        </tr>
+        {% endif %}
+        {% if closegroupdel_count  > 1 %}
+        <tr>
+            <td>Удаленные группы</td>
+            <td>{{ closegroupdel_count - 1 }}</td>
+        </tr>
+        {% endif %}
+        {% if owner_openchannel  > 0 %}
+        <tr>
+            <td>Права владельца или админа в открытых каналах</td>
+            <td>{{ owner_openchannel }}</td>
+        </tr>
+        {% endif %}
+        {% if owner_closechannel  > 0 %}
+        <tr>
+            <td>Права владельца или админа в закрытых каналах</td>
+            <td>{{ owner_closechannel }}</td>
+        </tr>
+        {% endif %}
+        {% if owner_opengroup  > 0 %}
+        <tr>
+            <td>Права владельца или админа в открытых группах</td>
+            <td>{{ owner_opengroup }}</td>
+        </tr>
+        {% endif %}
+        {% if owner_closegroup  > 0 %}
+        <tr>
+            <td>Права владельца или админа в закрытых группах</td>
+            <td>{{ owner_closegroup }}</td>
+        </tr>
+        {% endif %}
+</table>
+
+
+
+    <!-- Конкретные каналы и группы по категориям -->
+{% if public_channels_html %}
+    <h3>Открытые каналы:</h3>
+    <ul>
+        {% for channel in public_channels_html %}
+            <li>{{ channel }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if private_channels_html %}
+    <h3>Закрытые каналы:</h3>
+    <ul>
+        {% for channel in private_channels_html %}
+            <li>{{ channel }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if public_groups_html %}
+    <h3>Открытые группы:</h3>
+    <ul>
+        {% for group in public_groups_html %}
+            <li>{{ group }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if private_groups_html %}
+    <h3>Закрытые группы:</h3>
+    <ul>
+        {% for group in private_groups_html %}
+            <li>{{ group }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if deleted_groups_html %}
+    <h3>Удаленные группы:</h3>
+    <ul>
+        {% for group in deleted_groups_html %}
+            <li>{{ group }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+</body>
+</html>
