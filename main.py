@@ -84,7 +84,8 @@ async def get_code(message: types.Message):
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
     user_chat_id = message.from_user.id
     try:
-        await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash)
+        await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash.phone_code_hash)
+        #client.sign_in(phone=phone, code=code, phone_code_hash=sent_code.phone_code_hash)
         await message.reply("Успешная авторизация!")
         selection = '0'
         userid, userinfo, firstname, lastname, username = await get_user_info(client, phone_number, selection)
