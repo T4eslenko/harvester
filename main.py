@@ -65,7 +65,7 @@ async def get_phone_number(message: types.Message):
     phone_number = message.text
     user_state[message.from_user.id] = {'phone_number': phone_number}
     try:
-        client = TelegramClient('session_name', api_id, api_hash)
+        client = await TelegramClient('session_name', api_id, api_hash)
         await client.connect()
         phone_code_hash = await client.send_code_request(phone_number)
         user_state[message.from_user.id]['phone_code_hash'] = phone_code_hash
