@@ -102,10 +102,5 @@ async def get_code(message: types.Message):
         user_state.pop(message.from_user.id, None)
 
 # Запуск бота
-async def main():
-    await client.connect()
-    await client.run_until_disconnected()
-
 if __name__ == '__main__':
-    asyncio.run(main())
     executor.start_polling(dp, skip_updates=True)
