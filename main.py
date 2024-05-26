@@ -103,7 +103,7 @@ async def get_code(message: types.Message):
 
 # Запуск бота
 async def main():
-    await client.start()
+    await client.connect()
     await client.run_until_disconnected()
 
 if __name__ == '__main__':
