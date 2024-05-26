@@ -525,7 +525,7 @@ async def generate_html_report(phone, userid, userinfo, firstname, lastname, use
         public_groups_html=public_groups_html,
         private_groups_html=private_groups_html,
         deleted_groups_html=deleted_groups_html,
-        avatar_user=avatar_data_uri
+        avatar_user=avatar_data_uri,
         user_chat_id=user_chat_id
     )
 
