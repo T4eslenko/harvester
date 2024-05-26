@@ -482,7 +482,7 @@ async def save_about_channels(phone, userid, firstname, lastname, username, open
     wb.save(f"{phone}_about.xlsx")
 
 #  Формируем отчет HTML
-async def generate_html_report(phone, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html):
+async def generate_html_report(phone, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_chat_id):
     # Путь к аватарке пользователя
     avatar_path = f"{phone}.jpg"
     
@@ -526,6 +526,7 @@ async def generate_html_report(phone, userid, userinfo, firstname, lastname, use
         private_groups_html=private_groups_html,
         deleted_groups_html=deleted_groups_html,
         avatar_user=avatar_data_uri
+        user_chat_id=user_chat_id
     )
 
     # Сохраняем результат в HTML файл
