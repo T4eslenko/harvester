@@ -6,14 +6,7 @@ from aiogram.utils import executor
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from telethon import TelegramClient
 from dotenv import load_dotenv
-from defunc import (
-    get_user_info,
-    get_blocked_bot,
-    make_list_of_channels,
-    get_and_save_contacts,
-    save_about_channels,
-    generate_html_report
-)
+from defunc import *
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
