@@ -166,7 +166,7 @@ async def get_type_of_chats(client, selection):
     return delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html
 
 
-def get_blocked_bot(client, selection):
+async def get_blocked_bot(client, selection):
     blocked_bot_info = []
     blocked_bot_info_html = []
     count_blocked_bot = 0
@@ -174,8 +174,8 @@ def get_blocked_bot(client, selection):
     latest_date = None
     image_data_url = " "
     
-    delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html = get_type_of_chats(client, selection)
-    result_blocked = client(GetBlockedRequest(offset=0, limit=200))
+    delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html = await get_type_of_chats(client, selection)
+    result_blocked = await client(GetBlockedRequest(offset=0, limit=200))
     for peer in result_blocked.blocked:
         if peer.peer_id.__class__.__name__ == 'PeerUser':
             user = client.get_entity(peer.peer_id.user_id)
@@ -205,7 +205,7 @@ def get_blocked_bot(client, selection):
     return count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html
 
 
-def make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client):
+async def make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client):
     """Функция для формирования списков групп и каналов"""
     owner_openchannel = 0
     owner_opengroup = 0
@@ -379,8 +379,8 @@ def make_list_of_channels(delgroups, chat_message_counts, openchannels, closecha
 
     return groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html
 
-def get_and_save_contacts(client, phone, userinfo, userid):
-    result = client(GetContactsRequest(0))
+async def get_and_save_contacts(client, phone, userinfo, userid):
+    result = await client(GetContactsRequest(0))
     contacts = result.users
     total_contacts = len(contacts)
     total_contacts_with_phone = sum(bool(getattr(contact, 'phone', None)) for contact in contacts)
@@ -424,9 +424,9 @@ def get_and_save_contacts(client, phone, userinfo, userid):
     wb.save(contacts_file_name)
     return total_contacts, total_contacts_with_phone, total_mutual_contacts
 
-def save_about_channels(phone, userid, firstname, lastname, username, openchannel_count, opengroup_count, closechannel_count, closegroup_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, openchannels, closechannels, openchats, closechats, delgroups, closegroupdel_count):
+async def save_about_channels(phone, userid, firstname, lastname, username, openchannel_count, opengroup_count, closechannel_count, closegroup_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, openchannels, closechannels, openchats, closechats, delgroups, closegroupdel_count):
     
-    def write_data(sheet, data):
+    async def write_data(sheet, data):
         sheet.append(["Название", "Количество участников", "Владелец", "Администратор", "ID", "Ссылка"])
         for item in data:
           owner = " (Владелец)" if item.creator else ""
@@ -434,7 +434,7 @@ def save_about_channels(phone, userid, firstname, lastname, username, openchanne
           usernameadd = f"@{item.username}" if hasattr(item, 'username') and item.username is not None else ""
           sheet.append([item.title, item.participants_count, owner, admin, item.id, usernameadd])
     
-    def write_data_del(sheet, data):
+    async def write_data_del(sheet, data):
         sheet.append(["Название", "Владелец", "Администратор", "ID"])
         for item in data:
           owner_value = item['creator']
@@ -481,7 +481,7 @@ def save_about_channels(phone, userid, firstname, lastname, username, openchanne
     wb.save(f"{phone}_about.xlsx")
 
 #  Формируем отчет HTML
-def generate_html_report(phone, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html):
+async def generate_html_report(phone, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html):
     # Путь к аватарке пользователя
     avatar_path = f"{phone}.jpg"
     
