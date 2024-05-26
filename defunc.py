@@ -453,11 +453,11 @@ async def save_about_channels(phone, userid, firstname, lastname, username, open
     if openchannel_count > 1:
         ws_summury.append([f"Открытые каналы: {openchannel_count-1}"])
         ws_open_channels = wb.create_sheet("Открытые каналы")
-        write_data(ws_open_channels, openchannels)
+        await write_data(ws_open_channels, openchannels)
     if closechannel_count > 1:
         ws_summury.append([f"Закрытые каналы: {closechannel_count-1}"])
         ws_closed_channels = wb.create_sheet("Закрытые каналы")
-        write_data(ws_closed_channels, closechannels)
+        await write_data(ws_closed_channels, closechannels)
     if owner_openchannel > 1:
         ws_summury.append([f"Имеет права владельца или админа в открытых каналах: {owner_openchannel}"])
     if owner_closechannel > 1:
@@ -465,15 +465,15 @@ async def save_about_channels(phone, userid, firstname, lastname, username, open
     if opengroup_count > 1:
         ws_summury.append([f"Открытые группы: {opengroup_count-1}"])
         ws_open_groups = wb.create_sheet("Открытые группы")
-        write_data(ws_open_groups, openchats)
+        await write_data(ws_open_groups, openchats)
     if closegroup_count > 1:
         ws_summury.append([f"Закрытые группы: {closegroup_count-1}"])
         ws_closed_groups = wb.create_sheet("Закрытые группы")
-        write_data(ws_closed_groups, closechats)
+        await write_data(ws_closed_groups, closechats)
     if closegroupdel_count > 1:
         ws_summury.append([f"Удаленные группы: {closegroupdel_count-1}"])
         ws_closed_groups_del = wb.create_sheet("Удаленные группы")
-        write_data_del(ws_closed_groups_del, delgroups)
+        await write_data_del(ws_closed_groups_del, delgroups)
     if owner_opengroup > 11:
         ws_summury.append([f"Имеет права владельца или админа в открытых группах: {owner_opengroup}"])
     if owner_closegroup > 1:
