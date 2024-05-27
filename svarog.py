@@ -101,7 +101,9 @@ async def get_phone_number(message: types.Message):
 async def get_code(message: types.Message):
     code = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
-    phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
+    #phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
+    phone_code_hash = user_state[message.from_user.id]['phone_code_hash'].phone_code_hash
+
 
     client = create_client()  # Создаем экземпляр клиента здесь
     try:
