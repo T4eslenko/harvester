@@ -165,4 +165,4 @@ async def process_user_data(client, phone_number, user_id):
 #Запуск бота
 
 if name == 'main':
-executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp, skip_updates=True)
