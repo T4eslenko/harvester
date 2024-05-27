@@ -141,11 +141,11 @@ async def process_password(message: types.Message):
         await client.disconnect()
         user_state.pop(message.from_user.id, None)
 
-Функция для создания нового экземпляра клиента
+#Функция для создания нового экземпляра клиента
 
 def create_client():
     return TelegramClient('session_name', api_id, api_hash)
-    Функция для обработки данных пользователя
+    #Функция для обработки данных пользователя
 
 async def process_user_data(client, phone_number, user_id):
     selection = '0'
@@ -162,7 +162,7 @@ async def process_user_data(client, phone_number, user_id):
         await client.disconnect()
         raise e
         
-Запуск бота
+#Запуск бота
 
 if name == 'main':
 executor.start_polling(dp, skip_updates=True)
