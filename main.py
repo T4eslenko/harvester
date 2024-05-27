@@ -129,7 +129,7 @@ async def process_code(message: types.Message):
         # Удаляем состояние пользователя
         user_state.pop(message.from_user.id, None)
 
-Обработчик сообщений для ввода пароля двухфакторной аутентификации
+#Обработчик сообщений для ввода пароля двухфакторной аутентификации
 
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
 async def process_password(message: types.Message):
