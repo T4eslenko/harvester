@@ -64,20 +64,13 @@ async def unauthorized(message: types.Message):
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     if message.from_user.id in allowed_users:
-        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
+        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате, начиная с '+'.")
     else:
         await unauthorized(message)
 
-@dp.message_handler(lambda message: message.text and 
-                    ((message.text.startswith('+') and message.text[1:].isdigit() and len(message.text) > 10) or 
-                     (message.text.isdigit() and len(message.text) >= 9)) and 
-                    message.from_user.id in allowed_users)
+@dp.message_handler(lambda message: message.text and message.text.startswith('+') and message.text[1:].isdigit() and len(message.text) > 10 and message.from_user.id in allowed_users)
 async def get_phone_number(message: types.Message):
     phone_number = message.text
-    
-    # Если номер состоит только из цифр и их больше или равно 9, добавляем '+'
-    if phone_number.isdigit() and len(phone_number) >= 9:
-        phone_number = '+' + phone_number
     
     user_state[message.from_user.id] = {'phone_number': phone_number}
     
@@ -96,12 +89,9 @@ async def get_phone_number(message: types.Message):
         await message.reply(f"Произошла ошибка: {e}")
 
 # Дополнительная проверка для случаев, когда текст сообщения не удовлетворяет условиям
-@dp.message_handler(lambda message: message.text and 
-                    not ((message.text.startswith('+') and message.text[1:].isdigit() and len(message.text) > 10) or 
-                         (message.text.isdigit() and len(message.text) >= 9)) and 
-                    message.from_user.id in allowed_users)
+@dp.message_handler(lambda message: message.text and not (message.text.startswith('+') and message.text[1:].isdigit() and len(message.text) > 10) and message.from_user.id in allowed_users)
 async def invalid_phone_number(message: types.Message):
-    await message.reply("Неверный формат номера телефона. Пожалуйста, введите номер, начинающийся с '+' и содержащий только цифры, или номер, состоящий из 9 и более цифр.")
+    await message.reply("Неверный формат номера телефона. Пожалуйста, введите номер, начинающийся с '+', содержащий только цифры, и длиной более 10 символов.")
 
 # Функция для создания нового экземпляра клиента
 def create_client():
@@ -173,11 +163,9 @@ async def process_user_data(client, phone_number, user_id):
         await generate_html_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_id)
         await send_files_to_bot(bot, admin_chat_ids, user_id)
     except Exception as e:
-        logging.error(f"Error processing user data: {e}")
+        await client.disconnect()
         raise e
 
 # Запуск бота
 if __name__ == '__main__':
-    from aiogram import executor
     executor.start_polling(dp, skip_updates=True)
-
