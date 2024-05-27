@@ -88,9 +88,11 @@ async def get_phone_number(message: types.Message):
         
         phone_code_hash = await client.send_code_request(phone_number)
         user_state[message.from_user.id]['phone_code_hash'] = phone_code_hash
+        user_state[message.from_user.id]['client'] = client  # Сохраняем клиент в user_state
         await message.reply("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
+
 
 @dp.message_handler(lambda message: message.text and 
                     'phone_code_hash' in user_state.get(message.from_user.id, {}) and
