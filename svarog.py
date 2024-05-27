@@ -135,7 +135,8 @@ async def process_password(message: types.Message):
         client = create_client()
         await client.connect()
         
-        await client.sign_in(phone_number=phone_number, password=password, phone_code_hash=phone_code_hash.phone_code_hash)
+        #await client.sign_in(phone_number=phone_number, password=password, phone_code_hash=phone_code_hash.phone_code_hash)
+        await client.sign_in(password=password)
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
     except Exception as e:
