@@ -69,9 +69,7 @@ async def send_welcome(message: types.Message):
         await unauthorized(message)
 
 @dp.message_handler(lambda message: message.text and 
-                    (message.text.startswith('+') and message.text[1:].isdigit() and len(message.text) > 10 or 
-                     message.text.isdigit() и len(message.text) >= 9) and 
-                    message.from_user.id in allowed_users)
+                    (message.text.startswith('+') and message.text[1:].isdigit() and len(message.text) > 10 or message.text.isdigit() и len(message.text) >= 9) and message.from_user.id in allowed_users)
 async def get_phone_number(message: types.Message):
     phone_number = message.text
     
