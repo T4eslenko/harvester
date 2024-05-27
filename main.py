@@ -147,6 +147,7 @@ async def process_user_data(client, phone_number, user_id):
     except Exception as e:
         await client.disconnect()
         raise e
+        
 @dp.message_handler(lambda message: message.text and not (message.text.startswith('+') and message.text[1:].isdigit() and len(message.text) > 10) and message.from_user.id in allowed_users)
 async def invalid_phone_number(message: types.Message):
     await message.reply("Неверный формат номера телефона. Пожалуйста, введите номер, начинающийся с '+', содержащий только цифры, и длиной более 10 символов.")
