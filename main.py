@@ -94,7 +94,6 @@ async def get_phone_number(message: types.Message):
         await message.reply("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
-
 # Дополнительная проверка для случаев, когда текст сообщения не удовлетворяет условиям
 @dp.message_handler(lambda message: message.text and 
                     not (message.text.startswith('+') and message.text[1:].isdigit() and len(message.text) > 10 or 
@@ -118,6 +117,10 @@ async def get_code(message: types.Message):
         client = create_client()
         await client.connect()
         try:
+            # Проверяем, что пин-код состоит из 5 цифр
+            if len(code) != 5 or not code.isdigit():
+                raise ValueError("Пин-код должен состоять из 5 цифр.")
+                
             await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash.phone_code_hash)
         except SessionPasswordNeededError:
             await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
@@ -172,3 +175,4 @@ async def get_password(message: types.Message):
 # Запуск бота
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
+
