@@ -118,6 +118,7 @@ async def process_password(message: types.Message):
     password = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
+    await client.connect()
     try:
         #await client.sign_in(phone_number=phone_number, code=code, password=password, phone_code_hash=phone_code_hash.phone_code_hash)
         await client.sign_in(password=password)
