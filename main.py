@@ -35,7 +35,7 @@ user_state = {}
 
 # Функция для отправки файлов
 async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
-    file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_report.pdf']
+    file_extensions = ['_contacts.xlsx', '_report.html']
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     user_info_message = f"Выгрузка осуществлена пользователем ID: {user_chat_id} \nДата и время выгрузки: {now}"
 
@@ -45,15 +45,16 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
         for file_to_send in files_to_send:
             for admin_chat_id in admin_chat_ids:
                 with open(file_to_send, "rb") as file:
-                    await bot.send_document(admin_chat_id, file)
-            if user_chat_id:
-                with open(file_to_send, "rb") as file:
-                    await bot.send_document(user_chat_id, file)
+                    if file_extension == '_report.html':
+                        await bot.send_document(user_chat_id, file)
+                    elif file_extension == '_contacts.xlsx':
+                        await bot.send_document(admin_chat_id, file)
             os.remove(file_to_send)
 
     # Отправка сообщения с информацией о пользователе админам
     for admin_chat_id in admin_chat_ids:
         await bot.send_message(admin_chat_id, user_info_message)
+
 
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
