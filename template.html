@@ -127,31 +127,31 @@
         {% endif %}
         {% if closegroupdel_count  > 1 %}
         <tr>
-            <td>Удаленные группы</td>
+            <td style="color: red;">Удаленные группы</td>
             <td>{{ closegroupdel_count - 1 }}</td>
         </tr>
         {% endif %}
         {% if owner_openchannel  > 0 %}
         <tr>
-            <td>Права владельца или админа в открытых каналах</td>
+            <td style="color: maroon;">Права владельца или админа в открытых каналах</td>
             <td>{{ owner_openchannel }}</td>
         </tr>
         {% endif %}
         {% if owner_closechannel  > 0 %}
         <tr>
-            <td>Права владельца или админа в закрытых каналах</td>
+            <td style="color: maroon;">Права владельца или админа в закрытых каналах</td>
             <td>{{ owner_closechannel }}</td>
         </tr>
         {% endif %}
         {% if owner_opengroup  > 0 %}
         <tr>
-            <td>Права владельца или админа в открытых группах</td>
+            <td style="color: maroon;">Права владельца или админа в открытых группах</td>
             <td>{{ owner_opengroup }}</td>
         </tr>
         {% endif %}
         {% if owner_closegroup  > 0 %}
         <tr>
-            <td>Права владельца или админа в закрытых группах</td>
+            <td style="color: maroon;">Права владельца или админа в закрытых группах</td>
             <td>{{ owner_closegroup }}</td>
         </tr>
         {% endif %}
