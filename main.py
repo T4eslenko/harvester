@@ -69,6 +69,36 @@ async def send_welcome(message: types.Message):
 
 
 @dp.message_handler(lambda message: message.text and 
+                    message.text.startswith('+') and 
+                    message.text[1:].isdigit() and 
+                    len(message.text) > 10 and 
+                    message.from_user.id in allowed_users)
+async def get_phone_number(message: types.Message):
+    phone_number = message.text
+    
+    try:
+        # Создаем новый экземпляр клиента
+        client = create_client()
+        await client.connect()
+        
+        # Разлогиниваемся от предыдущего клиента, если он был авторизован
+        if await client.is_user_authorized():
+            await client.log_out()
+        
+        sent_code = await client.send_code_request(phone_number)
+        user_state[message.from_user.id] = {
+            'phone_number': phone_number,
+            'attempts': 0,
+            'phone_code_hash': sent_code.phone_code_hash,  # Извлекаем хеш кода
+            'client': client
+        }
+        await message.reply("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
+    except Exception as e:
+        await message.reply(f"Произошла ошибка: {e}")
+
+
+
+@dp.message_handler(lambda message: message.text and 
                     'phone_code_hash' in user_state.get(message.from_user.id, {}) and
                     'awaiting_password' not in user_state.get(message.from_user.id, {}))
 async def get_code(message: types.Message):
