@@ -110,11 +110,6 @@ async def get_code(message: types.Message):
     try:
         await client.connect()
 
-        if 'awaiting_password' not in user_state[message.from_user.id]:
-            if not code.isdigit():
-                await message.reply("Код должен содержать только цифры. Пожалуйста, попробуйте снова.")
-                return
-
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
         
         await message.reply("Успешная авторизация!")
@@ -144,6 +139,8 @@ async def get_code(message: types.Message):
             if 'code_attempts' not in user_state.get(message.from_user.id, {}):
                 await client.log_out()
                 await client.disconnect()
+
+
 
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
 async def process_password(message: types.Message):
