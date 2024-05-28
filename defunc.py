@@ -388,12 +388,12 @@ async def get_and_save_contacts(client, phone, userinfo, userid):
 
     wb = openpyxl.Workbook()
     sheet = wb.active
-    sheet.cell(row=1, column=1, value=userinfo)
+    #sheet.cell(row=1, column=1, value=userinfo)
     headers = ['ID', 'First name (так записан у объекта в книге)', 'Last name (так записан у объекта в книге)', 'Username', 'Телефон', 'Взаимный контакт', 'Дата внесения в базу', 'ID объекта']
     for col, header in enumerate(headers, start=1):
-        sheet.cell(row=2, column=col, value=header)
+        sheet.cell(row=1, column=col, value=header)
         
-    row_num = 3
+    row_num = 2
     for contact in contacts:
         if hasattr(contact, 'id'):
             sheet.cell(row=row_num, column=1, value=contact.id)
