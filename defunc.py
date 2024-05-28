@@ -27,12 +27,6 @@ async def get_user_info(client, phone, selection):
     username = f"@{me.username}" if me.username is not None else ""
     lastname = me.last_name if me.last_name is not None else ""
     userinfo = f"(Номер телефона: +{phone}, ID: {userid}, ({firstname} {lastname}) {username})"
-    print("Информация о пользователе:") 
-    print()
-    print(f"Номер телефона: {phone}")
-    print(f"ID пользователя: {userid}")
-    print(f"Имя пользователя: {firstname} {lastname}")
-    print(f"Username пользователя: {username}")
     if selection == '0':
         try:
             user_photo = await client.get_profile_photos(userid)
@@ -386,10 +380,7 @@ async def get_and_save_contacts(client, phone, userinfo, userid):
     total_contacts = len(contacts)
     total_contacts_with_phone = sum(bool(getattr(contact, 'phone', None)) for contact in contacts)
     total_mutual_contacts = sum(bool(getattr(contact, 'mutual_contact', None)) for contact in contacts)
-    print(f"Количество контактов: {total_contacts}")
-    print(f"Количество контактов с номерами телефонов: {total_contacts_with_phone}")
-    print(f"Количество взаимных контактов: {total_mutual_contacts}")
-    print()
+
     
     # Сохраняем информацию о контактах
     contacts_file_name = f'{phone}_contacts.xlsx'
