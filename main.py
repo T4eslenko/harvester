@@ -61,13 +61,30 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
 async def unauthorized(message: types.Message):
     await message.reply("Извините, вы не авторизованы для использования этого бота.")
 
+#@dp.message_handler(commands=['start'])
+#async def send_welcome(message: types.Message):
+#    if message.from_user.id in allowed_users:
+#        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
+#    else:
+#        await unauthorized(message)
+
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
-    if message.from_user.id in allowed_users:
-        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
+    user_id = message.from_user.id
+    if user_id in allowed_users:
+        # Создание клавиатуры с кнопкой "Старт"
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        button_start = types.KeyboardButton("Start")
+        keyboard.add(button_start)
+
+        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.", reply_markup=keyboard)
+        # Отправка сообщения администраторам
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        user_info_message = f"Пользователь ID: {user_id} запустил бота.\nДата и время запуска: {now}"
+        for admin_chat_id in admin_chat_ids:
+            await bot.send_message(admin_chat_id, user_info_message)
     else:
         await unauthorized(message)
-
 
 @dp.message_handler(lambda message: message.text and 
                     message.text.startswith('+') and 
