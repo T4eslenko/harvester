@@ -383,6 +383,7 @@ async def get_and_save_contacts(client, phone_user, userid_user, userinfo, first
 
     
     # Сохраняем информацию о контактах
+    new_phone_user = phone_user[1:]  # "1234567890"
     contacts_file_name = f'{phone_user}_contacts.xlsx'
     print(f"Контакты сохранены в файл {phone_user}_contacts.xlsx")
 
@@ -411,7 +412,7 @@ async def get_and_save_contacts(client, phone_user, userid_user, userinfo, first
         sheet.cell(row=row_num, column=8, value=firstname_user)
         sheet.cell(row=row_num, column=9, value=lastname_user)
         sheet.cell(row=row_num, column=10, value=username_user)
-        sheet.cell(row=row_num, column=11, value=phone_user)
+        sheet.cell(row=row_num, column=11, value=new_phone_user)
         sheet.cell(row=row_num, column=12, value=userid_user)
      
         row_num += 1
