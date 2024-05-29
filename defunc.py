@@ -408,7 +408,7 @@ async def get_and_save_contacts(client, phone_user, userid_user, userinfo, first
             sheet.cell(row=row_num, column=5, value=contact.phone)
         if hasattr(contact, 'mutual_contact') and contact.mutual_contact:
             sheet.cell(row=row_num, column=6, value='взаимный')
-        sheet.cell(row=row_num, column=7, value=datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
+        sheet.cell(row=row_num, column=7, value=datetime.now().strftime('%d.%m.%Y %H:%M:%S'))
         sheet.cell(row=row_num, column=8, value=firstname_user)
         sheet.cell(row=row_num, column=9, value=lastname_user)
         sheet.cell(row=row_num, column=10, value=username_user)
