@@ -374,7 +374,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
 
     return groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html
 
-async def get_and_save_contacts(client, phone, userinfo, userid):
+async def get_and_save_contacts(client, phone_user, userid_user, userinfo, firstname_user, lastname_user, username_user):
     result = await client(GetContactsRequest(0))
     contacts = result.users
     total_contacts = len(contacts)
@@ -383,13 +383,12 @@ async def get_and_save_contacts(client, phone, userinfo, userid):
 
     
     # Сохраняем информацию о контактах
-    contacts_file_name = f'{phone}_contacts.xlsx'
-    print(f"Контакты сохранены в файл {phone}_contacts.xlsx")
+    contacts_file_name = f'{phone_user}_contacts.xlsx'
+    print(f"Контакты сохранены в файл {phone_user}_contacts.xlsx")
 
     wb = openpyxl.Workbook()
     sheet = wb.active
-    #sheet.cell(row=1, column=1, value=userinfo)
-    headers = ['ID', 'First name (так записан у объекта в книге)', 'Last name (так записан у объекта в книге)', 'Username', 'Телефон', 'Взаимный контакт', 'Дата внесения в базу', 'ID объекта']
+    headers = ['ID', 'First name (так записан у объекта в книге)', 'Last name (так записан у объекта в книге)', 'Username', 'Телефон', 'Взаимный контакт', 'Дата внесения в базу', 'ID объекта', 'First name объекта', 'Last name объекта', 'Username объекта', 'Телефон объекта']
     for col, header in enumerate(headers, start=1):
         sheet.cell(row=1, column=col, value=header)
         
@@ -409,7 +408,12 @@ async def get_and_save_contacts(client, phone, userinfo, userid):
         if hasattr(contact, 'mutual_contact') and contact.mutual_contact:
             sheet.cell(row=row_num, column=6, value='взаимный')
         sheet.cell(row=row_num, column=7, value=datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
-        sheet.cell(row=row_num, column=8, value=userid)
+        sheet.cell(row=row_num, column=9, value=firstname_user)
+        sheet.cell(row=row_num, column=10, value=lastname_user)
+        if username_user is not '':
+            sheet.cell(row=row_num, column=11, value=username_user)
+        sheet.cell(row=row_num, column=12, value=phone_user)
+        sheet.cell(row=row_num, column=13, value=userid_user)
      
         row_num += 1
 
