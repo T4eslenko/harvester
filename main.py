@@ -72,12 +72,7 @@ async def unauthorized(message: types.Message):
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
-        # Создание клавиатуры с кнопкой "Старт"
-        keyboard = types.ReplyKeyboardMarkup()
-        keyboard.add(types.KeyboardButton("Старт"))
-        keyboard.resize_keyboard = True
-
-        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.", reply_markup=keyboard)
+        await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
         # Отправка сообщения администраторам
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         user_info_message = f"Пользователь ID: {user_id} запустил бота.\nДата и время запуска: {now}"
@@ -85,6 +80,7 @@ async def send_welcome(message: types.Message):
             await bot.send_message(admin_chat_id, user_info_message)
     else:
         await unauthorized(message)
+
 
 @dp.message_handler(lambda message: message.text and 
                     message.text.startswith('+') and 
