@@ -73,9 +73,9 @@ async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
         # Создание клавиатуры с кнопкой "Старт"
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        button_start = types.KeyboardButton("Start")
-        keyboard.add(button_start)
+        keyboard = types.ReplyKeyboardMarkup()
+        keyboard.add(types.KeyboardButton("Старт"))
+        keyboard.resize_keyboard = True
 
         await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.", reply_markup=keyboard)
         # Отправка сообщения администраторам
