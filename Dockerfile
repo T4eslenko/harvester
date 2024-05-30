@@ -1,31 +1,21 @@
-# Используем образ из архива
-FROM debian:bullseye-slim AS base
+# Используем базовый образ Debian
+FROM debian:bullseye-slim as build
 
-ENV PIP_NO_CACHE_DIR=1
-
+# Устанавливаем необходимые пакеты
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
-    procps
+    procps \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
+# Устанавливаем зависимости из requirements.txt
+COPY requirements.txt /app/requirements.txt
 WORKDIR /app
-COPY ./requirements.txt /app/requirements.txt
-RUN pip3 install --target=/app/dependencies -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Шаг 2: Сборка окончательного образа
-FROM base AS release
+# Копируем исходный код в рабочую директорию контейнера
+COPY . /app
 
-RUN useradd -m apprunner
-USER apprunner
-
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH="${PYTHONPATH}:/app/dependencies"
-
-WORKDIR /app
-COPY --chown=apprunner: . /app
-RUN chmod +x setup.sh
-
-ARG PORT=8000
-EXPOSE ${PORT}
-
+# Запускаем приложение при старте контейнера
 CMD ["python3", "main.py"]
