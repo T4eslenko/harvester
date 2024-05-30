@@ -116,7 +116,7 @@ async def get_phone_number(message: types.Message):
                     len(message.text) > 9 and 
                     message.from_user.id in allowed_users)
 async def get_phone_number(message: types.Message):
-    phone_number = f'+{message.text}
+    phone_number = f"+{message.text}"
     
     try:
         # Создаем новый экземпляр клиента
