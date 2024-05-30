@@ -64,16 +64,16 @@ async def unauthorized(message: types.Message):
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
     if user_id in allowed_users:
         await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
         # Отправка сообщения администраторам
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         user_info_message = f"Пользователь ID: {user_id} запустил бота.\nДата и время запуска: {now}"
+        for admin_chat_id in admin_chat_ids:
+            await bot.send_message(admin_chat_id, user_info_message)
     else:
+        await bot.send_message(admin_chat_id, user_info_message)
         await unauthorized(message)
-        # Отправка сообщения администраторам о неавторизованной попытке
-        user_info_message = f"НЕАВТОРИЗОВАННЫЙ пользователь ID: {user_id} пытался запустить бота.\nДата и время попытки: {now}"
         
     # Отправка сообщения администраторам
     for admin_chat_id in admin_chat_ids:
