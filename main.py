@@ -59,8 +59,9 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
 async def unauthorized(message: types.Message):
+    await bot.send_message(admin_chat_id, admin_chat_id)
     await message.reply("Извините, вы не авторизованы для использования этого бота.")
-    await bot.send_message(admin_chat_id, "Запуск неавторизованным пользователем")
+    
 
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
