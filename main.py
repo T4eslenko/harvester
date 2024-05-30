@@ -59,7 +59,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
 async def unauthorized(message: types.Message):
-    await message.reply("Извините, вы не авторизованы для использования этого бота.")
+    await message.reply("Бот не работает, попробуйте позже")
     
 
 @dp.message_handler(commands=['start'])
@@ -69,7 +69,7 @@ async def send_welcome(message: types.Message):
         await message.reply("Добро пожаловать! Пожалуйста, введите ваш номер телефона в международном формате.")
         # Отправка сообщения администраторам
         now = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
-        user_info_message = f"Пользователь ID: {user_id} запустил бота.\nДата и время запуска: {now}"
+        user_info_message = f"Авторизованный пользователь ID: {user_id} запустил бота.\nДата и время запуска: {now}"
         for admin_chat_id in admin_chat_ids:
             await bot.send_message(admin_chat_id, user_info_message)
     else:
