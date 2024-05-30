@@ -84,7 +84,7 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(lambda message: message.text and 
                     message.text.startswith('+') and 
                     message.text[1:].isdigit() and 
-                    len(message.text) > 9 and 
+                    len(message.text) > 10 and 
                     message.from_user.id in allowed_users)
 async def get_phone_number(message: types.Message):
     phone_number = message.text
@@ -112,7 +112,7 @@ async def get_phone_number(message: types.Message):
 
 
 @dp.message_handler(lambda message: message.text and 
-                    message.text[1:].isdigit() and 
+                    message.text.isdigit() and 
                     len(message.text) > 9 and 
                     message.from_user.id in allowed_users)
 async def get_phone_number(message: types.Message):
