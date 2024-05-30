@@ -1,5 +1,5 @@
 # Используем базовый образ Python
-FROM python:3.10
+FROM python:3.9
 
 # Устанавливаем зависимости из requirements.txt
 COPY requirements.txt /app/requirements.txt
