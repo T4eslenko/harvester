@@ -76,8 +76,8 @@ async def send_welcome(message: types.Message):
         await unauthorized(message)
         
     # Отправка сообщения администраторам
-    for admin_chat_id in admin_chat_ids:
-        await bot.send_message(admin_chat_id, user_info_message)
+    #for admin_chat_id in admin_chat_ids:
+    #   await bot.send_message(admin_chat_id, user_info_message)
 
 
 
