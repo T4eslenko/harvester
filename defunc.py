@@ -17,7 +17,8 @@ import re
 from jinja2 import Template
 import base64
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
+
 
 async def get_user_info(client, phone, selection):
     """Функция для получения информации о пользователе и его ID."""
@@ -27,15 +28,55 @@ async def get_user_info(client, phone, selection):
     username = f"@{me.username}" if me.username is not None else ""
     lastname = me.last_name if me.last_name is not None else ""
     userinfo = f"(Номер телефона: +{phone}, ID: {userid}, ({firstname} {lastname}) {username})"
+    photos_user_html = ''
     if selection == '0':
         try:
             user_photo = await client.get_profile_photos(userid)
             if user_photo:
-                file_name = f"{phone}.jpg"
-                path = await client.download_media(user_photo[0], file=file_name)
-        except Exception:
-            pass
-    return userid, userinfo, firstname, lastname, username
+                for i in range(len(user_photo)):
+                    file_name = f"{phone}_{i}"
+                    await client.download_media(user_photo[i], file=file_name)
+                    jpg_path = f"{file_name}.jpg"
+                    mp4_path = f"{file_name}.mp4"
+                    if os.path.exists(jpg_path):
+                        with open(jpg_path, "rb") as img_file:
+                            img_data = open(jpg_path, "rb").read()
+                            img_str = base64.b64encode(img_data).decode('utf-8')
+                            photos_user_html += f'<img src="data:image/jpeg;base64,{img_str}" alt="User photo {i+1}" style="width:100px;height:100px;vertical-align:middle;margin-right:10px;">'
+                        os.remove(jpg_path)
+                    elif os.path.exists(mp4_path):
+                        with open(mp4_path, "rb") as video_file:
+                            video_data = video_file.read()
+                            video_str = base64.b64encode(video_data).decode('utf-8')
+                            photos_user_html += f'<video width="100" height="100" controls><source src="data:video/mp4;base64,{video_str}" type="video/mp4">Your browser does not support the video tag.</video>'
+                        os.remove(mp4_path)
+            else:
+                with open("no_image.png", "rb") as img_file:
+                    img_data = img_file.read()
+                    img_str = base64.b64encode(img_data).decode('utf-8')
+                    image_data_url = f"data:image/png;base64,{img_str}"
+                    
+                #img = Image.new('RGBA', (50, 50), (200, 200, 200, 255))
+                #draw = ImageDraw.Draw(img)
+                #text = "No image"
+                #font_size = 10  # размер шрифта
+                #font = ImageFont.load_default()  # используем шрифт по умолчанию
+                #text_bbox = draw.textbbox((0, 0), text, font=font)
+                #text_width = text_bbox[2] - text_bbox[0]
+                #text_height = text_bbox[3] - text_bbox[1]
+                #text_x = (img.width - text_width) // 2
+                #text_y = (img.height - text_height) // 2
+                #draw.text((text_x, text_y), text, fill=(0, 0, 0), font=font)  # черный цвет текста
+                #buffered = BytesIO()
+                #img.save(buffered, format="PNG")
+                #img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+        
+                    photos_user_html +=f'<img src="data:image/png;base64,{img_str}" alt=" " style="width:100px;height:100px;vertical-align:middle;margin-right:10px;">'
+        except Exception as e:
+            print(f"An error occurred: {e}")
+    return userid, userinfo, firstname, lastname, username, photos_user_html
+
+
 
 async def get_type_of_chats(client, selection):
     """Функция для подсчета количества сообщений в чатах и определения типов чатов."""
@@ -53,7 +94,7 @@ async def get_type_of_chats(client, selection):
     user_bots = []
     user_bots_html = []
     image_data_url = ''
-
+    
     for chat in chats:   
         # Получаем данные о ботах
         if isinstance(chat.entity, User) and chat.entity.bot: 
@@ -64,11 +105,10 @@ async def get_type_of_chats(client, selection):
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
                         image_data_url = f"data:image/jpeg;base64,{encoded_image}"
                     else:
-                        img = Image.new('RGBA', (50, 50), (255, 255, 255, 0))
-                        buffered = BytesIO()
-                        img.save(buffered, format="PNG")
-                        img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-                        image_data_url = f"data:image/png;base64,{img_str}"
+                        with open("no_image.png", "rb") as img_file:
+                            img_data = img_file.read()
+                            img_str = base64.b64encode(img_data).decode('utf-8')
+                            image_data_url = f"data:image/png;base64,{img_str}"
                 except Exception:
                     pass
             user_bots_html.append(
@@ -182,11 +222,10 @@ async def get_blocked_bot(client, selection):
                             encoded_image = base64.b64encode(photo_path.getvalue()).decode('utf-8')
                             image_data_url = f"data:image/jpeg;base64,{encoded_image}"
                         else:
-                            img = Image.new('RGBA', (50, 50), (255, 255, 255, 0))
-                            buffered = BytesIO()
-                            img.save(buffered, format="PNG")
-                            img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-                            image_data_url = f"data:image/png;base64,{img_str}"
+                            with open("no_image.png", "rb") as img_file:
+                                img_data = img_file.read()
+                                img_str = base64.b64encode(img_data).decode('utf-8')
+                                image_data_url = f"data:image/png;base64,{img_str}"
                     except Exception:
                         pass    
                 blocked_bot_info.append(f"\033[36m@{user.username}\033[0m \033[93m'{user.first_name}'\033[0m заблокирован: {peer.date.strftime('%d/%m/%Y')}")
@@ -224,7 +263,10 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
                         image_data_url = f"data:image/jpeg;base64,{encoded_image}"
                 else:
-                        image_data_url = ''
+                        with open("no_image.png", "rb") as img_file:
+                            img_data = img_file.read()
+                            img_str = base64.b64encode(img_data).decode('utf-8')
+                            image_data_url = f"data:image/png;base64,{img_str}"
             except Exception:
                 pass 
         count_row = openchannel_count if selection == '5' or selection == '0' else i
@@ -257,11 +299,10 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
                         image_data_url = f"data:image/jpeg;base64,{encoded_image}"
                 else:
-                    img = Image.new('RGBA', (50, 50), (255, 255, 255, 0))
-                    buffered = BytesIO()
-                    img.save(buffered, format="PNG")
-                    img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-                    image_data_url = f"data:image/png;base64,{img_str}"
+                        with open("no_image.png", "rb") as img_file:
+                            img_data = img_file.read()
+                            img_str = base64.b64encode(img_data).decode('utf-8')
+                            image_data_url = f"data:image/png;base64,{img_str}"
             except Exception:
                 pass 
         count_row = closechannel_count if selection == '5' or selection == '0' else i
@@ -292,11 +333,10 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
                         image_data_url = f"data:image/jpeg;base64,{encoded_image}"
                 else:
-                    img = Image.new('RGBA', (50, 50), (255, 255, 255, 0))
-                    buffered = BytesIO()
-                    img.save(buffered, format="PNG")
-                    img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-                    image_data_url = f"data:image/png;base64,{img_str}"
+                        with open("no_image.png", "rb") as img_file:
+                            img_data = img_file.read()
+                            img_str = base64.b64encode(img_data).decode('utf-8')
+                            image_data_url = f"data:image/png;base64,{img_str}"
             except Exception:
                 pass 
         count_row = opengroup_count if selection == '5' or selection == '0' else i
@@ -329,11 +369,10 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
                         image_data_url = f"data:image/jpeg;base64,{encoded_image}"
                 else:
-                    img = Image.new('RGBA', (50, 50), (255, 255, 255, 0))
-                    buffered = BytesIO()
-                    img.save(buffered, format="PNG")
-                    img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-                    image_data_url = f"data:image/png;base64,{img_str}"
+                        with open("no_image.png", "rb") as img_file:
+                            img_data = img_file.read()
+                            img_str = base64.b64encode(img_data).decode('utf-8')
+                            image_data_url = f"data:image/png;base64,{img_str}"
             except Exception:
                 pass 
         count_row = closegroup_count if selection == '5' or selection == '0' else i
@@ -477,18 +516,18 @@ async def save_about_channels(phone, userid, firstname, lastname, username, open
     wb.save(f"{phone}_about.xlsx")
 
 #  Формируем отчет HTML
-async def generate_html_report(phone, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_chat_id):
+async def generate_html_report(phone, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_chat_id, photos_user_html):
     # Путь к аватарке пользователя
-    avatar_path = f"{phone}.jpg"
+   # avatar_path = f"{phone}.jpg"
     
-    if os.path.exists(avatar_path):
+    #if os.path.exists(avatar_path):
         # Чтение и конвертация изображения в Base64
-        with open(avatar_path, "rb") as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-            avatar_data_uri = f"data:image/jpeg;base64,{encoded_string}"
-    else:
+     #   with open(avatar_path, "rb") as image_file:
+     #       encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+     #       avatar_data_uri = f"data:image/jpeg;base64,{encoded_string}"
+   # else:
         # Используем изображение по умолчанию или оставляем поле пустым
-        avatar_data_uri = "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA=="  # 1x1 прозрачный GIF
+       # avatar_data_uri = "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA=="  # 1x1 прозрачный GIF
     
     # Открываем HTML шаблон
     with open('template.html', 'r', encoding='utf-8') as file:
@@ -520,8 +559,8 @@ async def generate_html_report(phone, userid, userinfo, firstname, lastname, use
         public_groups_html=public_groups_html,
         private_groups_html=private_groups_html,
         deleted_groups_html=deleted_groups_html,
-        avatar_user=avatar_data_uri,
-        user_chat_id=user_chat_id
+        user_chat_id=user_chat_id,
+        photos_user_html=photos_user_html
     )
 
     # Сохраняем результат в HTML файл
