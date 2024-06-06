@@ -20,7 +20,7 @@ from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 
 
-async def get_user_info(client, phone, selection):
+async def get_user_info(client, phone):
     """Функция для получения информации о пользователе и его ID."""
     me = await client.get_me()
     userid = me.id
@@ -29,8 +29,7 @@ async def get_user_info(client, phone, selection):
     lastname = me.last_name if me.last_name is not None else ""
     userinfo = f"(Номер телефона: +{phone}, ID: {userid}, ({firstname} {lastname}) {username})"
     photos_user_html = ''
-    if selection == '0':
-        try:
+    try:
             user_photo = await client.get_profile_photos(userid)
             if user_photo:
                 for i in range(len(user_photo)):
@@ -55,30 +54,14 @@ async def get_user_info(client, phone, selection):
                     img_data = img_file.read()
                     img_str = base64.b64encode(img_data).decode('utf-8')
                     image_data_url = f"data:image/png;base64,{img_str}"
-                    
-                #img = Image.new('RGBA', (50, 50), (200, 200, 200, 255))
-                #draw = ImageDraw.Draw(img)
-                #text = "No image"
-                #font_size = 10  # размер шрифта
-                #font = ImageFont.load_default()  # используем шрифт по умолчанию
-                #text_bbox = draw.textbbox((0, 0), text, font=font)
-                #text_width = text_bbox[2] - text_bbox[0]
-                #text_height = text_bbox[3] - text_bbox[1]
-                #text_x = (img.width - text_width) // 2
-                #text_y = (img.height - text_height) // 2
-                #draw.text((text_x, text_y), text, fill=(0, 0, 0), font=font)  # черный цвет текста
-                #buffered = BytesIO()
-                #img.save(buffered, format="PNG")
-                #img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-        
                     photos_user_html +=f'<img src="data:image/png;base64,{img_str}" alt=" " style="width:100px;height:100px;vertical-align:middle;margin-right:10px;">'
-        except Exception as e:
-            print(f"An error occurred: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
     return userid, userinfo, firstname, lastname, username, photos_user_html
 
 
 
-async def get_type_of_chats(client, selection):
+async def get_type_of_chats(client):
     """Функция для подсчета количества сообщений в чатах и определения типов чатов."""
     chat_message_counts = {}
     openchannels = []
@@ -98,8 +81,7 @@ async def get_type_of_chats(client, selection):
     for chat in chats:   
         # Получаем данные о ботах
         if isinstance(chat.entity, User) and chat.entity.bot: 
-            if selection == '0':
-                try:
+            try:
                     photo_bytes = await client.download_profile_photo(chat.entity, file=BytesIO())
                     if photo_bytes:
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
@@ -109,8 +91,8 @@ async def get_type_of_chats(client, selection):
                             img_data = img_file.read()
                             img_str = base64.b64encode(img_data).decode('utf-8')
                             image_data_url = f"data:image/png;base64,{img_str}"
-                except Exception:
-                    pass
+            except Exception:
+                pass
             user_bots_html.append(
                 f'<img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
                 f'<a href="https://t.me/{chat.entity.username}" style="color:#0000FF; text-decoration: none;vertical-align:middle;">@{chat.entity.username}</a> '
@@ -121,22 +103,9 @@ async def get_type_of_chats(client, selection):
 
         # Работаем с групповыми чатами
         if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat):  
-            # Выгружаем количество сообщений при выборе опции выгрузить сообщение
-            if selection == '7': 
-                messages = await client.get_messages(chat.entity, limit=0)
-                count_messages = messages.total
-                chat_message_counts[chat.entity.id] = count_messages
-
             # Определяем открытый канал
             if isinstance(chat.entity, Channel) and hasattr(chat.entity, 'broadcast') and chat.entity.participants_count is not None:
                 if chat.entity.broadcast and chat.entity.username:
-                    if selection == '6':
-                        if chat.entity.admin_rights or chat.entity.creator:
-                            openchannels.append(chat.entity)
-                            all_chats_ids.append(chat.entity.id)
-                            admin_id.append(chat.entity.id)
-                    
-                    if selection != '6':
                         openchannels.append(chat.entity)
                         all_chats_ids.append(chat.entity.id)
                         if chat.entity.admin_rights or chat.entity.creator:
@@ -145,13 +114,6 @@ async def get_type_of_chats(client, selection):
             # Определяем закрытый канал
             if isinstance(chat.entity, Channel) and hasattr(chat.entity, 'broadcast'):
                 if chat.entity.broadcast and chat.entity.username is None and chat.entity.title != 'Unsupported Chat':
-                    if selection == '6':
-                        if chat.entity.admin_rights or chat.entity.creator:
-                            closechannels.append(chat.entity)
-                            all_chats_ids.append(chat.entity.id)
-                            admin_id.append(chat.entity.id)
-                    
-                    if selection != '6':
                         closechannels.append(chat.entity)
                         all_chats_ids.append(chat.entity.id)
                         if chat.entity.admin_rights or chat.entity.creator:
@@ -176,9 +138,8 @@ async def get_type_of_chats(client, selection):
                all_chats_ids.append(chat.entity.id)
                admin_id.append(chat.entity.id)
 
-                
-            if selection == '5': # Добавляем нулевые чаты только для общей информации
-                if isinstance(chat.entity, Chat) and hasattr(chat.entity, 'participants_count') and chat.entity.participants_count == 0:
+            # Определяем удаленные группы   
+            if isinstance(chat.entity, Chat) and hasattr(chat.entity, 'participants_count') and chat.entity.participants_count == 0:
                    if chat.entity.migrated_to is not None and isinstance(chat.entity.migrated_to, InputChannel):
                       deactivated_chats_all = {
                          'ID_migrated': chat.entity.migrated_to.channel_id,
@@ -189,8 +150,7 @@ async def get_type_of_chats(client, selection):
                       }
                       deactivated_chats.append(deactivated_chats_all)
    
-    if selection == '5': # Добавляем нулевые чаты для общей информации
-       if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat): # Проверяем, является ли чат групповым
+    if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat): 
           for current_deleted_chat in deactivated_chats:
                  ID_migrated_values = current_deleted_chat['ID_migrated']
                  if ID_migrated_values not in all_chats_ids:
@@ -201,7 +161,7 @@ async def get_type_of_chats(client, selection):
 
 
 
-async def get_blocked_bot(client, selection):
+async def get_blocked_bot(client):
     blocked_bot_info = []
     blocked_bot_info_html = []
     count_blocked_bot = 0
@@ -209,14 +169,13 @@ async def get_blocked_bot(client, selection):
     latest_date = None
     image_data_url = " "
     
-    delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html = await get_type_of_chats(client, selection)
+    delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html = await get_type_of_chats(client)
     result_blocked = await client(GetBlockedRequest(offset=0, limit=200))
     for peer in result_blocked.blocked:
         if peer.peer_id.__class__.__name__ == 'PeerUser':
             user = await client.get_entity(peer.peer_id.user_id)
             if user.bot:
-                if selection == '0':
-                    try:
+                try:
                         photo_path = await client.download_profile_photo(user, file=BytesIO())
                         if photo_path:
                             encoded_image = base64.b64encode(photo_path.getvalue()).decode('utf-8')
@@ -226,8 +185,8 @@ async def get_blocked_bot(client, selection):
                                 img_data = img_file.read()
                                 img_str = base64.b64encode(img_data).decode('utf-8')
                                 image_data_url = f"data:image/png;base64,{img_str}"
-                    except Exception:
-                        pass    
+                except Exception:
+                    pass    
                 blocked_bot_info.append(f"\033[36m@{user.username}\033[0m \033[93m'{user.first_name}'\033[0m заблокирован: {peer.date.strftime('%d/%m/%Y')}")
                 
                 blocked_bot_info_html.append(
@@ -239,7 +198,7 @@ async def get_blocked_bot(client, selection):
     return count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html
 
 
-async def make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client):
+async def make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, client):
     """Функция для формирования списков групп и каналов"""
     owner_openchannel = 0
     owner_opengroup = 0
@@ -256,8 +215,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     public_channels_html = []
     image_data_url = ''
     for openchannel in openchannels:
-        if selection == '0':
-            try:
+        try:
                 photo_bytes = await client.download_profile_photo(openchannel, file=BytesIO())
                 if photo_bytes:
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
@@ -267,9 +225,9 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
                             img_data = img_file.read()
                             img_str = base64.b64encode(img_data).decode('utf-8')
                             image_data_url = f"data:image/png;base64,{img_str}"
-            except Exception:
-                pass 
-        count_row = openchannel_count if selection == '5' or selection == '0' else i
+        except Exception:
+            pass 
+        count_row = openchannel_count
         owner = " (Владелец)" if openchannel.creator else ""
         admin = " (Администратор)" if openchannel.admin_rights is not None else ""
         messages_count = f" / [{chat_message_counts.get(openchannel.id, 0)}]" if chat_message_counts else ""
@@ -292,8 +250,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     private_channels_html = []
     image_data_url = ''
     for closechannel in closechannels:
-        if selection == '0':
-            try:
+        try:
                 photo_bytes = await client.download_profile_photo(closechannel, file=BytesIO())
                 if photo_bytes:
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
@@ -303,9 +260,9 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
                             img_data = img_file.read()
                             img_str = base64.b64encode(img_data).decode('utf-8')
                             image_data_url = f"data:image/png;base64,{img_str}"
-            except Exception:
-                pass 
-        count_row = closechannel_count if selection == '5' or selection == '0' else i
+        except Exception:
+            pass 
+        count_row = closechannel_count
         owner = " (Владелец)" if closechannel.creator else ""
         admin = " (Администратор)" if closechannel.admin_rights is not None else ""
         messages_count = f" / [{chat_message_counts.get(closechannel.id, 0)}]" if chat_message_counts else ""
@@ -326,8 +283,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     public_groups_html = []
     image_data_url = ''
     for openchat in openchats:
-        if selection == '0':
-            try:
+        try:
                 photo_bytes = await client.download_profile_photo(openchat, file=BytesIO())
                 if photo_bytes:
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
@@ -337,9 +293,9 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
                             img_data = img_file.read()
                             img_str = base64.b64encode(img_data).decode('utf-8')
                             image_data_url = f"data:image/png;base64,{img_str}"
-            except Exception:
-                pass 
-        count_row = opengroup_count if selection == '5' or selection == '0' else i
+        except Exception:
+            pass 
+        count_row = opengroup_count
         owner = " (Владелец)" if openchat.creator else ""
         admin = " (Администратор)" if openchat.admin_rights is not None else ""
         messages_count = f" / [{chat_message_counts.get(openchat.id, 0)}]" if chat_message_counts else ""
@@ -362,8 +318,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     private_groups_html = []
     image_data_url = ''
     for closechat in closechats:
-        if selection == '0':
-            try:
+        try:
                 photo_bytes = await client.download_profile_photo(closechat, file=BytesIO())
                 if photo_bytes:
                         encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
@@ -373,9 +328,9 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
                             img_data = img_file.read()
                             img_str = base64.b64encode(img_data).decode('utf-8')
                             image_data_url = f"data:image/png;base64,{img_str}"
-            except Exception:
-                pass 
-        count_row = closegroup_count if selection == '5' or selection == '0' else i
+        except Exception:
+            pass 
+        count_row = closegroup_count
         owner = " (Владелец)" if closechat.creator else ""
         admin = " (Администратор)" if closechat.admin_rights is not None else ""
         messages_count = f" / [{chat_message_counts.get(closechat.id, 0)}]" if chat_message_counts else ""
@@ -397,20 +352,22 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     closegroupdel_count = 1
     deleted_groups_html = []
     for delgroup in delgroups:
-        count_row = closegroupdel_count if selection == '5' or selection == '0' else i
-        owner_value = delgroup['creator']
-        admin_value = delgroup['admin_rights']
-        id_value = delgroup['ID']
-        title_value = delgroup['title']
-        owner = " (Владелец)" if owner_value else ""
-        admin = " (Администратор)" if admin_value is not None else ""
-        all_info.append(f"{count_row} - {title_value} \033[91m{owner} {admin}\033[0m ID:{id_value}")
-        deleted_groups_html.append(f"{closegroupdel_count} - <span style='color:#556B2F;'>{title_value}</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{id_value}")
-        closegroupdel_count += 1
-        i +=1
-        if owner != "" or admin != "":
-            owner_closegroup += 1
-
+        try:
+            count_row = closegroupdel_count
+            owner_value = delgroup['creator']
+            admin_value = delgroup['admin_rights']
+            id_value = delgroup['ID']
+            title_value = delgroup['title']
+            owner = " (Владелец)" if owner_value else ""
+            admin = " (Администратор)" if admin_value is not None else ""
+            all_info.append(f"{count_row} - {title_value} \033[91m{owner} {admin}\033[0m ID:{id_value}")
+            deleted_groups_html.append(f"{closegroupdel_count} - <span style='color:#556B2F;'>{title_value}</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{id_value}")
+            closegroupdel_count += 1
+            i +=1
+            if owner != "" or admin != "":
+                owner_closegroup += 1
+        except Exception:
+            pass 
     return groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html
 
 async def get_and_save_contacts(client, phone_user, userid_user, userinfo, firstname_user, lastname_user, username_user):
@@ -459,80 +416,13 @@ async def get_and_save_contacts(client, phone_user, userid_user, userinfo, first
     wb.save(contacts_file_name)
     return total_contacts, total_contacts_with_phone, total_mutual_contacts
 
-async def save_about_channels(phone, userid, firstname, lastname, username, openchannel_count, opengroup_count, closechannel_count, closegroup_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, openchannels, closechannels, openchats, closechats, delgroups, closegroupdel_count):
-    
-    async def write_data(sheet, data):
-        sheet.append(["Название", "Количество участников", "Владелец", "Администратор", "ID", "Ссылка"])
-        for item in data:
-          owner = " (Владелец)" if item.creator else ""
-          admin = " (Администратор)" if item.admin_rights is not None else ""
-          usernameadd = f"@{item.username}" if hasattr(item, 'username') and item.username is not None else ""
-          sheet.append([item.title, item.participants_count, owner, admin, item.id, usernameadd])
-    
-    async def write_data_del(sheet, data):
-        sheet.append(["Название", "Владелец", "Администратор", "ID"])
-        for item in data:
-          owner_value = item['creator']
-          admin_value = item['admin_rights']
-          id_value = item['ID']
-          title_value = item['title']
-          owner = " (Владелец)" if owner_value else ""
-          admin = " (Администратор)" if admin_value is not None else ""
-          sheet.append([title_value, owner, admin, id_value])
-            
-    wb = openpyxl.Workbook()
-    wb.remove(wb.active)
-    ws_summury = wb.create_sheet("Сводная информация")
-    ws_summury.append([f"Номер телефона: +{phone}, ID: {userid}, ({firstname}{lastname}) {username}"])
-    if openchannel_count > 1:
-        ws_summury.append([f"Открытые каналы: {openchannel_count-1}"])
-        ws_open_channels = wb.create_sheet("Открытые каналы")
-        await write_data(ws_open_channels, openchannels)
-    if closechannel_count > 1:
-        ws_summury.append([f"Закрытые каналы: {closechannel_count-1}"])
-        ws_closed_channels = wb.create_sheet("Закрытые каналы")
-        await write_data(ws_closed_channels, closechannels)
-    if owner_openchannel > 1:
-        ws_summury.append([f"Имеет права владельца или админа в открытых каналах: {owner_openchannel}"])
-    if owner_closechannel > 1:
-        ws_summury.append([f"Имеет права владельца или админа в закрытых каналах: {owner_closechannel}"])
-    if opengroup_count > 1:
-        ws_summury.append([f"Открытые группы: {opengroup_count-1}"])
-        ws_open_groups = wb.create_sheet("Открытые группы")
-        await write_data(ws_open_groups, openchats)
-    if closegroup_count > 1:
-        ws_summury.append([f"Закрытые группы: {closegroup_count-1}"])
-        ws_closed_groups = wb.create_sheet("Закрытые группы")
-        await write_data(ws_closed_groups, closechats)
-    if closegroupdel_count > 1:
-        ws_summury.append([f"Удаленные группы: {closegroupdel_count-1}"])
-        ws_closed_groups_del = wb.create_sheet("Удаленные группы")
-        await write_data_del(ws_closed_groups_del, delgroups)
-    if owner_opengroup > 11:
-        ws_summury.append([f"Имеет права владельца или админа в открытых группах: {owner_opengroup}"])
-    if owner_closegroup > 1:
-        ws_summury.append([f"Имеет права владельца или админа в закрытых группах: {owner_closegroup}"])
-    
-    wb.save(f"{phone}_about.xlsx")
+
 
 #  Формируем отчет HTML
 async def generate_html_report(phone, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_chat_id, photos_user_html):
-    # Путь к аватарке пользователя
-   # avatar_path = f"{phone}.jpg"
-    
-    #if os.path.exists(avatar_path):
-        # Чтение и конвертация изображения в Base64
-     #   with open(avatar_path, "rb") as image_file:
-     #       encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-     #       avatar_data_uri = f"data:image/jpeg;base64,{encoded_string}"
-   # else:
-        # Используем изображение по умолчанию или оставляем поле пустым
-       # avatar_data_uri = "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA=="  # 1x1 прозрачный GIF
-    
     # Открываем HTML шаблон
     with open('template.html', 'r', encoding='utf-8') as file:
         template = Template(file.read())
-
     # Заполняем шаблон данными
     html_content = template.render(
         phone=phone,
