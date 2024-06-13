@@ -94,7 +94,14 @@
     </ul>
 </body>
 </html>
-
+    <h3>Боты из истории</h3>
+        <ul>
+        {% for bot_history in bot_from_search_html %}
+            <li>{{ bot_history }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
 <h2>Суммарная информация о каналах и группах</h2>
    <table border="1">
     <tr>
