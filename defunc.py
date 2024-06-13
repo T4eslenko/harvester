@@ -269,6 +269,29 @@ async def get_blocked_bot(client, selection):
 
     return count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html, list_botblocked
 
+# Assuming `admin_rights` is an object that has boolean attributes representing various rights
+def get_admin_rights_list(admin_rights):
+    rights = []
+    if admin_rights.add_admins:
+        rights.append('Добавление админов')
+    if admin_rights.ban_users:
+        rights.append('Бан пользователей')
+    if admin_rights.change_info:
+        rights.append('Изменение информации')
+    if admin_rights.delete_messages:
+        rights.append('Удаление сообщений')
+    if admin_rights.edit_messages:
+        rights.append('Редактирование сообщений')
+    if admin_rights.invite_users:
+        rights.append('Приглашение пользователей')
+    if admin_rights.pin_messages:
+        rights.append('Закрепление сообщений')
+    if admin_rights.post_messages:
+        rights.append('Публикация сообщений')
+    if admin_rights.manage_call:
+        rights.append('Управление звонками')
+    return rights
+
 
 async def make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client):
     """Функция для формирования списков групп и каналов"""
@@ -287,30 +310,39 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     public_channels_html = []
     image_data_url = ''
     for openchannel in openchannels:
-        if selection == '0':
-            try:
-                photo_bytes = await client.download_profile_photo(openchannel, file=BytesIO())
-                if photo_bytes:
-                        encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
-                        image_data_url = f"data:image/jpeg;base64,{encoded_image}"
-                else:
-                        with open("no_image.png", "rb") as img_file:
-                            img_data = img_file.read()
-                            img_str = base64.b64encode(img_data).decode('utf-8')
-                            image_data_url = f"data:image/png;base64,{img_str}"
-            except Exception:
-                pass 
-        count_row = openchannel_count if selection == '5' or selection == '0' else i
+        try:
+            photo_bytes = await client.download_profile_photo(openchannel, file=BytesIO())
+            if photo_bytes:
+                encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
+                image_data_url = f"data:image/jpeg;base64,{encoded_image}"
+            else:
+                with open("no_image.png", "rb") as img_file:
+                    img_data = img_file.read()
+                    img_str = base64.b64encode(img_data).decode('utf-8')
+                    image_data_url = f"data:image/png;base64,{img_str}"
+        except Exception:
+            pass 
+        count_row = openchannel_count
         owner = " (Владелец)" if openchannel.creator else ""
         admin = " (Администратор)" if openchannel.admin_rights is not None else ""
+        
+        # Add admin rights to the list
+        admin_rights_list = get_admin_rights_list(openchannel.admin_rights) if openchannel.admin_rights else []
+        admin_rights_html = ""
+        if admin_rights_list:
+            admin_rights_html = "<ul>" + "".join([f"<li>{right}</li>" for right in admin_rights_list]) + "</ul>"
+        
         messages_count = f" / [{chat_message_counts.get(openchannel.id, 0)}]" if chat_message_counts else ""
         all_info.append(f"{count_row} - {openchannel.title} \033[93m[{openchannel.participants_count}]{messages_count}\033[0m\033[91m {owner} {admin}\033[0m ID:{openchannel.id} \033[94m@{openchannel.username}\033[0m")
+        
         public_channels_html.append(
-        f"{openchannel_count}. <img src='{image_data_url}' alt=' ' style='width:50px;height:50px;vertical-align:middle;margin-right:10px;'>" 
-        f"<span style='color:#556B2F;'>{openchannel.title}</span> <span style='color:#8B4513;'>[{openchannel.participants_count}]</span> "
-        f"<span style='color:#FF0000;'>{owner} {admin}</span> ID:{openchannel.id} "
-        f'<a href="https://t.me/{openchannel.username}" style="color:#0000FF; text-decoration: none;">@{openchannel.username}</a>'
+            f"{openchannel_count}. <img src='{image_data_url}' alt=' ' style='width:50px;height:50px;vertical-align:middle;margin-right:10px;'>"
+            f"<span style='color:#556B2F;'>{openchannel.title}</span> <span style='color:#8B4513;'>[{openchannel.participants_count}]</span> "
+            f"<span style='color:#FF0000;'>{owner} {admin}</span> ID:{openchannel.id} "
+            f'<a href="https://t.me/{openchannel.username}" style="color:#0000FF; text-decoration: none;">@{openchannel.username}</a>'
+            f"{admin_rights_html}"
         )
+        
         openchannel_count += 1
         groups.append(openchannel)
         i +=1
