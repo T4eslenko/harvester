@@ -432,7 +432,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         count_row = opengroup_count if selection == '5' or selection == '0' else i
         owner = " (Владелец)" if openchat.creator else ""
         admin = " (Администратор)" if openchat.admin_rights is not None else ""
-        admin_rights_list = get_admin_rights_chat_list(opengroup.admin_rights)
+        admin_rights_list = get_admin_rights_chat_list(openchat.admin_rights)
         admin_rights_html = ""
         if admin_rights_list:
             admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
@@ -474,7 +474,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         count_row = closegroup_count if selection == '5' or selection == '0' else i
         owner = " (Владелец)" if closechat.creator else ""
         admin = " (Администратор)" if closechat.admin_rights is not None else ""
-        admin_rights_list = get_admin_rights_chat_list(closegroup.admin_rights)
+        admin_rights_list = get_admin_rights_chat_list(closechat.admin_rights)
         admin_rights_html = ""
         if admin_rights_list:
             admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
