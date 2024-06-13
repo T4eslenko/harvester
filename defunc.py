@@ -272,24 +272,20 @@ async def get_blocked_bot(client, selection):
 # Assuming `admin_rights` is an object that has boolean attributes representing various rights
 def get_admin_rights_list(admin_rights):
     rights = ['<span style="color:red; font-weight:bold; font-style:italic;">Права, как администратора канала:</span>']
-    if admin_rights.add_admins:
-        rights.append('Добавление админов')
-    if admin_rights.ban_users:
-        rights.append('Бан пользователей')
-    if admin_rights.change_info:
-        rights.append('Изменение информации')
-    if admin_rights.delete_messages:
-        rights.append('Удаление сообщений')
-    if admin_rights.edit_messages:
-        rights.append('Редактирование сообщений')
-    if admin_rights.invite_users:
-        rights.append('Приглашение пользователей')
-    if admin_rights.pin_messages:
-        rights.append('Закрепление сообщений')
-    if admin_rights.post_messages:
-        rights.append('Публикация сообщений')
-    if admin_rights.manage_call:
-        rights.append('Управление звонками')
+    possible_rights = {
+        'Добавление админов': admin_rights.add_admins if admin_rights else False,
+        'Бан пользователей': admin_rights.ban_users if admin_rights else False,
+        'Изменение информации': admin_rights.change_info if admin_rights else False,
+        'Удаление сообщений': admin_rights.delete_messages if admin_rights else False,
+        'Редактирование сообщений': admin_rights.edit_messages if admin_rights else False,
+        'Приглашение пользователей': admin_rights.invite_users if admin_rights else False,
+        'Закрепление сообщений': admin_rights.pin_messages if admin_rights else False,
+        'Публикация сообщений': admin_rights.post_messages if admin_rights else False,
+        'Управление звонками': admin_rights.manage_call if admin_rights else False
+    }
+    for right, has_right in possible_rights.items():
+        status = '<b>да</b>' if has_right else '<b>нет</b>'
+        rights.append(f"{right} - {status}")
     return rights
 
 
@@ -326,11 +322,9 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         owner = " (Владелец)" if openchannel.creator else ""
         admin = " (Администратор)" if openchannel.admin_rights is not None else ""
         
-        # Add admin rights to the list
-        admin_rights_list = get_admin_rights_list(openchannel.admin_rights) if openchannel.admin_rights else []
-        admin_rights_html = ""
-        if admin_rights_list:
-            admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
+        # Получение списка прав администратора
+        admin_rights_list = get_admin_rights_list(openchannel.admin_rights)
+        admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
         
         messages_count = f" / [{chat_message_counts.get(openchannel.id, 0)}]" if chat_message_counts else ""
         all_info.append(f"{count_row} - {openchannel.title} \033[93m[{openchannel.participants_count}]{messages_count}\033[0m\033[91m {owner} {admin}\033[0m ID:{openchannel.id} \033[94m@{openchannel.username}\033[0m")
@@ -345,7 +339,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         
         openchannel_count += 1
         groups.append(openchannel)
-        i +=1
+        i += 1
         if owner != "" or admin != "":
             owner_openchannel += 1
 
