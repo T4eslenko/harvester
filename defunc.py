@@ -270,18 +270,19 @@ async def get_blocked_bot(client, selection):
     return count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html, list_botblocked
 
 # Функция для получения списка прав администратора с отметкой "да" или "нет"
-def get_admin_rights_list(admin_rights):
+def get_admin_rights_channel_list(admin_rights):
     rights = ['<span style="color:red; font-weight:bold; font-style:italic;">Права, как администратора канала:</span>']
     possible_rights = {
-        'Добавление админов': admin_rights.add_admins if admin_rights else False,
-        'Бан пользователей': admin_rights.ban_users if admin_rights else False,
-        'Изменение информации': admin_rights.change_info if admin_rights else False,
-        'Удаление сообщений': admin_rights.delete_messages if admin_rights else False,
-        'Редактирование сообщений': admin_rights.edit_messages if admin_rights else False,
-        'Приглашение пользователей': admin_rights.invite_users if admin_rights else False,
-        'Закрепление сообщений': admin_rights.pin_messages if admin_rights else False,
+        'Изменение профиля канала': admin_rights.change_info if admin_rights else False,
         'Публикация сообщений': admin_rights.post_messages if admin_rights else False,
-        'Управление звонками': admin_rights.manage_call if admin_rights else False
+        'Изменение чужих публикаций': admin_rights.edit_messages if admin_rights else False,
+        'Удаление чужих публикаций': admin_rights.delete_messages if admin_rights else False,
+        'Публикация историй': admin_rights.post_stories if admin_rights else False,
+        'Изменение чужих историй': admin_rights.edit_stories if admin_rights else False,
+        'Удаление чужих историй': admin_rights.delete_stories if admin_rights else False,
+        'Пригласительные ссылки': admin_rights.invite_users if admin_rights else False,
+        'Управление трансляциями': admin_rights.manage_call if admin_rights else False,
+        'Назначение администраторов': admin_rights.add_admins if admin_rights else False
     }
     has_any_rights = any(possible_rights.values())
     for right, has_right in possible_rights.items():
@@ -289,6 +290,25 @@ def get_admin_rights_list(admin_rights):
         rights.append(f"{right} - {status}")
     return rights if has_any_rights else []
 
+def get_admin_rights_chat_list(admin_rights):
+    rights = ['<span style="color:red; font-weight:bold; font-style:italic;">Права, как администратора группы:</span>']
+    possible_rights = {
+        'Удаление сообщений': admin_rights.delete_messages if admin_rights else False,
+        'Блокировка пользователей': admin_rights.ban_users if admin_rights else False,
+        'Пригласительные ссылки': admin_rights.invite_users if admin_rights else False,
+        'Закрепление сообщений': admin_rights.pin_messages if admin_rights else False,
+        'Публикация историй': admin_rights.post_stories if admin_rights else False,
+        'Изменение чужих историй': admin_rights.edit_stories if admin_rights else False,
+        'Удаление чужих историй': admin_rights.delete_stories if admin_rights else False,
+        'Управление трансляциями': admin_rights.manage_call if admin_rights else False,
+        'Назначение администраторов': admin_rights.add_admins if admin_rights else False,
+        'Анонимность': admin_rights.anonymous if admin_rights else False
+    }
+    has_any_rights = any(possible_rights.values())
+    for right, has_right in possible_rights.items():
+        status = '<b>да</b>' if has_right else '<b>нет</b>'
+        rights.append(f"{right} - {status}")
+    return rights if has_any_rights else []
 
 async def make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client):
     """Функция для формирования списков групп и каналов"""
@@ -324,7 +344,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         admin = " (Администратор)" if openchannel.admin_rights is not None else ""
         
         # Получение списка прав администратора
-        admin_rights_list = get_admin_rights_list(openchannel.admin_rights)
+        admin_rights_list = get_admin_rights_channel_list(openchannel.admin_rights)
         admin_rights_html = ""
         if admin_rights_list:
             admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
@@ -370,11 +390,19 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         count_row = closechannel_count if selection == '5' or selection == '0' else i
         owner = " (Владелец)" if closechannel.creator else ""
         admin = " (Администратор)" if closechannel.admin_rights is not None else ""
+
+        # Получение списка прав администратора
+        admin_rights_list = get_admin_rights_channel_list(closechannel.admin_rights)
+        admin_rights_html = ""
+        if admin_rights_list:
+            admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
+        
         messages_count = f" / [{chat_message_counts.get(closechannel.id, 0)}]" if chat_message_counts else ""
         all_info.append(f"{count_row} - {closechannel.title} \033[93m[{closechannel.participants_count}]{messages_count}\033[0m \033[91m{owner} {admin}\033[0m ID:{closechannel.id}")
         private_channels_html.append(
             f'{closechannel_count}. <img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
             f"<span style='color:#556B2F;'>{closechannel.title}</span> <span style='color:#8B4513;'>[{closechannel.participants_count}]</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{closechannel.id}"
+            f"{admin_rights_html}"
         )
         closechannel_count += 1
         groups.append(closechannel)
@@ -404,6 +432,11 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         count_row = opengroup_count if selection == '5' or selection == '0' else i
         owner = " (Владелец)" if openchat.creator else ""
         admin = " (Администратор)" if openchat.admin_rights is not None else ""
+        admin_rights_list = get_admin_rights_chat_list(opengroup.admin_rights)
+        admin_rights_html = ""
+        if admin_rights_list:
+            admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
+        
         messages_count = f" / [{chat_message_counts.get(openchat.id, 0)}]" if chat_message_counts else ""
         all_info.append(f"{count_row} - {openchat.title} \033[93m[{openchat.participants_count}]{messages_count}\033[0m\033[91m {owner} {admin}\033[0m ID:{openchat.id} \033[94m@{openchat.username}\033[0m")
         public_groups_html.append(
@@ -411,6 +444,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             f"<span style='color:#556B2F;'>{openchat.title}</span> <span style='color:#8B4513;'>[{openchat.participants_count}]</span> "
             f"<span style='color:#FF0000;'>{owner} {admin}</span> ID:{openchat.id} "
             f'<a href="https://t.me/{openchat.username}" style="color:#0000FF; text-decoration: none;">@{openchat.username}</a>'
+            f"{admin_rights_html}"
         )
         opengroup_count += 1
         groups.append(openchat)
@@ -440,11 +474,17 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         count_row = closegroup_count if selection == '5' or selection == '0' else i
         owner = " (Владелец)" if closechat.creator else ""
         admin = " (Администратор)" if closechat.admin_rights is not None else ""
+        admin_rights_list = get_admin_rights_chat_list(closegroup.admin_rights)
+        admin_rights_html = ""
+        if admin_rights_list:
+            admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
+        
         messages_count = f" / [{chat_message_counts.get(closechat.id, 0)}]" if chat_message_counts else ""
         all_info.append(f"{count_row} - {closechat.title} \033[93m[{closechat.participants_count}]{messages_count}\033[0m \033[91m{owner} {admin}\033[0m ID:{closechat.id}")
         private_groups_html.append(
             f'{closegroup_count}. <img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
             f"<span style='color:#556B2F;'>{closechat.title}</span> <span style='color:#8B4513;'>[{closechat.participants_count}]</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{closechat.id}"
+            f"{admin_rights_html}"
         )
         closegroup_count += 1
         groups.append(closechat)
