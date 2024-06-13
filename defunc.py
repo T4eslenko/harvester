@@ -282,7 +282,7 @@ def get_admin_rights_channel_list(admin_rights):
         'Удаление историй': admin_rights.delete_stories if admin_rights else False,
         'Пригласительные ссылки': admin_rights.invite_users if admin_rights else False,
         'Управление трансляциями': admin_rights.manage_call if admin_rights else False,
-        'Назначение администраторов': admin_rights.add_admins if admin_rights else False
+        '<b>Назначение администраторов</b>': admin_rights.add_admins if admin_rights else False,
     }
     has_any_rights = any(possible_rights.values())
     for right, has_right in possible_rights.items():
@@ -301,7 +301,7 @@ def get_admin_rights_chat_list(admin_rights):
         'Изменение историй': admin_rights.edit_stories if admin_rights else False,
         'Удаление историй': admin_rights.delete_stories if admin_rights else False,
         'Управление трансляциями': admin_rights.manage_call if admin_rights else False,
-        'Назначение администраторов': admin_rights.add_admins if admin_rights else False,
+        '<b>Назначение администраторов</b>': admin_rights.add_admins if admin_rights else False,
         'Анонимность': admin_rights.anonymous if admin_rights else False
     }
     has_any_rights = any(possible_rights.values())
