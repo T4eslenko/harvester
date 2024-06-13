@@ -306,7 +306,7 @@ def get_admin_rights_chat_list(admin_rights):
     }
     has_any_rights = any(possible_rights.values())
     for right, has_right in possible_rights.items():
-        status = '<b>да</b>' if has_right else '<b>нет</b>'
+        status = '<b>да</b>' if has_right else 'нет'
         rights.append(f"{right} - {status}")
     return rights if has_any_rights else []
 
