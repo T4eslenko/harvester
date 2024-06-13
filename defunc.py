@@ -266,7 +266,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             f"{openchannel_count}. <img src='{image_data_url}' alt=' ' style='width:50px;height:50px;vertical-align:middle;margin-right:10px;'>"
             f"<span style='color:#556B2F;'>{openchannel.title}</span> <span style='color:#8B4513;'>[{openchannel.participants_count}]</span> "
             f"<span style='color:#FF0000;'>{owner} {admin}</span> ID:{openchannel.id} "
-            f'<a href="https://t.me/{openchannel.username}" style="color:#0000FF; text-decoration: none;'>@{openchannel.username}</a>'
+            f'<a href="https://t.me/{openchannel.username}" style="color:#0000FF; text-decoration: none;">@{openchannel.username}</a>'
             f"{admin_rights_html}"
         )
         
