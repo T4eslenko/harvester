@@ -269,7 +269,7 @@ async def get_blocked_bot(client, selection):
 
     return count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html, list_botblocked
 
-# Assuming `admin_rights` is an object that has boolean attributes representing various rights
+# Функция для получения списка прав администратора с отметкой "да" или "нет"
 def get_admin_rights_list(admin_rights):
     rights = ['<span style="color:red; font-weight:bold; font-style:italic;">Права, как администратора канала:</span>']
     possible_rights = {
@@ -283,10 +283,11 @@ def get_admin_rights_list(admin_rights):
         'Публикация сообщений': admin_rights.post_messages if admin_rights else False,
         'Управление звонками': admin_rights.manage_call if admin_rights else False
     }
+    has_any_rights = any(possible_rights.values())
     for right, has_right in possible_rights.items():
-        status = '<b>да</b>' if has_right else '<b>нет</b>'
+        status = '<b>да</b>' if has_right else 'нет'
         rights.append(f"{right} - {status}")
-    return rights
+    return rights if has_any_rights else []
 
 
 async def make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client):
@@ -324,7 +325,9 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         
         # Получение списка прав администратора
         admin_rights_list = get_admin_rights_list(openchannel.admin_rights)
-        admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
+        admin_rights_html = ""
+        if admin_rights_list:
+            admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
         
         messages_count = f" / [{chat_message_counts.get(openchannel.id, 0)}]" if chat_message_counts else ""
         all_info.append(f"{count_row} - {openchannel.title} \033[93m[{openchannel.participants_count}]{messages_count}\033[0m\033[91m {owner} {admin}\033[0m ID:{openchannel.id} \033[94m@{openchannel.username}\033[0m")
@@ -342,6 +345,8 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         i += 1
         if owner != "" or admin != "":
             owner_openchannel += 1
+
+    
 
     closechannels_name = 'Закрытые КАНАЛЫ:' if closechannels else ''
     all_info.append(f"\033[95m{closechannels_name}\033[0m")  
