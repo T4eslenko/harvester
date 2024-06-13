@@ -271,7 +271,7 @@ async def get_blocked_bot(client, selection):
 
 # Assuming `admin_rights` is an object that has boolean attributes representing various rights
 def get_admin_rights_list(admin_rights):
-    rights = [Права, как администратора канала:]
+    rights = ['          Права, как администратора канала:']
     if admin_rights.add_admins:
         rights.append('          Добавление админов')
     if admin_rights.ban_users:
