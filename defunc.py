@@ -271,25 +271,25 @@ async def get_blocked_bot(client, selection):
 
 # Assuming `admin_rights` is an object that has boolean attributes representing various rights
 def get_admin_rights_list(admin_rights):
-    rights = []
+    rights = [Права, как администратора канала:]
     if admin_rights.add_admins:
-        rights.append('Добавление админов')
+        rights.append('          Добавление админов')
     if admin_rights.ban_users:
-        rights.append('Бан пользователей')
+        rights.append('          Бан пользователей')
     if admin_rights.change_info:
-        rights.append('Изменение информации')
+        rights.append('          Изменение информации')
     if admin_rights.delete_messages:
-        rights.append('Удаление сообщений')
+        rights.append('          Удаление сообщений')
     if admin_rights.edit_messages:
-        rights.append('Редактирование сообщений')
+        rights.append('          Редактирование сообщений')
     if admin_rights.invite_users:
-        rights.append('Приглашение пользователей')
+        rights.append('          Приглашение пользователей')
     if admin_rights.pin_messages:
-        rights.append('Закрепление сообщений')
+        rights.append('          Закрепление сообщений')
     if admin_rights.post_messages:
-        rights.append('Публикация сообщений')
+        rights.append('          Публикация сообщений')
     if admin_rights.manage_call:
-        rights.append('Управление звонками')
+        rights.append('          Управление звонками')
     return rights
 
 
@@ -330,7 +330,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         admin_rights_list = get_admin_rights_list(openchannel.admin_rights) if openchannel.admin_rights else []
         admin_rights_html = ""
         if admin_rights_list:
-            admin_rights_html = "<ul>" + "".join([f"<li>{right}</li>" for right in admin_rights_list]) + "</ul>"
+            admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li>{right}</li>" for right in admin_rights_list]) + "</ul>"
         
         messages_count = f" / [{chat_message_counts.get(openchannel.id, 0)}]" if chat_message_counts else ""
         all_info.append(f"{count_row} - {openchannel.title} \033[93m[{openchannel.participants_count}]{messages_count}\033[0m\033[91m {owner} {admin}\033[0m ID:{openchannel.id} \033[94m@{openchannel.username}\033[0m")
