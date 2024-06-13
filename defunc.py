@@ -269,17 +269,17 @@ async def get_blocked_bot(client, selection):
 
     return count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html, list_botblocked
 
-# Функция для получения списка прав администратора с отметкой "да" или "нет"
+# Функция для получения списка прав администратора в канале
 def get_admin_rights_channel_list(admin_rights):
-    rights = ['<span style="color:red; font-weight:bold; font-style:italic;">Права, как администратора канала:</span>']
+    rights = ['<span style="color:maroon; font-weight:bold; font-style:italic;">Права, как администратора канала:</span>']
     possible_rights = {
         'Изменение профиля канала': admin_rights.change_info if admin_rights else False,
         'Публикация сообщений': admin_rights.post_messages if admin_rights else False,
-        'Изменение чужих публикаций': admin_rights.edit_messages if admin_rights else False,
-        'Удаление чужих публикаций': admin_rights.delete_messages if admin_rights else False,
+        'Изменение публикаций': admin_rights.edit_messages if admin_rights else False,
+        'Удаление публикаций': admin_rights.delete_messages if admin_rights else False,
         'Публикация историй': admin_rights.post_stories if admin_rights else False,
-        'Изменение чужих историй': admin_rights.edit_stories if admin_rights else False,
-        'Удаление чужих историй': admin_rights.delete_stories if admin_rights else False,
+        'Изменение историй': admin_rights.edit_stories if admin_rights else False,
+        'Удаление историй': admin_rights.delete_stories if admin_rights else False,
         'Пригласительные ссылки': admin_rights.invite_users if admin_rights else False,
         'Управление трансляциями': admin_rights.manage_call if admin_rights else False,
         'Назначение администраторов': admin_rights.add_admins if admin_rights else False
@@ -291,15 +291,15 @@ def get_admin_rights_channel_list(admin_rights):
     return rights if has_any_rights else []
 
 def get_admin_rights_chat_list(admin_rights):
-    rights = ['<span style="color:red; font-weight:bold; font-style:italic;">Права, как администратора группы:</span>']
+    rights = ['<span style="color:maroon; font-weight:bold; font-style:italic;">Права, как администратора группы:</span>']
     possible_rights = {
         'Удаление сообщений': admin_rights.delete_messages if admin_rights else False,
         'Блокировка пользователей': admin_rights.ban_users if admin_rights else False,
         'Пригласительные ссылки': admin_rights.invite_users if admin_rights else False,
         'Закрепление сообщений': admin_rights.pin_messages if admin_rights else False,
         'Публикация историй': admin_rights.post_stories if admin_rights else False,
-        'Изменение чужих историй': admin_rights.edit_stories if admin_rights else False,
-        'Удаление чужих историй': admin_rights.delete_stories if admin_rights else False,
+        'Изменение историй': admin_rights.edit_stories if admin_rights else False,
+        'Удаление историй': admin_rights.delete_stories if admin_rights else False,
         'Управление трансляциями': admin_rights.manage_call if admin_rights else False,
         'Назначение администраторов': admin_rights.add_admins if admin_rights else False,
         'Анонимность': admin_rights.anonymous if admin_rights else False
