@@ -48,7 +48,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     user_id=user_chat_id
     user_name = ALLOWED_USERS[user_id]
 
-    user_info_message = f"Выгрузка осуществлена пользователем: ({user_name}, id: {user_id}) \nДата и время выгрузки: {now}"
+    user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}):"
 
     # Отправка сообщения с информацией о пользователе админам
     for admin_chat_id in admin_chat_ids:
