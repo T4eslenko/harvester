@@ -131,12 +131,7 @@ async def get_type_of_chats(client, selection):
     for chat in chats:   
 
         chat_id = chat.id
-        chat_name = get_display_name(chat.entity)
         chat_link = f"https://t.me/{chat.entity.username}" if hasattr(chat.entity, 'username') and chat.entity.username else "No link"
-        
-        # Проверка на наличие имени и ссылки чата
-        if not chat_name:
-            chat_name = "Unnamed chat"
         
         # Итерируем по сообщениям в чате
         async for message in client.iter_messages(chat_id):
