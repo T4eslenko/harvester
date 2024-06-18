@@ -121,8 +121,40 @@ async def get_type_of_chats(client, selection):
     user_bots_html = []
     image_data_url = ''
     list_botexisted =[]
-    
+
+    me = await client.get_me()
+    my_id = me.id
+
+    # Переменная для хранения информации о сообщениях
+    messages_info = []
+
     for chat in chats:   
+
+        chat_id = chat.id
+        chat_name = get_display_name(chat.entity)
+        chat_link = f"https://t.me/{chat.entity.username}" if hasattr(chat.entity, 'username') and chat.entity.username else "No link"
+        
+        # Проверка на наличие имени и ссылки чата
+        if not chat_name:
+            chat_name = "Unnamed chat"
+        
+        # Итерируем по сообщениям в чате
+        async for message in client.iter_messages(chat_id):
+            if message.sender_id == my_id:
+                # Сохраняем информацию о сообщении в переменную
+                message_info = {
+                    "chat_name": chat_name,
+                    "chat_id": chat_id,
+                    "chat_link": chat_link,
+                    "message_id": message.id,
+                    "message_text": message.message,
+                    "date": message.date,
+                    "reactions": ', '.join([f"{reaction.emoticon}: {reaction.count}" for reaction in message.reactions.results]) if message.reactions else "None"
+                }
+                messages_info.append(message_info)
+
+
+        
         # Получаем данные о ботах
         if isinstance(chat.entity, User) and chat.entity.bot: 
             if selection == '0':
@@ -224,7 +256,8 @@ async def get_type_of_chats(client, selection):
                  if ID_migrated_values not in all_chats_ids:
                       delgroups.append(current_deleted_chat)
 
-
+    for mi in messages_info:
+            print(mi)
     return delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted
 
 
