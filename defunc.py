@@ -138,7 +138,6 @@ async def get_type_of_chats(client, selection):
             if message.sender_id == my_id:
                 # Сохраняем информацию о сообщении в переменную
                 message_info = {
-                    "chat_name": chat_name,
                     "chat_id": chat_id,
                     "chat_link": chat_link,
                     "message_id": message.id,
