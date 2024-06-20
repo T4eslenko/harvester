@@ -68,7 +68,7 @@ async def show_keyboard(user_id):
 # Функция what_to_do для отображения клавиатуры при выполнении условий
 async def what_to_do(message: types.Message, conditions_met: bool):
     if conditions_met:
-        await message.answer("Подключено! Формирую отчет")
+        await message.answer("Подключено!")
         await show_keyboard(message.from_user.id)
     else:
         await message.answer("Выбери, что будешь делать!")
@@ -247,12 +247,13 @@ def create_client():
 
 # Обработчики колбэков для запуска нужных функций
 @dp.callback_query_handler(state=Form.awaiting_selection)
-async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext, client, phone_number, user_id):
+async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
     code = callback_query.data
     await bot.answer_callback_query(callback_query.id)
 
     if code == 'analytics':
-        await process_user_data(client, phone_number, user_id)
+        await bot.send_message(callback_query.message.chat.id, "Формирую отчет!")
+        await process_user_data(user_state[user_id]['client'], user_state[user_id]['phone_number'], user_id)
     elif code == 'personal_chats':
         await export_personal_chats(callback_query.message)
     elif code == 'group_chats':
