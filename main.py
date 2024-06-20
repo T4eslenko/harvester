@@ -16,7 +16,6 @@ from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
                           CallbackQuery as AiogramCallbackQuery, \
                           Message as AiogramMessage
 
-
 # Загрузка переменных окружения из файла .env
 load_dotenv()
 
@@ -41,7 +40,6 @@ logging.basicConfig(level=logging.INFO)
 # Словарь для хранения состояния пользователя
 user_state = {}
 
-
 # Функция для отправки файлов
 async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     file_extensions = ['_contacts.xlsx', '_report.html']
@@ -50,7 +48,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     now_local = now_utc.astimezone(timezone)
     # Форматирование даты и времени
     now = now_local.strftime("%Y-%m-%d %H:%M:%S")
-    user_id=user_chat_id
+    user_id = user_chat_id
     user_name = ALLOWED_USERS[user_id]
 
     user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}):"
@@ -59,7 +57,6 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     for admin_chat_id in admin_chat_ids:
         await bot.send_message(admin_chat_id, user_info_message)
 
-    # Отправка файлов с информацией пользователю и админам
     # Отправка файлов с информацией пользователю и админам
     for file_extension in file_extensions:
         files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
@@ -70,10 +67,9 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                     await bot.send_document(chat_id, file)
             os.remove(file_to_send)
 
-
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
-async def unauthorized(message: types.Message):
+async def unauthorized(message: AiogramMessage):
     await message.answer("Бот не работает, попробуйте позже")
     now_utc = datetime.now(pytz.utc)
     timezone = pytz.timezone('Europe/Moscow')
@@ -81,12 +77,12 @@ async def unauthorized(message: types.Message):
     now = now_local.strftime("%Y-%m-%d %H:%M:%S")
     user_id = message.from_user.id
     
-    user_info_message=f'Попытка запуска бота НЕАВТОРИЗОВАННЫМ пользователем ID:{user_id}.\nДата и время запуска: {now}'
+    user_info_message = f'Попытка запуска бота НЕАВТОРИЗОВАННЫМ пользователем ID:{user_id}.\nДата и время запуска: {now}'
     for admin_chat_id in admin_chat_ids:
             await bot.send_message(admin_chat_id, user_info_message)
 
 @dp.message_handler(commands=['start'])
-async def send_welcome(message: types.Message):
+async def send_welcome(message: AiogramMessage):
     user_id = message.from_user.id
     if user_id in allowed_users:
         await message.answer("Введите номер телефона")
@@ -100,11 +96,11 @@ async def send_welcome(message: types.Message):
             await bot.send_message(admin_chat_id, user_info_message)
 
         # Добавляем кнопки
-        keyboard = InlineKeyboardMarkup(row_width=1)
+        keyboard = AiogramInlineKeyboardMarkup(row_width=1)
         buttons = [
-            InlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analytics'),
-            InlineKeyboardButton(text="Выгрузка личных чатов", callback_data='personal_chats'),
-            InlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
+            AiogramInlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analytics'),
+            AiogramInlineKeyboardButton(text="Выгрузка личных чатов", callback_data='personal_chats'),
+            AiogramInlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
         ]
         keyboard.add(buttons[0])
         keyboard.add(buttons[1], buttons[2])
@@ -112,7 +108,6 @@ async def send_welcome(message: types.Message):
         await message.answer("Выберите направление поиска", reply_markup=keyboard)
     else:
         await unauthorized(message)
-        
 
 @dp.callback_query_handler(lambda callback_query: True)
 async def handle_callback_query(callback_query: AiogramCallbackQuery):
