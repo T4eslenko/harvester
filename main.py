@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from defunc import *
 import pytz
+from aiogram.dispatcher.filters.state import State, StatesGroup
 from allowed_users import ALLOWED_USERS  # Импортируем словарь из отдельного файла
 from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
                           InlineKeyboardButton as AiogramInlineKeyboardButton, \
@@ -29,10 +30,12 @@ admin_chat_ids_str = os.getenv("ADMIN_CHAT_IDS")
 admin_chat_ids = [int(chat_id) for chat_id in admin_chat_ids_str.split(",")]
 allowed_users = ALLOWED_USERS
 
-# Создаем Bot и Dispatcher
+# Создаем Bot, Dispatcher и FSM Storage
 bot = Bot(token=bot_token)
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 dp.middleware.setup(LoggingMiddleware())
+
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
