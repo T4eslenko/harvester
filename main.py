@@ -96,20 +96,25 @@ async def send_welcome(message: types.Message):
             await bot.send_message(admin_chat_id, user_info_message)
 
         # Добавляем кнопки
-        keyboard = InlineKeyboardMarkup(row_width=2)
+        keyboard = InlineKeyboardMarkup(row_width=1)
         buttons = [
-            InlineKeyboardButton(text="Telegram", callback_data='telegram'),
-            InlineKeyboardButton(text="Вконтакте", callback_data='vk'),
-            InlineKeyboardButton(text="Поиск по ИНН", callback_data='inn'),
-            InlineKeyboardButton(text="Найти по паспорту", callback_data='passport')
+            InlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analytics'),
+            InlineKeyboardButton(text="Выгрузка личных чатов", callback_data='personal_chats'),
+            InlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
         ]
-        keyboard.add(*buttons)
+        keyboard.add(buttons[0])
+        keyboard.add(buttons[1], buttons[2])
 
         await message.answer("Выберите направление поиска", reply_markup=keyboard)
     else:
         await unauthorized(message)
 
-
+@dp.callback_query_handler(lambda c: c.data)
+async def process_callback(callback_query: types.CallbackQuery):
+    code = callback_query.data
+    await bot.answer_callback_query(callback_query.id)
+    await bot.send_message(callback_query.from_user.id, f"Вы выбрали: {code}")
+    
 #Введен номер
 @dp.message_handler(lambda message: message.text and 
                     len(re.sub(r'\D', '', message.text)) > 9 and 
