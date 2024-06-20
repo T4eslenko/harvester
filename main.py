@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from defunc import *
 import pytz
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
