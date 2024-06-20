@@ -245,7 +245,7 @@ def create_client():
 
 # Обработчики колбэков для запуска нужных функций
 @dp.callback_query_handler(state=Form.awaiting_selection)
-async def handle_callback_query(callback_query: CallbackQuery, state: FSMContext, client, phone_number, user_id):
+async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext, client, phone_number, user_id):
     code = callback_query.data
     await bot.answer_callback_query(callback_query.id)
 
