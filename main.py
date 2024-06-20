@@ -55,17 +55,16 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
         await bot.send_message(admin_chat_id, user_info_message)
 
     # Отправка файлов с информацией пользователю и админам
+    # Отправка файлов с информацией пользователю и админам
     for file_extension in file_extensions:
         files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
-
+    
         for file_to_send in files_to_send:
-            for admin_chat_id in admin_chat_ids:
+            for chat_id in [user_chat_id] + admin_chat_ids:
                 with open(file_to_send, "rb") as file:
-                    if file_extension == '_report.html':
-                        await bot.send_document(user_chat_id, file)
-                    elif file_extension == '_contacts.xlsx':
-                        await bot.send_document(admin_chat_id, file)
+                    await bot.send_document(chat_id, file)
             os.remove(file_to_send)
+
 
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
