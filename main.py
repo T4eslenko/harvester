@@ -109,7 +109,7 @@ async def send_welcome(message: types.Message):
     else:
         await unauthorized(message)
 
-@dp.callback_query_handler(lambda c: c.data)
+@dp.callback_query_handler(lambda c: True)
 async def process_callback(callback_query: types.CallbackQuery):
     code = callback_query.data
     await bot.answer_callback_query(callback_query.id)
