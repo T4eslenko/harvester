@@ -254,7 +254,7 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
 
     if code == 'analytics':
         await bot.send_message(callback_query.message.chat.id, "Формирую отчет!")
-        await process_user_data(user_state[user_id]['client'], user_state[user_id]['phone_number'], user_id)
+        await process_user_data(user_state[user_id]['client'], user_state[user_id]['phone_number'])
     elif code == 'personal_chats':
         await export_personal_chats(callback_query.message)
     elif code == 'group_chats':
@@ -272,7 +272,7 @@ async def export_group_chats(message: Message):
     await message.answer("Выгрузка групповых чатов...")
 
 # Функция для обработки данных пользователя
-async def process_user_data(client, phone_number, user_id):
+async def process_user_data(client, phone_number):
     selection = '0'
     try:
         userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number, selection)
