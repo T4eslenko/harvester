@@ -113,8 +113,9 @@ async def send_welcome(message: types.Message):
     else:
         await unauthorized(message)
         
+
 @dp.callback_query_handler(lambda callback_query: True)
-async def handle_callback_query(callback_query: types.CallbackQuery):
+async def handle_callback_query(callback_query: AiogramCallbackQuery):
     code = callback_query.data
     await bot.answer_callback_query(callback_query.id)
     await bot.send_message(callback_query.from_user.id, f"Вы выбрали: {code}")
