@@ -1,7 +1,7 @@
 import logging
 import asyncio
 import os
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher
 from aiogram.utils import executor
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from telethon import TelegramClient
@@ -11,7 +11,7 @@ from datetime import datetime
 from defunc import *
 import pytz
 from allowed_users import ALLOWED_USERS  # Импортируем словарь из отдельного файла
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
