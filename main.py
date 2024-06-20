@@ -249,6 +249,7 @@ def create_client():
 @dp.callback_query_handler(state=Form.awaiting_selection)
 async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
     code = callback_query.data
+    user_id = callback_query.from_user.id
     await bot.answer_callback_query(callback_query.id)
 
     if code == 'analytics':
