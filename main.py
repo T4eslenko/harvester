@@ -12,6 +12,7 @@ from defunc import *
 import pytz
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
 from allowed_users import ALLOWED_USERS  # Импортируем словарь из отдельного файла
 from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
                           InlineKeyboardButton as AiogramInlineKeyboardButton, \
