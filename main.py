@@ -109,11 +109,6 @@ async def send_welcome(message: types.Message):
     else:
         await unauthorized(message)
 
-@dp.callback_query_handler(lambda c: c.data)
-async def process_callback(callback_query: types.CallbackQuery):
-    code = callback_query.data
-    await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(callback_query.from_user.id, f"Вы выбрали: {code}")
 
 #Введен номер
 @dp.message_handler(lambda message: message.text and 
