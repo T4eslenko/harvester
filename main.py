@@ -11,7 +11,11 @@ from datetime import datetime
 from defunc import *
 import pytz
 from allowed_users import ALLOWED_USERS  # Импортируем словарь из отдельного файла
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
+from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
+                          InlineKeyboardButton as AiogramInlineKeyboardButton, \
+                          CallbackQuery as AiogramCallbackQuery, \
+                          Message as AiogramMessage
+
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
