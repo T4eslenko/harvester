@@ -234,6 +234,8 @@ def create_client():
 
 # Функция для обработки данных пользователя
 async def process_user_data(client, phone_number, user_id):
+    await bot.send_message(user_id, 'зашел в функцию')
+    
     selection = '0'
     try:
         userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number, selection)
