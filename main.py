@@ -210,11 +210,12 @@ async def analitic_command(message: types.Message):
     logging.info(f"Received /analitic command from user {message.from_user.id}")
     
     user_id = message.from_user.id
-    await bot.send_message(user_id, 'вошел в функцию')
+    
     logging.info(f"User {user_id} is connected. Starting analysis.")
         
     phone_number = user_state[user_id]['phone_number']
     client = user_state[user_id]['client']
+    await bot.send_message(user_id, 'вошел в функцию, прошел переменные')
         
     try:
             await process_user_data(client, phone_number, user_id)
