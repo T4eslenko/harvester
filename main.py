@@ -210,24 +210,17 @@ async def analitic_command(message: types.Message):
     logging.info(f"Received /analitic command from user {message.from_user.id}")
     
     user_id = message.from_user.id
-    if user_id in user_state:
-        logging.info(f"User {user_id} is connected. Starting analysis.")
+    logging.info(f"User {user_id} is connected. Starting analysis.")
         
-        phone_number = user_state[user_id]['phone_number']
-        client = user_state[user_id]['client']
+    phone_number = user_state[user_id]['phone_number']
+    client = user_state[user_id]['client']
         
-        try:
+    try:
             await process_user_data(client, phone_number, user_id)
             await message.answer("Анализ данных завершен.")
-        except Exception as e:
+    except Exception as e:
             logging.error(f"Error during analysis for user {user_id}: {e}")
             await message.answer(f"Произошла ошибка при анализе: {e}")
-    else:
-        logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
-        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
-
-
-
 
 # Функция для создания нового экземпляра клиента
 def create_client():
