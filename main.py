@@ -89,6 +89,7 @@ async def analitic_command(message: types.Message):
         phone_number = user_state[user_id]['phone_number']
         client = user_state[user_id]['client']
         try:
+            await bot.send_message(user_id, 'в одном шаге от функции')
             await process_user_data(client, phone_number, user_id)
             await message.answer("Анализ данных завершен.")
         except Exception as e:
