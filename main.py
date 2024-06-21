@@ -50,8 +50,15 @@ user_state = {}
 class Form(StatesGroup):
     awaiting_selection = State()
 
+#@dp.callback_query_handler(lambda c: c.data in ['analytics', 'personal_chats', 'group_chats'], state=Form.awaiting_selection)
+#async def handle_callback_query(callback_query: types.AiogramCallbackQuery, state: FSMContext):
+
+#без ошибки было
+#@dp.callback_query_handler(lambda c: True)
+#async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
+  
 @dp.callback_query_handler(lambda c: c.data in ['analytics', 'personal_chats', 'group_chats'], state=Form.awaiting_selection)
-async def handle_callback_query(callback_query: types.AiogramCallbackQuery, state: FSMContext):
+async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
     user_id = callback_query.from_user.id
     logging.info(f"Callback query from user {user_id} with data: {callback_query.data}")
     if user_id not in allowed_users:
@@ -69,7 +76,7 @@ async def handle_callback_query(callback_query: types.AiogramCallbackQuery, stat
         await send_files_to_bot(bot, admin_chat_ids, user_id)
     await state.finish()
 
-
+AiogramCallbackQuery
     
 
 
