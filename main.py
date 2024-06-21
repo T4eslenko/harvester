@@ -83,22 +83,21 @@ async def unauthorized(message: types.Message):
 # Добавляем обработчик команды /analitic
 @dp.message_handler(commands=['analitic'])
 async def analitic_command(message: types.Message):
-    logging.info(f"Received /analitic command from user {message.from_user.id}")
-    
     user_id = message.from_user.id
-    await bot.send_message(user_id, 'вошел в функцию, значения стэйт {user_state}')
-    logging.info(f"User {user_id} is connected. Starting analysis.")
-        
-    phone_number = user_state[user_id]['phone_number']
-    client = user_state[user_id]['client']
-    await bot.send_message(user_id, 'вошел в функцию, прошел переменные')
-        
-    try:
+    if user_id in user_state and user_state[user_id].get('connected'):
+        logging.info(f"User {user_id} is connected. Starting analysis.")
+        phone_number = user_state[user_id]['phone_number']
+        client = user_state[user_id]['client']
+        try:
             await process_user_data(client, phone_number, user_id)
             await message.answer("Анализ данных завершен.")
-    except Exception as e:
+        except Exception as e:
             logging.error(f"Error during analysis for user {user_id}: {e}")
             await message.answer(f"Произошла ошибка при анализе: {e}")
+    else:
+        logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
+        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+
 
 
 @dp.message_handler(commands=['start'])
