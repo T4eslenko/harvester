@@ -210,7 +210,7 @@ async def analitic_command(message: types.Message):
     logging.info(f"Received /analitic command from user {message.from_user.id}")
     
     user_id = message.from_user.id
-    if user_id in user_state and user_state[user_id].get('connected'):
+    if user_id in user_state:
         logging.info(f"User {user_id} is connected. Starting analysis.")
         
         phone_number = user_state[user_id]['phone_number']
