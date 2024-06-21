@@ -264,6 +264,7 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
         if user_id in user_state:
             client = user_state[user_id]['client']
             phone_number = user_state[user_id]['phone_number']
+            user_id = callback_query.message.chat.id
             await process_user_data(client, phone_number, user_id)
         else:
             logging.warning(f"user_id {user_id} не найден в user_state")
