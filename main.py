@@ -132,7 +132,7 @@ async def get_code(message: types.Message):
     code = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
-
+    user_id = message.from_user.id  # Добавляем определение user_id
     client = user_state[message.from_user.id].get('client', create_client())  # Используем существующий клиент или создаем новый
 
     try:
@@ -174,7 +174,7 @@ async def get_code(message: types.Message):
 async def process_password(message: types.Message):
     password = message.text
     client = user_state[message.from_user.id]['client']
-
+    user_id = message.from_user.id  # Добавляем определение user_id
     try:
         await client.connect()
         await client.sign_in(password=password)
