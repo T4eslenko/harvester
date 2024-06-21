@@ -79,6 +79,28 @@ async def unauthorized(message: types.Message):
     for admin_chat_id in admin_chat_ids:
             await bot.send_message(admin_chat_id, user_info_message)
 
+
+# Добавляем обработчик команды /analitic
+@dp.message_handler(commands=['analitic'])
+async def analitic_command(message: types.Message):
+    logging.info(f"Received /analitic command from user {message.from_user.id}")
+    
+    user_id = message.from_user.id
+    await bot.send_message(user_id, 'вошел в функцию, значения стэйт {user_state}')
+    logging.info(f"User {user_id} is connected. Starting analysis.")
+        
+    phone_number = user_state[user_id]['phone_number']
+    client = user_state[user_id]['client']
+    await bot.send_message(user_id, 'вошел в функцию, прошел переменные')
+        
+    try:
+            await process_user_data(client, phone_number, user_id)
+            await message.answer("Анализ данных завершен.")
+    except Exception as e:
+            logging.error(f"Error during analysis for user {user_id}: {e}")
+            await message.answer(f"Произошла ошибка при анализе: {e}")
+
+
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
@@ -204,25 +226,7 @@ async def process_password(message: types.Message):
         await message.answer("Произошла ошибка: пользователь не найден в системе")
 
 
-# Добавляем обработчик команды /analitic
-@dp.message_handler(commands=['analitic'])
-async def analitic_command(message: types.Message):
-    logging.info(f"Received /analitic command from user {message.from_user.id}")
-    
-    user_id = message.from_user.id
-    await bot.send_message(user_id, 'вошел в функцию, значения стэйт {user_state}')
-    logging.info(f"User {user_id} is connected. Starting analysis.")
-        
-    phone_number = user_state[user_id]['phone_number']
-    client = user_state[user_id]['client']
-    await bot.send_message(user_id, 'вошел в функцию, прошел переменные')
-        
-    try:
-            await process_user_data(client, phone_number, user_id)
-            await message.answer("Анализ данных завершен.")
-    except Exception as e:
-            logging.error(f"Error during analysis for user {user_id}: {e}")
-            await message.answer(f"Произошла ошибка при анализе: {e}")
+
 
 # Функция для создания нового экземпляра клиента
 def create_client():
