@@ -151,7 +151,7 @@ async def get_phone_number(message: types.Message, state: FSMContext):
         await client.connect()
         
         # Разлогиниваемся от предыдущего клиента, если он был авторизован
-        if await client.is_user_authorized():
+        #if await client.is_user_authorized():
             #await client.log_out()
         
         sent_code = await client.send_code_request(phone_number)
