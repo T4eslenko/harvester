@@ -254,12 +254,7 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
     logging.info(f"Callback query from user {user_id} with data: {callback_query.data}")
     
     code = callback_query.data
-    user_id = callback_query.from_user.id
-    input(code)
-    input(user_id)
-    input(user_state[user_id]['phone_number'])
-    
-    
+    user_id = callback_query.from_user.id  
     await bot.answer_callback_query(callback_query.id)
 
     if code == 'analytics':
