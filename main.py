@@ -259,7 +259,15 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
 
     if code == 'analytics':
         await bot.send_message(callback_query.message.chat.id, "Формирую отчет!")
-        await process_user_data(user_state[user_id]['client'], user_state[user_id]['phone_number'], user_id)
+
+        # Получаем необходимые данные из user_state
+        if user_id in user_state:
+            client = user_state[user_id]['client']
+            phone_number = user_state[user_id]['phone_number']
+            await process_user_data(client, phone_number, user_id)
+        else:
+            logging.warning(f"user_id {user_id} не найден в user_state")
+            
     elif code == 'personal_chats':
         await export_personal_chats(callback_query.message)
     elif code == 'group_chats':
