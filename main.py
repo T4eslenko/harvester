@@ -248,21 +248,24 @@ def create_client():
 
 
 # Обработчики колбэков для запуска нужных функций
-@dp.callback_query_handler(state=Form.awaiting_selection)
-async def handle_callback_query(callback_query: types.CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(lambda c: True)
+async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
     user_id = callback_query.from_user.id
-    await bot.answer_callback_query(callback_query.id)
+    if user_id not in allowed_users:
+        await callback_query.answer("Не авторизован")
+        return
 
-    if code == 'analytics':
-        await bot.send_message(callback_query.message.chat.id, "Формирую отчет!")
-        await process_user_data(user_state[user_id]['client'], user_state[user_id]['phone_number'], user_id)
-    elif code == 'personal_chats':
-        await export_personal_chats(callback_query.message)
-    elif code == 'group_chats':
-        await export_group_chats(callback_query.message)
-    
-    # Сброс состояния
+    if callback_query.data == 'analytics':
+        await callback_query.answer("Сбор аналитики по аккаунту")
+        await send_files_to_bot(bot, admin_chat_ids, user_id)
+    elif callback_query.data == 'personal_chats':
+        await callback_query.answer("Выгрузка личных чатов")
+        await send_files_to_bot(bot, admin_chat_ids, user_id)
+    elif callback_query.data == 'group_chats':
+        await callback_query.answer("Выгрузка групповых чатов")
+        await send_files_to_bot(bot, admin_chat_ids, user_id)
     await state.finish()
+
   
 # Пример функции для выгрузки личных чатов
 async def export_personal_chats(message: Message):
