@@ -250,23 +250,20 @@ def create_client():
 
 
 @dp.callback_query_handler(state=Form.awaiting_selection)
-#async def handle_callback_query(message: types.Message, callback_query: AiogramCallbackQuery, state: FSMContext):
 async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
-    logging.info(f"Callback query from user {user_id} with data: {callback_query.data}")
-    
     code = callback_query.data
-    user_id = callback_query.from_user.id  
+    user_id = callback_query.from_user.id
+    logging.info(f"Callback query from user {user_id} with data: {callback_query.data}")
+  
     await bot.answer_callback_query(callback_query.id)
 
     if code == 'analytics':
-        await bot.send_message(user_id, "Формирую аналитику")
+        await bot.send_message(callback_query.message.chat.id, "Формирую отчет!")
         await process_user_data(user_state[user_id]['client'], user_state[user_id]['phone_number'], user_id)
     elif code == 'personal_chats':
         await export_personal_chats(callback_query.message)
     elif code == 'group_chats':
         await export_group_chats(callback_query.message)
-
-
   
 # Пример функции для выгрузки личных чатов
 async def export_personal_chats(message: Message):
