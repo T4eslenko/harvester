@@ -251,7 +251,7 @@ def create_client():
 @dp.callback_query_handler(lambda c: c.data in ['analytics', 'personal_chats', 'group_chats'])
 async def handle_callback_query(callback_query: CallbackQuery, state: FSMContext):
     user_id = callback_query.from_user.id
-    logging.info(f"Callback query from user {user_id} with data: {callback_query.data}")
+    #logging.info(f"Callback query from user {user_id} with data: {callback_query.data}")
     
     if user_id not in allowed_users:
         await callback_query.answer("Не авторизован")
