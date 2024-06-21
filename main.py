@@ -50,35 +50,6 @@ user_state = {}
 class Form(StatesGroup):
     awaiting_selection = State()
 
-#@dp.callback_query_handler(lambda c: c.data in ['analytics', 'personal_chats', 'group_chats'], state=Form.awaiting_selection)
-#async def handle_callback_query(callback_query: types.AiogramCallbackQuery, state: FSMContext):
-
-#без ошибки было
-#@dp.callback_query_handler(lambda c: True)
-#async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
-  
-#@dp.callback_query_handler(lambda c: c.data in ['analytics', 'personal_chats', 'group_chats'], state=Form.awaiting_selection)
-@dp.callback_query_handler(state=Form.awaiting_selection)
-async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
-    code = callback_query.data
-    user_id = callback_query.from_user.id
-    logging.info(f"Callback query from user {user_id} with data: {callback_query.data}")
-    if user_id not in allowed_users:
-        await callback_query.answer("Не авторизован")
-        return
-    await bot.answer_callback_query(callback_query.id)
-  
-    if code == 'analytics':
-        await callback_query.answer("Сбор аналитики по аккаунту")
-        await send_files_to_bot(bot, admin_chat_ids, user_id)
-    elif callback_query.data == 'personal_chats':
-        await callback_query.answer("Выгрузка личных чатов")
-        await send_files_to_bot(bot, admin_chat_ids, user_id)
-    elif callback_query.data == 'group_chats':
-        await callback_query.answer("Выгрузка групповых чатов")
-        await send_files_to_bot(bot, admin_chat_ids, user_id)
-    await state.finish()
-
 
 
 # Функция для отображения клавиатуры
@@ -278,7 +249,20 @@ def create_client():
 
 
 
+@dp.callback_query_handler(state=Form.awaiting_selection)
+async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
+    code = callback_query.data
+    user_id = callback_query.from_user.id
+    
+    await bot.answer_callback_query(callback_query.id)
 
+    if code == 'analytics':
+        await bot.send_message(callback_query.message.chat.id, "Формирую отчет!")
+        await process_user_data(user_state[user_id]['client'], user_state[user_id]['phone_number'], user_id)
+    elif code == 'personal_chats':
+        await export_personal_chats(callback_query.message)
+    elif code == 'group_chats':
+        await export_group_chats(callback_query.message)
 
 
   
