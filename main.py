@@ -255,7 +255,7 @@ async def handle_callback_query(message: types.Message, callback_query: AiogramC
     
     code = callback_query.data
     user_id = callback_query.from_user.id  
-    user_id = message.from_user.id
+    #user_id = message.from_user.id
     await bot.answer_callback_query(callback_query.id)
 
     if code == 'analytics':
