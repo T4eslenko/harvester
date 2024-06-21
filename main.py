@@ -119,7 +119,7 @@ async def unauthorized(message: types.Message):
             await bot.send_message(admin_chat_id, user_info_message)
 
 @dp.message_handler(commands=['start'])
-async def send_welcome(message: types.Message):
+async def send_welcome(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     if user_id in allowed_users:
         await message.answer("Введите номер телефона")
@@ -250,11 +250,12 @@ def create_client():
 
 
 @dp.callback_query_handler(state=Form.awaiting_selection)
-async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
+async def handle_callback_query(message: types.Message, callback_query: AiogramCallbackQuery, state: FSMContext):
     logging.info(f"Callback query from user {user_id} with data: {callback_query.data}")
     
     code = callback_query.data
     user_id = callback_query.from_user.id  
+    user_id = message.from_user.id
     await bot.answer_callback_query(callback_query.id)
 
     if code == 'analytics':
