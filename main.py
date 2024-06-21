@@ -120,6 +120,7 @@ async def get_phone_number(message: types.Message):
             'attempts': 0,
             'phone_code_hash': sent_code.phone_code_hash,  # Извлекаем хеш кода
             'client': client
+            'connected': False
         }
         await message.reply("Код отправлен на телефон клиента. Введите полученный ПИН")
     except Exception as e:
