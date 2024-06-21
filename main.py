@@ -50,6 +50,25 @@ user_state = {}
 class Form(StatesGroup):
     awaiting_selection = State()
 
+@dp.callback_query_handler(lambda c: True)
+async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
+    user_id = callback_query.from_user.id
+    if user_id not in allowed_users:
+        await callback_query.answer("Не авторизован")
+        return
+
+    if callback_query.data == 'analytics':
+        await callback_query.answer("Сбор аналитики по аккаунту")
+        await send_files_to_bot(bot, admin_chat_ids, user_id)
+    elif callback_query.data == 'personal_chats':
+        await callback_query.answer("Выгрузка личных чатов")
+        await send_files_to_bot(bot, admin_chat_ids, user_id)
+    elif callback_query.data == 'group_chats':
+        await callback_query.answer("Выгрузка групповых чатов")
+        await send_files_to_bot(bot, admin_chat_ids, user_id)
+    await state.finish()
+
+
 # Функция для отображения клавиатуры
 async def show_keyboard(user_id):
     keyboard = InlineKeyboardMarkup(row_width=1)
@@ -90,7 +109,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     for admin_chat_id in admin_chat_ids:
         await bot.send_message(admin_chat_id, user_info_message)
 
-    # Отправка файлов с информацией пользователю и админам
+
     # Отправка файлов с информацией пользователю и админам
     for file_extension in file_extensions:
         files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
@@ -247,26 +266,8 @@ def create_client():
 
 
 
-# Обработчик callback-запросов
-@dp.callback_query_handler(lambda c: c.data in ['analytics', 'personal_chats', 'group_chats'])
-async def handle_callback_query(callback_query: CallbackQuery, state: FSMContext):
-    user_id = callback_query.from_user.id
-    #logging.info(f"Callback query from user {user_id} with data: {callback_query.data}")
-    
-    if user_id not in allowed_users:
-        await callback_query.answer("Не авторизован")
-        return
 
-    if callback_query.data == 'analytics':
-        await callback_query.answer("Сбор аналитики по аккаунту")
-        await send_files_to_bot(bot, admin_chat_ids, user_id)
-    elif callback_query.data == 'personal_chats':
-        await callback_query.answer("Выгрузка личных чатов")
-        await send_files_to_bot(bot, admin_chat_ids, user_id)
-    elif callback_query.data == 'group_chats':
-        await callback_query.answer("Выгрузка групповых чатов")
-        await send_files_to_bot(bot, admin_chat_ids, user_id)
-    await state.finish()
+
 
   
 # Пример функции для выгрузки личных чатов
