@@ -79,8 +79,6 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
         await send_files_to_bot(bot, admin_chat_ids, user_id)
     await state.finish()
 
-AiogramCallbackQuery
-    
 
 
 # Функция для отображения клавиатуры
