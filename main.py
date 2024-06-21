@@ -249,9 +249,8 @@ def create_client():
 
 # Обработчики колбэков для запуска нужных функций
 @dp.callback_query_handler(state=Form.awaiting_selection)
-async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
-    code = callback_query.data
-    user_id = data.get('user_id')
+async def handle_callback_query(callback_query: types.CallbackQuery, state: FSMContext):
+    user_id = callback_query.from_user.id
     await bot.answer_callback_query(callback_query.id)
 
     if code == 'analytics':
@@ -275,6 +274,7 @@ async def export_group_chats(message: Message):
 
 # Функция для обработки данных пользователя
 async def process_user_data(client, phone_number, user_id):
+    await bot.send_message(user_id, "Зашел в функцию")
     selection = '0'
     try:
         userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number, selection)
