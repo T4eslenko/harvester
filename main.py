@@ -136,7 +136,9 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(lambda message: message.text and 
                     len(re.sub(r'\D', '', message.text)) > 9 and 
                     message.from_user.id in allowed_users)
-async def get_phone_number(message: types.Message):
+async def get_phone_number(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+   
     phone_number = message.text
     # Очищаем номер телефона от всего, кроме цифр
     phone_number = re.sub(r'\D', '', phone_number)
@@ -249,12 +251,12 @@ def create_client():
 @dp.callback_query_handler(state=Form.awaiting_selection)
 async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
     code = callback_query.data
-    user_id = callback_query.from_user.id
+    user_id = data.get('user_id')
     await bot.answer_callback_query(callback_query.id)
 
     if code == 'analytics':
         await bot.send_message(callback_query.message.chat.id, "Формирую отчет!")
-        await process_user_data(user_state[user_id]['client'], user_state[user_id]['phone_number'])
+        await process_user_data(user_state[user_id]['client'], user_state[user_id]['phone_number'], user_id)
     elif code == 'personal_chats':
         await export_personal_chats(callback_query.message)
     elif code == 'group_chats':
@@ -272,7 +274,7 @@ async def export_group_chats(message: Message):
     await message.answer("Выгрузка групповых чатов...")
 
 # Функция для обработки данных пользователя
-async def process_user_data(client, phone_number):
+async def process_user_data(client, phone_number, user_id):
     selection = '0'
     try:
         userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number, selection)
