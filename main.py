@@ -83,6 +83,7 @@ async def unauthorized(message: types.Message):
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
+        user_state[user_id] = {'connected': False}
         await message.answer("Введите номер телефона")
         now_utc = datetime.now(pytz.utc)
         timezone = pytz.timezone('Europe/Moscow')
@@ -138,7 +139,7 @@ async def get_code(message: types.Message):
         await client.connect()
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
         await message.answer("Подключено! Теперь можно выбрать одну из опций")
-        user_state[message.from_user.id]['connected'] = True
+        user_state[user_id]['connected'] = True  # Обновляем состояние
         #await process_user_data(client, phone_number, message.from_user.id)
         #await client.log_out()
         #await client.disconnect()
@@ -177,7 +178,7 @@ async def process_password(message: types.Message):
     try:
         await client.connect()
         await client.sign_in(password=password)
-        user_state[message.from_user.id]['connected'] = True
+        user_state[user_id]['connected'] = True  # Обновляем состояние
         await message.answer("Подключено! Теперь можно выбрать одну из опций")
         phone_number = user_state[message.from_user.id]['phone_number']
         #await process_user_data(client, phone_number, message.from_user.id)
@@ -202,13 +203,16 @@ async def process_password(message: types.Message):
 @dp.message_handler(commands=['analitic'])
 async def analitic_command(message: types.Message):
     user_id = message.from_user.id
+    logging.info(f"User {user_id} requested analysis.")
     if user_id in user_state and user_state[user_id].get('connected'):
         phone_number = user_state[user_id]['phone_number']
         client = user_state[user_id]['client']
+        logging.info(f"Starting data analysis for user {user_id} with phone number {phone_number}.")
         await process_user_data(client, phone_number, user_id)
         await message.answer("Анализ данных завершен.")
     else:
         await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+        logging.info(f"User {user_id} is not connected. Prompting to start the connection process.")
 
 
 # Функция для создания нового экземпляра клиента
