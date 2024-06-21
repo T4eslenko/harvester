@@ -121,34 +121,8 @@ async def get_type_of_chats(client, selection):
     user_bots_html = []
     image_data_url = ''
     list_botexisted =[]
-
-    me = await client.get_me()
-    my_id = me.id
-
-    # Переменная для хранения информации о сообщениях
-    messages_info = []
-
+    
     for chat in chats:   
-
-        chat_id = chat.id
-        chat_link = f"https://t.me/{chat.entity.username}" if hasattr(chat.entity, 'username') and chat.entity.username else "No link"
-        
-        # Итерируем по сообщениям в чате
-        async for message in client.iter_messages(chat_id):
-            if message.sender_id == my_id:
-                # Сохраняем информацию о сообщении в переменную
-                message_info = {
-                    "chat_id": chat_id,
-                    "chat_link": chat_link,
-                    "message_id": message.id,
-                    "message_text": message.message,
-                    "date": message.date,
-                    "reactions": ', '.join([f"{reaction.emoticon}: {reaction.count}" for reaction in message.reactions.results]) if message.reactions else "None"
-                }
-                messages_info.append(message_info)
-
-
-        
         # Получаем данные о ботах
         if isinstance(chat.entity, User) and chat.entity.bot: 
             if selection == '0':
@@ -250,8 +224,7 @@ async def get_type_of_chats(client, selection):
                  if ID_migrated_values not in all_chats_ids:
                       delgroups.append(current_deleted_chat)
 
-    for mi in messages_info:
-            print(mi)
+
     return delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted
 
 
@@ -313,7 +286,7 @@ def get_admin_rights_channel_list(admin_rights):
     }
     has_any_rights = any(possible_rights.values())
     for right, has_right in possible_rights.items():
-        status = '<b><span style="color:red; font-weight:bold;">да</span></b>' if has_right else 'нет'
+        status = '<b><span style="color:red; font-weight:bold;">да</span></b>' if has_right else '<b>нет</b>'
         rights.append(f"{right} - {status}")
     return rights if has_any_rights else []
 
@@ -333,7 +306,7 @@ def get_admin_rights_chat_list(admin_rights):
     }
     has_any_rights = any(possible_rights.values())
     for right, has_right in possible_rights.items():
-        status = '<b><span style="color:red; font-weight:bold;">да</span></b>' if has_right else 'нет'
+        status = '<b><span style="color:red; font-weight:bold;">да</span></b>' if has_right else '<b>нет</b>'
         rights.append(f"{right} - {status}")
     return rights if has_any_rights else []
 
