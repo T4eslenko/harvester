@@ -62,7 +62,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                 if os.path.getsize(file_to_send) <= max_file_size:  # Проверка размера файла
                     with open(file_to_send, "rb") as file:
                         await bot.send_document(chat_id, file)
-                os.remove(file_to_send)
+                    os.remove(file_to_send)
                 else:
                     await bot.send_message (chat_id, 'Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить')
 
