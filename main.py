@@ -191,7 +191,7 @@ async def say_by(message: types.Message):
       user_state.pop(message.from_user.id, None)
       await message.answer("Вы разлогинились.")
     else:
-      await message.answer("Вы подключены.")
+      await message.answer("Не требуется. Вы не подключены.")
 
 
 # Добавляем обработчик команды /analytic
