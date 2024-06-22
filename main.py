@@ -14,7 +14,9 @@ from allowed_users import ALLOWED_USERS  # Импортируем словарь
 from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
                           InlineKeyboardButton as AiogramInlineKeyboardButton, \
                           CallbackQuery as AiogramCallbackQuery
-
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
@@ -32,7 +34,10 @@ allowed_users = ALLOWED_USERS
 # Создаем Bot и Dispatcher
 bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 dp.middleware.setup(LoggingMiddleware())
+logging.basicConfig(level=logging.INFO)
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
