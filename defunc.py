@@ -38,7 +38,7 @@ import shutil
 
 
 # Получаем сообщения пользователей и формируем нумерованный список для выбора диалога для скачивания
-async def get_user_dialogs(client, flag_user_dialogs):
+async def get_user_dialogs(client):
     user_dialogs = []
     users_list = []
 
@@ -75,8 +75,7 @@ async def get_user_dialogs(client, flag_user_dialogs):
         except Exception as e:
             print(f"Ошибка при обработке диалога {dialog.id}: {e}")
 
-    flag_user_dialogs = True
-    return user_dialogs, i, users_list, flag_user_dialogs
+    return user_dialogs, i, users_list
 
 
 # Выгрузка самих сообщений
