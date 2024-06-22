@@ -137,10 +137,12 @@ async def analitic_command(message: types.Message):
                                   message.text.isdigit() and 1 <= len(message.text) <= 4)
 async def get_private_message_from_list(message: types.Message):
     user_id = message.from_user.id
+    await bot.reply('словил выбор диалога, зашел в функцию')
     client = user_state[user_id]['client']
     users_list = user_state[user_id]['users_list']
     i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
     g_index = int(message.text.strip()) 
+    await bot.send_message(user_id, g_index)
     try:
         if 0 <= g_index < i:
             target_user = users_list[g_index]
