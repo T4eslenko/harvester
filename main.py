@@ -81,7 +81,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
       
 # Обработчики колбэков для запуска нужных функций
 #@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
-@dp.callback_query_handler(lambda query: bool(user_state.get(query.from_user.id, {}).get('type')))
+@dp.callback_query_handler(lambda query: bool(user_state.get(query.from_user.id, {}).get('type'))) #Перехват, когда список не пустой
 async def callback_query_handler(callback_query: AiogramCallbackQuery):
     logging.info(f"Callback query data: {callback_query.data}")
     user_id = callback_query.from_user.id
@@ -187,6 +187,7 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(commands=['analitic'])
 async def analitic_command(message: types.Message):
     user_id = message.from_user.id
+    user_state[user_id]['type'] = '' #обнуляем, чтобы после аналитики не реагировала на цифры!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
     if user_id in user_state and user_state[user_id].get('connected'):
         logging.info(f"User {user_id} is connected. Starting analysis.")
         phone_number = user_state[user_id]['phone_number']
@@ -238,7 +239,7 @@ async def select_mode_of_download(message: types.Message):
 @dp.message_handler(lambda message: message.text and 
                     len(re.sub(r'\D', '', message.text)) > 9 and 
                     message.from_user.id in allowed_users)
-async def get_phone_number(message: types.Message):
+async def get_phone_number(message: s.Message):
     phone_number = message.text
     # Очищаем номер телефона от всего, кроме цифр
     phone_number = re.sub(r'\D', '', phone_number)
@@ -259,7 +260,7 @@ async def get_phone_number(message: types.Message):
             'phone_code_hash': sent_code.phone_code_hash,  # Извлекаем хеш кода
             'client': client,
             'connected': False,
-            'type': "",
+            '': "",
             'selection':""
         }
         await message.reply("Код отправлен на телефон клиента. Введите полученный ПИН")
