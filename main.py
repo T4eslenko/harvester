@@ -106,8 +106,6 @@ async def show_keyboard(message: Message):
         AiogramInlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
     ]
     keyboard.add(*buttons)
-    keyboard.add(*buttons)
-
     await message.answer("Выберите направление поиска", reply_markup=keyboard)
     # Устанавливаем состояние "awaiting_selection"
     await Form.awaiting_selection.set()
