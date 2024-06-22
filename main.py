@@ -142,9 +142,10 @@ async def get_private_message_from_list(message: types.Message):
     user_id = message.from_user.id
     users_list = user_state[user_id]['users_list']
     i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
+    g_index = int(message.text.strip()) 
     try:
         if 0 <= g_index < i:
-            target_user = users_list[int(g_index)]
+            target_user = users_list[g_index]
             await get_messages_for_html(client, target_user, selection)
             send_files_to_bot(bot, admin_chat_ids, user_id)
     except ValueError:
