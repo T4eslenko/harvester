@@ -141,7 +141,7 @@ async def show_keyboard(message: Message):
 
 # Добавляем обработчик команды /private
 @dp.message_handler(commands=['private'])
-async def select_mode_of_download(message: types.Message, state: FSMContext)
+async def select_mode_of_download(message: types.Message, state: FSMContext):
 user_id = message.from_user.id
 user_state[user_id]['get_private'] = True
 
