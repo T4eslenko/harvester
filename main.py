@@ -101,7 +101,7 @@ class Form(StatesGroup):
 async def show_keyboard(message: Message):
     keyboard = AiogramInlineKeyboardMarkup(row_width=1)
     buttons = [
-        AiogramInlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analitic'),
+        AiogramInlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analytic'),
         AiogramInlineKeyboardButton(text="Выгрузка личных чатов", callback_data='private'),
         AiogramInlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
     ]
@@ -118,44 +118,51 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
     user_id = callback_query.from_user.id
     await bot.answer_callback_query(callback_query.id)
 
-    if code == 'analitic':
-        user_id = message.from_user.id
-        if user_id in user_state and user_state[user_id].get('connected'):
-            logging.info(f"User {user_id} is connected. Starting analysis.")
-            phone_number = user_state[user_id]['phone_number']
-            client = user_state[user_id]['client']
-            try:
-                await message.answer("Начинаю анализ данных завершен")
-                await process_user_data(client, phone_number, user_id)
-                await message.answer("Анализ данных завершен")
-            except Exception as e:
-                logging.error(f"Error during analysis for user {user_id}: {e}")
-                await message.answer(f"Произошла ошибка при анализе: {e}")
-        else:
-            logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
-            await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+    if code == 'analytic':
+        user_id = callback_query.from_user.id
+        async with state.proxy() as user_state:
+            if user_id in user_state and user_state[user_id].get('connected'):
+                logging.info(f"User {user_id} is connected. Starting analysis.")
+                phone_number = user_state[user_id]['phone_number']
+                client = user_state[user_id]['client']
+                try:
+                    await bot.send_message(user_id, "Начинаю анализ данных")
+                    await process_user_data(client, phone_number, user_id)
+                    await bot.send_message(user_id, "Анализ данных завершен")
+                except Exception as e:
+                    logging.error(f"Error during analysis for user {user_id}: {e}")
+                    await bot.send_message(user_id, f"Произошла ошибка при анализе: {e}")
+            else:
+                logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
+                await bot.send_message(user_id, "Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
           
     elif code == 'private':
-        user_id = message.from_user.id
-        user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
-        if user_id in user_state and user_state[user_id].get('connected'):
-            logging.info(f"User {user_id} is connected. Starting get private message.")
-            client = user_state[user_id]['client']
-            try:
-                user_dialogs, i, users_list = await get_user_dialogs(client)
-                if not user_dialogs:
-                    await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
-                    return
-                else:
-                    # Сохраняем user_id и users_list в user_state для дальнейшего использования
-                    user_state[user_id]['users_list'] = users_list
-                    user_state[user_id]['dialogs_count'] = i        
-                    dialog_message = "\n".join(user_dialogs)
-                    await bot.send_message(user_id, dialog_message)
-                    await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-    
-    # Сброс состояния
+        user_id = callback_query.from_user.id
+        async with state.proxy() as user_state:
+            user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
+            if user_id in user_state and user_state[user_id].get('connected'):
+                logging.info(f"User {user_id} is connected. Starting private message.")
+                client = user_state[user_id]['client']
+                try:
+                    user_dialogs, i, users_list = await get_user_dialogs(client)
+                    if not user_dialogs:
+                        await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
+                        return
+                    else:
+                        user_state[user_id]['users_list'] = users_list
+                        user_state[user_id]['dialogs_count'] = i
+                        dialog_message = "\n".join(user_dialogs)
+                        await bot.send_message(user_id, dialog_message)
+                        await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
+                except Exception as e:
+                    logging.error(f"Error during private message for user {user_id}: {e}")
+                    await bot.send_message(user_id, f"Произошла ошибка: {e}")
+            else:
+                logging.info(f"User {user_id} is not connected. Cannot perform private message.")
+                await bot.send_message(user_id, "Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+
     await state.finish()
+
 
 
 
