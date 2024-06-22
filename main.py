@@ -17,7 +17,10 @@ from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters.state import Form
+
+# Определяем состояния с использованием StatesGroup
+class ModeSelection(StatesGroup):
+    awaiting_selection = State()
 
 
 # Загрузка переменных окружения из файла .env
