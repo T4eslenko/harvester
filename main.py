@@ -185,9 +185,16 @@ async def send_welcome(message: types.Message):
     else:
         await unauthorized(message)
 
-# Добавляем обработчик команды /analitic
-@dp.message_handler(commands=['analitic'])
-async def analitic_command(message: types.Message):
+@dp.message_handler(commands=['exit'])
+async def say_by(message: types.Message):
+    user_state.pop(message.from_user.id, None)
+    await client.log_out()
+    await client.disconnect()
+
+
+# Добавляем обработчик команды /analytic
+@dp.message_handler(commands=['analytic'])
+async def analytic_command(message: types.Message):
     user_id = message.from_user.id
     user_state[user_id]['type'] = '' #обнуляем, чтобы после аналитики не реагировала на цифры!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
     if user_id in user_state and user_state[user_id].get('connected'):
@@ -317,7 +324,9 @@ async def get_code(message: types.Message):
                 await client.log_out()
                 await client.disconnect()
                 
-                
+
+
+
 #Введен пароль
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}) and not
                     user_state.get(message.from_user.id, {}).get('connected', False))
