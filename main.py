@@ -15,6 +15,7 @@ from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
                           InlineKeyboardButton as AiogramInlineKeyboardButton, \
                           CallbackQuery as AiogramCallbackQuery
 from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
 
