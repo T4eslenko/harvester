@@ -130,9 +130,6 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
     await state.finish()
 
 
-# Пример функции для выгрузки групповых чатов
-async def export_group_chats(message: AiogramMessage):
-    await message.answer("Выгрузка групповых чатов...")
 
 
 
