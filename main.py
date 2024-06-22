@@ -196,6 +196,11 @@ async def say_by(message: types.Message):
 @dp.message_handler(commands=['analytic'])
 async def analytic_command(message: types.Message):
     user_id = message.from_user.id
+  
+    # Проверяем и инициализируем состояние пользователя, если оно отсутствует
+    if user_id not in user_state:
+        user_state[user_id] = {}
+      
     user_state[user_id]['type'] = '' #обнуляем, чтобы после аналитики не реагировала на цифры!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
     if user_id in user_state and user_state[user_id].get('connected'):
         logging.info(f"User {user_id} is connected. Starting analysis.")
