@@ -124,7 +124,7 @@ async def analitic_command(message: types.Message):
         client = user_state[user_id]['client']
         try:
             await message.answer("Начинаю анализ данных...")
-            await process_user_data(client, phone_number, user_id 
+            await process_user_data(client, phone_number, user_id)
         except Exception as e:
             logging.error(f"Error during analysis for user {user_id}: {e}")
             await message.answer(f"Произошла ошибка при анализе: {e}")
