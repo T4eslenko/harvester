@@ -94,9 +94,8 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
         selection_alias = 'Отчет с фото'
     elif code == 'get_media':
         selection = '450'
-        selection_alias = 'Отчет с фото + скачивание всех медиа'
+        selection_alias = 'Отчет с фото + скачивание всех медиа в zip'
     user_state[user_id]['selection'] = selection
-    await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}")
     if selection in ['40', '45', '450']:
         #if user_id in user_state and user_state[user_id].get('connected'): #надо подумать, нужна ли
         await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
@@ -209,7 +208,7 @@ async def show_keyboard(message: Message):
     buttons = [
         AiogramInlineKeyboardButton(text="Отчет без медиа", callback_data='withoutall'),
         AiogramInlineKeyboardButton(text="Отчет с фото", callback_data='with_photos'),
-        AiogramInlineKeyboardButton(text="Отчет с фото + скачивание всех медиа (может потребоваться много времени)", callback_data='get_media')
+        AiogramInlineKeyboardButton(text="Отчет с фото + скачивание всех медиа", callback_data='get_media')
     ]
     keyboard.add(*buttons)
     await message.answer("Выберите вариант загрузки", reply_markup=keyboard)
