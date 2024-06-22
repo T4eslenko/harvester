@@ -6,4 +6,3 @@ jinja2==3.0.2
 Pillow==9.0.1
 python-dotenv==0.19.1
 pytz
-pysftp
