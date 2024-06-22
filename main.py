@@ -38,7 +38,8 @@ logging.basicConfig(level=logging.INFO)
 user_state = {}
 
 async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
-    file_extensions = ['_contacts.xlsx', '_report.html']
+    file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_private_messages.html', '_chat_messages.html', '_media_files.zip']
+    max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
     now_utc = datetime.now(pytz.utc)
     timezone = pytz.timezone('Europe/Moscow')
     now_local = now_utc.astimezone(timezone)
