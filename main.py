@@ -119,9 +119,40 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
     await bot.answer_callback_query(callback_query.id)
 
     if code == 'analitic':
-        await analitic_command(callback_query.message)
+        user_id = message.from_user.id
+        if user_id in user_state and user_state[user_id].get('connected'):
+            logging.info(f"User {user_id} is connected. Starting analysis.")
+            phone_number = user_state[user_id]['phone_number']
+            client = user_state[user_id]['client']
+            try:
+                await message.answer("Начинаю анализ данных завершен")
+                await process_user_data(client, phone_number, user_id)
+                await message.answer("Анализ данных завершен")
+            except Exception as e:
+                logging.error(f"Error during analysis for user {user_id}: {e}")
+                await message.answer(f"Произошла ошибка при анализе: {e}")
+        else:
+            logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
+            await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+          
     elif code == 'private':
-        await private_command(callback_query.message)
+        user_id = message.from_user.id
+        user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
+        if user_id in user_state and user_state[user_id].get('connected'):
+            logging.info(f"User {user_id} is connected. Starting get private message.")
+            client = user_state[user_id]['client']
+            try:
+                user_dialogs, i, users_list = await get_user_dialogs(client)
+                if not user_dialogs:
+                    await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
+                    return
+                else:
+                    # Сохраняем user_id и users_list в user_state для дальнейшего использования
+                    user_state[user_id]['users_list'] = users_list
+                    user_state[user_id]['dialogs_count'] = i        
+                    dialog_message = "\n".join(user_dialogs)
+                    await bot.send_message(user_id, dialog_message)
+                    await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
     elif code == 'group_chats':
         await export_group_chats(callback_query.message)
     
