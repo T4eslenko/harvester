@@ -108,7 +108,7 @@ async def show_keyboard(message: Message):
     keyboard.add(*buttons)
     keyboard.add(*buttons)
 
-    await message.answer(user_id, "Выберите направление поиска", reply_markup=keyboard)
+    await message.answer("Выберите направление поиска", reply_markup=keyboard)
     # Устанавливаем состояние "awaiting_selection"
     await Form.awaiting_selection.set()
 
