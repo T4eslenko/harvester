@@ -93,9 +93,11 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
 #@dp.callback_query_handler((lambda message: 'get_private' in user_state.get(message.from_user.id, {})))
 #async def private_command(callback_query: AiogramCallbackQuery):
 
-@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
+#@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
+@dp.callback_query_handler(lambda callback_query: True)
 async def private_command(callback_query: AiogramCallbackQuery):
     user_id = callback_query.from_user.id
+    message.answer("словил ввод цифр")
     #if user_state[user_id]['get_private']:
     await bot.answer_callback_query(callback_query.id)
     code = callback_query.data
