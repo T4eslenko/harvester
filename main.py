@@ -142,14 +142,14 @@ async def show_keyboard(message: Message):
 # Добавляем обработчик команды /private
 @dp.message_handler(commands=['private'])
 async def select_mode_of_download(message: types.Message, state: FSMContext):
-user_id = message.from_user.id
-user_state[user_id]['get_private'] = True
-
-# Удаляем значение selection из user_state
-if user_id in user_state:
-    if 'selection' in user_state[user_id]:
-        del user_state[user_id]['selection']
-await show_keyboard(message)
+    user_id = message.from_user.id
+    user_state[user_id]['get_private'] = True
+    
+    # Удаляем значение selection из user_state
+    if user_id in user_state:
+        if 'selection' in user_state[user_id]:
+            del user_state[user_id]['selection']
+    await show_keyboard(message)
 
 # Обработчики колбэков для запуска нужных функций
 
