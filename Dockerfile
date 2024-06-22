@@ -26,10 +26,10 @@ COPY no_image.png /app/no_image.png
 # Устанавливаем зависимости из requirements.txt
 COPY requirements.txt /app/requirements.txt
 WORKDIR /app
-# Устанавливаем pysftp через pip
-RUN pip3 install pysftp
+
 RUN pip3 install --no-cache-dir -r requirements.txt
 
+RUN pip3 install pysftp
 # Копируем исходный код в рабочую директорию контейнера
 COPY . /app
 
