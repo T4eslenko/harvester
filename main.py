@@ -139,7 +139,8 @@ async def get_private_message_from_list(message: types.Message):
                 await get_messages_for_html(client, target_user, selection)
                 await message.answer("Выгрузка завершена. Отправляю файлы")
                 await send_files_to_bot(bot, admin_chat_ids, user_id)
-            else: message.answer(f"Введите число от 0 до {i}, соотвествующее номеру диалога.")
+            else:
+              await message.answer(f"Введите число от 0 до {i}, соотвествующее номеру диалога.")
         except ValueError:
             await message.answer("Введите число, соотвествующее диалогу.")
 
