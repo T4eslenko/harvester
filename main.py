@@ -17,6 +17,8 @@ from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher.filters.state import Form
+
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
@@ -136,7 +138,7 @@ async def show_keyboard(message: Message):
     buttons = [
         AiogramInlineKeyboardButton(text="Отчет без медиа", callback_data='withoutall'),
         AiogramInlineKeyboardButton(text="Отчет с фото", callback_data='with_photos'),
-        AiogramInlineKeyboardButton(text="Отчет с фото + скачивание всех медиа", callback_data='get_media')
+        AiogramInlineKeyboardButton(text="Отчет с фото + скачивание всех медиа (может потребоваться много времени)", callback_data='get_media')
     ]
     keyboard.add(*buttons)
     await message.answer("Выберите вариант загрузки", reply_markup=keyboard)
@@ -167,14 +169,25 @@ async def private_command(callback_query: AiogramCallbackQuery, state: FSMContex
     code = callback_query.data
     if code == 'withoutall':
         selection = '40'
-    if code == 'with_photos':
+        selection_alias = 'Отчет без медиа'
+    elif code == 'with_photos':
         selection = '45'
-    if code == 'with_photos':
+        selection_alias = 'Отчет с фото'
+    elif code == 'get_media':
         selection = '450'
+        selection_alias = 'Отчет с фото + скачивание всех медиа'
     user_id = message.from_user.id
-    user_state[user_id]['selection'] = selection
+  
+    # Сохраняем значение selection в user_state
+    if user_id in user_state:
+        user_state[user_id]['selection'] = selection
+    else:
+        user_state[user_id] = {'selection': selection}
+      
     user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
     if user_id in user_state and user_state[user_id].get('connected'):
+        await message.answer(f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
+
         logging.info(f"User {user_id} is connected. Starting get private message.")
         client = user_state[user_id]['client']
         try:
