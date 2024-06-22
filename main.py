@@ -139,7 +139,7 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
     elif code == 'private':
         user_id = callback_query.from_user.id
         async with state.proxy() as user_state:
-            user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
+                user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
             #if user_id in user_state and user_state[user_id].get('connected'):
                 logging.info(f"User {user_id} is connected. Starting private message.")
                 client = user_state[user_id]['client']
