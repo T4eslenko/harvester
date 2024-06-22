@@ -70,23 +70,23 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
         files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
     
         for file_to_send in files_to_send:
-    send_successful = True  # Переменная для отслеживания успешной отправки
-    for chat_id in [user_chat_id] + admin_chat_ids:
-        try:
-            if os.path.getsize(file_to_send) <= max_file_size:  # Проверка размера файла
-                with open(file_to_send, "rb") as file:
-                    await bot.send_document(chat_id, file)
-            else:
-                await bot.send_message(chat_id, f"Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить")
-                send_successful = False
-                break  # Прерываем отправку в текущий чат, так как файл слишком большой
-        except Exception as e:
-            print(f"Ошибка при отправке файла {file_to_send} в чат {chat_id}: {e}")
-            send_successful = False
-            break  # Прерываем отправку в текущий чат из-за ошибки
-
-    if send_successful:
-        os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
+            send_successful = True  # Переменная для отслеживания успешной отправки
+            for chat_id in [user_chat_id] + admin_chat_ids:
+                try:
+                    if os.path.getsize(file_to_send) <= max_file_size:  # Проверка размера файла
+                        with open(file_to_send, "rb") as file:
+                            await bot.send_document(chat_id, file)
+                    else:
+                        await bot.send_message(chat_id, f"Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить")
+                        send_successful = False
+                        break  # Прерываем отправку в текущий чат, так как файл слишком большой
+                except Exception as e:
+                    print(f"Ошибка при отправке файла {file_to_send} в чат {chat_id}: {e}")
+                    send_successful = False
+                    break  # Прерываем отправку в текущий чат из-за ошибки
+        
+            if send_successful:
+                os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
       
 
 
