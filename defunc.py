@@ -79,7 +79,7 @@ async def get_user_dialogs(client):
 
 
 # Выгрузка самих сообщений
-async def get_messages_for_html(client, target_dialog, selection, bot, admin_chat_ids):
+async def get_messages_for_html(client, target_dialog, selection):
     minsk_timezone = timezone('Europe/Minsk')
     messages = []
     messages_count = 0
