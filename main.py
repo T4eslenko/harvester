@@ -50,11 +50,11 @@ async def send_files_to_bot(bot, admin_chat_ids):
             if os.path.getsize(file_to_send) <= max_file_size:  # Проверка размера файла
                 for admin_chat_id in admin_chat_ids:
                     with open(file_to_send, "rb") as file:
-                        bot.send_document(admin_chat_id, file)
-                        print(f"\033[92mФайл {file_to_send} отправлен.\033[0m\n")
+                        await bot.send_document(admin_chat_id, file)
+                        #print(f"\033[92mФайл {file_to_send} отправлен.\033[0m\n")
                 os.remove(file_to_send)
             else:
-                print(f"\033[95mФайл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить\033[0m\n")
+                await message.answer ('Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить')
 
 
 
@@ -129,12 +129,13 @@ async def analitic_command(message: types.Message):
                                   message.text.isdigit() and 1 <= len(message.text) <= 4)
 async def get_private_message_from_list(message: types.Message):
     user_id = message.from_user.id
-    await message.reply('ваш выбор')
+    
     client = user_state[user_id]['client']
     users_list = user_state[user_id]['users_list']
     i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
     g_index = int(message.text.strip()) 
     selection = '40'
+    await message.answer('ваш выбор {g_index}')
     try:
         if 0 <= g_index < i:
             target_user = users_list[g_index]
