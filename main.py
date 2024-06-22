@@ -98,31 +98,50 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
     user_state[user_id]['selection'] = selection
     await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}")
     if selection in ['40', '45', '450']:
-        await process_private_message(selection)
-    
- async def process_private_message(selection): 
-    #selection = user_state[user_id]['selection']
-    #if user_id in user_state and user_state[user_id].get('connected'):
-    await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
+        #if user_id in user_state and user_state[user_id].get('connected'): #надо подумать, нужна ли
+        await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
+        logging.info(f"User {user_id} is connected. Starting get private message.")
+        client = user_state[user_id]['client']
+        try:
+                user_dialogs, i, users_list = await get_user_dialogs(client)
+                if not user_dialogs:
+                    await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
+                    return
+                else:
+                    # Сохраняем user_id и users_list в user_state для дальнейшего использования
+                    user_state[user_id]['users_list'] = users_list
+                    user_state[user_id]['dialogs_count'] = i        
+                    dialog_message = "\n".join(user_dialogs)
+                    await bot.send_message(user_id, dialog_message)
+                    await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
+        
+        except Exception as e:
+                logging.error(f"Error during making list: {e}")
+                await message.answer(f"Произошла ошибка при формирование списка: {e}")
+    elif selection in ['70', '75', '750']:      
+      pass
 
-    logging.info(f"User {user_id} is connected. Starting get private message.")
-    client = user_state[user_id]['client']
-    try:
-            user_dialogs, i, users_list = await get_user_dialogs(client)
-            if not user_dialogs:
-                await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
-                return
-            else:
-                # Сохраняем user_id и users_list в user_state для дальнейшего использования
-                user_state[user_id]['users_list'] = users_list
-                user_state[user_id]['dialogs_count'] = i        
-                dialog_message = "\n".join(user_dialogs)
-                await bot.send_message(user_id, dialog_message)
-                await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
+# Обработчик выбора списка приватного диалого для выгрузки, если get_private равно True
+@dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('type') == 'private' and
+                                  message.text.isdigit() and 1 <= len(message.text) <= 4)
+async def get_private_message_from_list(message: types.Message):
+    user_id = message.from_user.id
     
-    except Exception as e:
-            logging.error(f"Error during making list: {e}")
-            await message.answer(f"Произошла ошибка при формирование списка: {e}")
+    client = user_state[user_id]['client']
+    users_list = user_state[user_id]['users_list']
+    i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
+    g_index = int(message.text.strip()) 
+    if user_id in user_state and 'selection' in user_state[user_id]:
+        selection = user_state[user_id]['selection']
+        try:
+            if 0 <= g_index < i:
+                target_user = users_list[g_index]
+                await message.answer(f"начинаю выгрузку диалога под номеом: {g_index}. Дождись сообщение о завершении")
+                await get_messages_for_html(client, target_user, selection)
+                await message.answer("Выгрузка завершена. Отправляю файлы")
+                await send_files_to_bot(bot, admin_chat_ids, user_id)
+        except ValueError:
+            await message.answer("Введите число, соотвествующее диалогу.")
 
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
@@ -209,28 +228,7 @@ async def select_mode_of_download(message: types.Message):
 
 
 
-
-# Обработчик выбора списка приватного диалого для выгрузки, если get_private равно True
-@dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('type') == 'private' and
-                                  message.text.isdigit() and 1 <= len(message.text) <= 4)
-async def get_private_message_from_list(message: types.Message):
-    user_id = message.from_user.id
-    
-    client = user_state[user_id]['client']
-    users_list = user_state[user_id]['users_list']
-    i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
-    g_index = int(message.text.strip()) 
-    if user_id in user_state and 'selection' in user_state[user_id]:
-        selection = user_state[user_id]['selection']
-        try:
-            if 0 <= g_index < i:
-                target_user = users_list[g_index]
-                await message.answer(f"начинаю выгрузку диалога под номеом: {g_index}. Дождись сообщение о завершении")
-                await get_messages_for_html(client, target_user, selection)
-                await message.answer("Выгрузка завершена. Отправляю файлы")
-                await send_files_to_bot(bot, admin_chat_ids, user_id)
-        except ValueError:
-            await message.answer("Введите число, соотвествующее диалогу.")
+                                          
 
 
 
