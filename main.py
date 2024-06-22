@@ -39,31 +39,23 @@ user_state = {}
 
 
 # Функция для отправки файлов
-async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
-    file_extensions = ['_contacts.xlsx', '_report.html']
-    now_utc = datetime.now(pytz.utc)
-    timezone = pytz.timezone('Europe/Moscow')
-    now_local = now_utc.astimezone(timezone)
-    # Форматирование даты и времени
-    now = now_local.strftime("%Y-%m-%d %H:%M:%S")
-    user_id=user_chat_id
-    user_name = ALLOWED_USERS[user_id]
+async def send_files_to_bot(bot, admin_chat_ids):
+    file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_private_messages.html', '_chat_messages.html', '_media_files.zip']
+    max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
 
-    user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}):"
-
-    # Отправка сообщения с информацией о пользователе админам
-    for admin_chat_id in admin_chat_ids:
-        await bot.send_message(admin_chat_id, user_info_message)
-
-    # Отправка файлов с информацией пользователю и админам
     for file_extension in file_extensions:
         files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
-    
+        
         for file_to_send in files_to_send:
-            for chat_id in [user_chat_id] + admin_chat_ids:
-                with open(file_to_send, "rb") as file:
-                    await bot.send_document(chat_id, file)
-            os.remove(file_to_send)
+            if os.path.getsize(file_to_send) <= max_file_size:  # Проверка размера файла
+                for admin_chat_id in admin_chat_ids:
+                    with open(file_to_send, "rb") as file:
+                        bot.send_document(admin_chat_id, file)
+                        print(f"\033[92mФайл {file_to_send} отправлен.\033[0m\n")
+                os.remove(file_to_send)
+            else:
+                print(f"\033[95mФайл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить\033[0m\n")
+
 
 
 # Обработчики сообщений
