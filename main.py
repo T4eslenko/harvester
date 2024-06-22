@@ -84,14 +84,12 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
 #@dp.callback_query_handler((lambda message: 'get_private' in user_state.get(message.from_user.id, {})))
 #async def private_command(callback_query: AiogramCallbackQuery):
 
-#@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
-@dp.callback_query_handler(lambda callback_query: True)
+@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
+#@dp.callback_query_handler(lambda callback_query: True)
 async def private_command(callback_query: AiogramCallbackQuery):
     logging.info(f"Callback query data: {callback_query.data}")
     await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {callback_query.data}")
-    await callback_query.answer()
     user_id = callback_query.from_user.id
-    
     #if user_state[user_id]['get_private']:
     await bot.answer_callback_query(callback_query.id)
     code = callback_query.data
@@ -204,8 +202,6 @@ async def show_keyboard(message: Message):
     ]
     keyboard.add(*buttons)
     await message.answer("Выберите вариант загрузки", reply_markup=keyboard)
-    # Устанавливаем состояние "awaiting_selection"
-    await Form.awaiting_selection.set()
 
 # Добавляем обработчик команды /private
 @dp.message_handler(commands=['private'])
