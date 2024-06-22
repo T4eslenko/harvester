@@ -35,9 +35,9 @@ allowed_users = ALLOWED_USERS
 # Создаем Bot и Dispatcher
 bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 dp.middleware.setup(LoggingMiddleware())
-
-# Логирование
 logging.basicConfig(level=logging.INFO)
 
 # Словарь для хранения состояния пользователя
