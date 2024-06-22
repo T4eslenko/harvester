@@ -119,18 +119,15 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
     await bot.answer_callback_query(callback_query.id)
 
     if code == 'analitic':
-        await analitic_command(message: types.Message)
+        await analitic_command(callback_query.message)
     elif code == 'private':
-        await private_command(message: types.Message)
+        await private_command(callback_query.message)
     elif code == 'group_chats':
         await export_group_chats(callback_query.message)
     
     # Сброс состояния
     await state.finish()
 
-# Пример функции для выгрузки личных чатов
-async def export_personal_chats(message: AiogramMessage):
-    await message.answer("Выгрузка личных чатов...")
 
 # Пример функции для выгрузки групповых чатов
 async def export_group_chats(message: AiogramMessage):
