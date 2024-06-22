@@ -109,10 +109,8 @@ async def analitic_command(message: types.Message):
     user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
     if user_id in user_state and user_state[user_id].get('connected'):
         logging.info(f"User {user_id} is connected. Starting get private message.")
-        #phone_number = user_state[user_id]['phone_number']
         client = user_state[user_id]['client']
         try:
-            #await making_list_private_message(client, user_id)
             user_dialogs, i, users_list = await get_user_dialogs(client)
             if not user_dialogs:
                 await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
@@ -121,9 +119,8 @@ async def analitic_command(message: types.Message):
                 # Сохраняем user_id и users_list в user_state для дальнейшего использования
                 user_state[user_id]['users_list'] = users_list
                 user_state[user_id]['dialogs_count'] = i        
-                # Отправляем пользователю список диалогов
                 dialog_message = "\n".join(user_dialogs)
-                await bot.send_message(user_id, users_list)
+                await bot.send_message(user_id, dialog_message)
                 await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
     
         except Exception as e:
