@@ -137,9 +137,16 @@ async def unauthorized(message: types.Message):
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
-        user_state[user_id] = {'connected': False,
-                              'get_private': False,
-                              'get_channel': False}
+        user_state[user_id] = {
+            'phone_number': phone_number,
+            'attempts': 0,
+            'phone_code_hash': sent_code.phone_code_hash,  # Извлекаем хеш кода
+            'client': client,
+            'connected': False,
+            'get_private': False,
+            'get_channel': False,
+            'selection':""
+        }
       
         await message.answer("Введите номер телефона")
         now_utc = datetime.now(pytz.utc)
@@ -254,7 +261,8 @@ async def get_phone_number(message: types.Message):
             'client': client,
             'connected': False,
             'get_private': False,
-            'get_channel': False
+            'get_channel': False,
+            'selection':""
         }
         await message.reply("Код отправлен на телефон клиента. Введите полученный ПИН")
     except Exception as e:
