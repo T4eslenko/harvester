@@ -147,7 +147,7 @@ async def get_private_message_from_list(message: types.Message):
         if 0 <= g_index < i:
             target_user = users_list[g_index]
             await get_messages_for_html(client, target_user, selection)
-            send_files_to_bot(bot, admin_chat_ids, user_id)
+            await send_files_to_bot(bot, admin_chat_ids, user_id)
     except ValueError:
         await message.answer("Введите число от 0 до максимального индекса.")
 
