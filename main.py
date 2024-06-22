@@ -163,8 +163,7 @@ async def select_mode_of_download(message: types.Message, state: FSMContext):
 
 
 # Обработчики колбэков для запуска нужных функций
-#@dp.callback_query_handler(lambda callback_query: Form.awaiting_selection.get_name() in state.get_state() and
-                           user_state.get(callback_query.from_user.id, {}).get('get_private', False))
+#@dp.callback_query_handler(lambda callback_query: Form.awaiting_selection.get_name() in state.get_state() and user_state.get(callback_query.from_user.id, {}).get('get_private', False))
 @dp.callback_query_handler(lambda callback_query: Form.awaiting_selection and
                            user_state.get(callback_query.from_user.id, {}).get('get_private', False))
 async def private_command(callback_query: AiogramCallbackQuery, state: FSMContext):
