@@ -239,7 +239,7 @@ async def select_mode_of_download(message: types.Message):
 @dp.message_handler(lambda message: message.text and 
                     len(re.sub(r'\D', '', message.text)) > 9 and 
                     message.from_user.id in allowed_users)
-async def get_phone_number(message: s.Message):
+async def get_phone_number(message: types.Message):
     phone_number = message.text
     # Очищаем номер телефона от всего, кроме цифр
     phone_number = re.sub(r'\D', '', phone_number)
