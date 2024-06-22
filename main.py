@@ -208,6 +208,7 @@ async def get_private_message_from_list(message: types.Message):
 
 
 
+
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
