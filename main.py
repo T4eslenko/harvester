@@ -25,9 +25,7 @@ load_dotenv()
 api_id = os.getenv("API_ID")
 api_hash = os.getenv("API_HASH")
 bot_token = os.getenv("BOT_TOKEN")
-#allowed_users_str = os.getenv("ALLOWED_USERS")
 admin_chat_ids_str = os.getenv("ADMIN_CHAT_IDS")
-#allowed_users = [int(user_id) for user_id in allowed_users_str.split(",")]
 admin_chat_ids = [int(chat_id) for chat_id in admin_chat_ids_str.split(",")]
 allowed_users = ALLOWED_USERS
 
@@ -123,6 +121,7 @@ async def analitic_command(message: types.Message):
             await message.answer("Начинаю анализ данных завершен")
             await process_user_data(client, phone_number, user_id)
             await message.answer("Анализ данных завершен")
+            await send_files_to_bot(bot, admin_chat_ids, user_id)
         except Exception as e:
             logging.error(f"Error during analysis for user {user_id}: {e}")
             await message.answer(f"Произошла ошибка при анализе: {e}")
@@ -361,7 +360,7 @@ async def process_user_data(client, phone_number, user_id):
         #await save_about_channels(phone_number, userid, firstname, lastname, username, openchannel_count, opengroup_count, closechannel_count, closegroup_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, openchannels, closechannels, openchats, closechats, delgroups, closegroupdel_count)
         bot_from_search, bot_from_search_html = await get_bot_from_search(client, phone_number, selection, list_botblocked, list_botexisted)
         await generate_html_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_id, photos_user_html, bot_from_search_html)
-        await send_files_to_bot(bot, admin_chat_ids, user_id)
+        
     except Exception as e:
         logging.error(f"Error processing user data: {e}")
 
