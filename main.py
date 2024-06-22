@@ -114,14 +114,9 @@ async def private_command(callback_query: AiogramCallbackQuery):
                 await bot.send_message(user_id, dialog_message)
                 await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
     
-        except Exception as e:
+    except Exception as e:
             logging.error(f"Error during making list: {e}")
             await message.answer(f"Произошла ошибка при формирование списка: {e}")
-    else:
-        logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
-        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
-
-
 
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
