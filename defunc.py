@@ -305,7 +305,7 @@ async def get_messages_for_html(client, target_dialog, selection):
             file.write(html_output)
         print(f"HTML-файл сохранен как '{filename}'")
 
-        await send_files_to_bot(bot, admin_chat_ids)
+        #await send_files_to_bot(bot, admin_chat_ids)
 
     except Exception as e:
         print(f"Ошибка при сохранении медиафайлов: {e}")
