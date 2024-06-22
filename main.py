@@ -95,7 +95,12 @@ async def private_command(callback_query: AiogramCallbackQuery):
         selection = '450'
         selection_alias = 'Отчет с фото + скачивание всех медиа'
     await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}")
-    user_state[user_id]['selection'] = selection
+    try:
+      user_state[user_id]['selection'] = selection
+    except Exception as e:
+            logging.error(f"Error during making list: {e}")
+            await message.answer(f"Произошла ошибка при формирование списка: {e}")
+    
     #if user_id in user_state and user_state[user_id].get('connected'):
     await message.answer(f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
 
