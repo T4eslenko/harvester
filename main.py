@@ -153,8 +153,6 @@ async def handle_callback_query(callback_query: AiogramCallbackQuery, state: FSM
                     dialog_message = "\n".join(user_dialogs)
                     await bot.send_message(user_id, dialog_message)
                     await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-    elif code == 'group_chats':
-        await export_group_chats(callback_query.message)
     
     # Сброс состояния
     await state.finish()
