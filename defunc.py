@@ -46,7 +46,7 @@ async def get_user_dialogs(client):
         dialogs = await client.get_dialogs()
     except Exception as e:
         print(f"Ошибка при получении диалогов: {e}")
-        return user_dialogs, 0, users_list, flag_user_dialogs
+        return user_dialogs, 0, users_list
 
     i = 0
 
@@ -61,13 +61,13 @@ async def get_user_dialogs(client):
                     count_messages = "N/A"  # Значение по умолчанию, если сообщения не удалось получить
 
                 user = dialog.entity
-                username = f'\033[36m@{user.username}\033[0m' if user.username else ""
+                username = f'@{user.username}' if user.username else ""
                 first_name = user.first_name if user.first_name else ''
                 last_name = user.last_name if user.last_name else ''
 
                 user_dialogs.append(
-                    f'{i}) \033[95m{first_name} {last_name}\033[0m {username} {user.id} ' 
-                    f'/ \033[33m[{count_messages}]\033[0m'
+                    f'{i}) *{first_name} {last_name}* {username} {user.id} ' +
+                    f'/ [{count_messages}]'
                 )
 
                 users_list.append(dialog.entity.id)
@@ -76,6 +76,7 @@ async def get_user_dialogs(client):
             print(f"Ошибка при обработке диалога {dialog.id}: {e}")
 
     return user_dialogs, i, users_list
+
 
 
 # Выгрузка самих сообщений
