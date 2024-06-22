@@ -1,5 +1,10 @@
 # Используем базовый образ Debian
 FROM debian:bullseye-slim as build
+FROM atmoz/sftp:latest
+
+# Добавьте пользователя root с паролем и укажите директорию для SFTP
+RUN echo "root:IZxc4rtgv:0:0:root:/upload" > /etc/sftp-users.conf
+
 
 # Устанавливаем необходимые пакеты
 RUN apt-get update && apt-get install -y \
