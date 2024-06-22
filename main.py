@@ -149,15 +149,17 @@ async def show_keyboard(message: Message):
 async def select_mode_of_download(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     user_state[user_id]['get_private'] = True
-    
     # Удаляем значение selection из user_state
     if user_id in user_state:
         if 'selection' in user_state[user_id]:
             del user_state[user_id]['selection']
-    await show_keyboard(message)
+    if user_id in user_state and user_state[user_id].get('connected'):
+        await show_keyboard(message)
+    else:
+        logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
+        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
 
 # Обработчики колбэков для запуска нужных функций
-
 @dp.callback_query_handler(lambda callback_query: Form.awaiting_selection.get_name() in state.get_state() and
                            user_state.get(callback_query.from_user.id, {}).get('get_private', False))
 async def private_command(callback_query: AiogramCallbackQuery, state: FSMContext):
