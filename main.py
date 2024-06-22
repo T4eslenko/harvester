@@ -98,13 +98,14 @@ class Form(StatesGroup):
     awaiting_selection = State()
 
 # Функция для отображения клавиатуры
-async def show_keyboard():
-    keyboard = InlineKeyboardMarkup(row_width=1)
+async def show_keyboard(message: Message):
+    keyboard = AiogramInlineKeyboardMarkup(row_width=1)
     buttons = [
-        InlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analitic'),
-        InlineKeyboardButton(text="Выгрузка личных чатов", callback_data='private'),
-        InlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
+        AiogramInlineKeyboardButton(text="Сбор аналитики по аккаунту", callback_data='analitic'),
+        AiogramInlineKeyboardButton(text="Выгрузка личных чатов", callback_data='private'),
+        AiogramInlineKeyboardButton(text="Выгрузка групповых чатов", callback_data='group_chats')
     ]
+    keyboard.add(*buttons)
     keyboard.add(*buttons)
 
     await message.answer(user_id, "Выберите направление поиска", reply_markup=keyboard)
