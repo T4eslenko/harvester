@@ -18,8 +18,8 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
-# Определяем состояния с использованием StatesGroup
-class ModeSelection(StatesGroup):
+# Определение состояний
+class Form(StatesGroup):
     awaiting_selection = State()
 
 
