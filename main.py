@@ -123,7 +123,7 @@ async def analitic_command(message: types.Message):
                 user_state[user_id]['dialogs_count'] = i        
                 # Отправляем пользователю список диалогов
                 dialog_message = "\n".join(user_dialogs)
-                await bot.send_message(user_id, dialog_message, parse_mode='Markdown')
+                await bot.send_message(user_id, dialog_message)
                 await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
     
         except Exception as e:
