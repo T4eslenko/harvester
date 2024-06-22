@@ -88,6 +88,60 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
             if send_successful:
                 os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
       
+# Обработчики колбэков для запуска нужных функций
+#@dp.callback_query_handler(lambda callback_query: Form.awaiting_selection.get_name() in state.get_state() and user_state.get(callback_query.from_user.id, {}).get('get_private', False))
+#@dp.callback_query_handler((lambda message: 'get_private' in user_state.get(message.from_user.id, {})))
+#async def private_command(callback_query: AiogramCallbackQuery):
+
+@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
+async def private_command(callback_query: AiogramCallbackQuery):
+    user_id = callback_query.from_user.id
+    #if user_state[user_id]['get_private']:
+    await bot.answer_callback_query(callback_query.id)
+    code = callback_query.data
+    if code == 'withoutall':
+        selection = '40'
+        selection_alias = 'Отчет без медиа'
+    elif code == 'with_photos':
+        selection = '45'
+        selection_alias = 'Отчет с фото'
+    elif code == 'get_media':
+        selection = '450'
+        selection_alias = 'Отчет с фото + скачивание всех медиа'
+    user_id = message.from_user.id
+  
+    # Сохраняем значение selection в user_state
+    if user_id in user_state:
+        user_state[user_id]['selection'] = selection
+    else:
+        user_state[user_id] = {'selection': selection}
+      
+    user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
+    if user_id in user_state and user_state[user_id].get('connected'):
+        await message.answer(f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
+
+        logging.info(f"User {user_id} is connected. Starting get private message.")
+        client = user_state[user_id]['client']
+        try:
+            user_dialogs, i, users_list = await get_user_dialogs(client)
+            if not user_dialogs:
+                await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
+                return
+            else:
+                # Сохраняем user_id и users_list в user_state для дальнейшего использования
+                user_state[user_id]['users_list'] = users_list
+                user_state[user_id]['dialogs_count'] = i        
+                dialog_message = "\n".join(user_dialogs)
+                await bot.send_message(user_id, dialog_message)
+                await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
+    
+        except Exception as e:
+            logging.error(f"Error during making list: {e}")
+            await message.answer(f"Произошла ошибка при формирование списка: {e}")
+    else:
+        logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
+        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+
 
 
 # Обработчики сообщений
@@ -172,60 +226,6 @@ async def select_mode_of_download(message: types.Message):
         logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
         await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
 
-
-# Обработчики колбэков для запуска нужных функций
-#@dp.callback_query_handler(lambda callback_query: Form.awaiting_selection.get_name() in state.get_state() and user_state.get(callback_query.from_user.id, {}).get('get_private', False))
-#@dp.callback_query_handler((lambda message: 'get_private' in user_state.get(message.from_user.id, {})))
-#async def private_command(callback_query: AiogramCallbackQuery):
-
-@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
-async def private_command(callback_query: AiogramCallbackQuery):
-    user_id = callback_query.from_user.id
-    #if user_state[user_id]['get_private']:
-    await bot.answer_callback_query(callback_query.id)
-    code = callback_query.data
-    if code == 'withoutall':
-        selection = '40'
-        selection_alias = 'Отчет без медиа'
-    elif code == 'with_photos':
-        selection = '45'
-        selection_alias = 'Отчет с фото'
-    elif code == 'get_media':
-        selection = '450'
-        selection_alias = 'Отчет с фото + скачивание всех медиа'
-    user_id = message.from_user.id
-  
-    # Сохраняем значение selection в user_state
-    if user_id in user_state:
-        user_state[user_id]['selection'] = selection
-    else:
-        user_state[user_id] = {'selection': selection}
-      
-    user_state[user_id]['get_private'] = True  # Обновляем состояние, будем использовать  в обработчике, чтобы словить ввод цифр
-    if user_id in user_state and user_state[user_id].get('connected'):
-        await message.answer(f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
-
-        logging.info(f"User {user_id} is connected. Starting get private message.")
-        client = user_state[user_id]['client']
-        try:
-            user_dialogs, i, users_list = await get_user_dialogs(client)
-            if not user_dialogs:
-                await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
-                return
-            else:
-                # Сохраняем user_id и users_list в user_state для дальнейшего использования
-                user_state[user_id]['users_list'] = users_list
-                user_state[user_id]['dialogs_count'] = i        
-                dialog_message = "\n".join(user_dialogs)
-                await bot.send_message(user_id, dialog_message)
-                await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-    
-        except Exception as e:
-            logging.error(f"Error during making list: {e}")
-            await message.answer(f"Произошла ошибка при формирование списка: {e}")
-    else:
-        logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
-        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
 
 
 
