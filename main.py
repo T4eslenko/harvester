@@ -164,10 +164,6 @@ async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
         user_state[user_id] = {
-            'phone_number': phone_number,
-            'attempts': 0,
-            'phone_code_hash': sent_code.phone_code_hash,  # Извлекаем хеш кода
-            'client': client,
             'connected': False,
             'type': "",
             'selection':""
@@ -187,9 +183,13 @@ async def send_welcome(message: types.Message):
 
 @dp.message_handler(commands=['exit'])
 async def say_by(message: types.Message):
-    user_state.pop(message.from_user.id, None)
-    await client.log_out()
-    await client.disconnect()
+    user_id = message.from_user.id
+    if 'client' in user_state.get(user_id, {}):
+      client = user_state[user_id]['client']
+      await client.log_out()
+      await client.disconnect()
+      user_state.pop(message.from_user.id, None)
+      await message.answer("Вы разлогинились.")
 
 
 # Добавляем обработчик команды /analytic
