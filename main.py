@@ -281,7 +281,7 @@ async def get_code(message: types.Message):
         await client.connect()
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
         await message.answer("Подключено! Выбери в меню бота одну из опций")
-        await show_keyboard()
+        await show_keyboard(message)
         user_state[user_id]['connected'] = True  # Обновляем состояние
         #await process_user_data(client, phone_number, message.from_user.id)
         #await client.log_out()
@@ -326,7 +326,7 @@ async def process_password(message: types.Message):
             await client.sign_in(password=password)
             user_state[user_id]['connected'] = True  # Обновляем состояние
             await message.answer("Подключено! Выбери в меню бота одну из опций")
-            await show_keyboard()
+            await show_keyboard(message)
             phone_number = user_state[user_id]['phone_number']
             # await process_user_data(client, phone_number, user_id)
             # user_state.pop(user_id, None)  # Удаляем состояние пользователя после успешной обработки
