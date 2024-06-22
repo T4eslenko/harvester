@@ -14,13 +14,6 @@ from allowed_users import ALLOWED_USERS  # Импортируем словарь
 from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
                           InlineKeyboardButton as AiogramInlineKeyboardButton, \
                           CallbackQuery as AiogramCallbackQuery
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-
-# Определение состояний
-class Form(StatesGroup):
-    awaiting_selection = State()
 
 
 # Загрузка переменных окружения из файла .env
@@ -37,8 +30,6 @@ allowed_users = ALLOWED_USERS
 # Создаем Bot и Dispatcher
 bot = Bot(token=bot_token)
 dp = Dispatcher(bot)
-storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)
 dp.middleware.setup(LoggingMiddleware())
 logging.basicConfig(level=logging.INFO)
 
@@ -96,7 +87,9 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
 #@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
 @dp.callback_query_handler(lambda callback_query: True)
 async def private_command(callback_query: AiogramCallbackQuery):
-    await message.answer("словил ввод цифр")
+    logging.info(f"Callback query data: {callback_query.data}")
+    await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {callback_query.data}")
+    await callback_query.answer()
     user_id = callback_query.from_user.id
     
     #if user_state[user_id]['get_private']:
