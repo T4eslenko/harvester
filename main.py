@@ -112,7 +112,20 @@ async def analitic_command(message: types.Message):
         #phone_number = user_state[user_id]['phone_number']
         client = user_state[user_id]['client']
         try:
-            await process_private_message(client, user_id)
+            #await making_list_private_message(client, user_id)
+            user_dialogs, i, users_list = await get_user_dialogs(client)
+            if not user_dialogs:
+                await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
+                return
+            else:
+                # Сохраняем user_id и users_list в user_state для дальнейшего использования
+                user_state[user_id]['users_list'] = users_list
+                user_state[user_id]['dialogs_count'] = i        
+                # Отправляем пользователю список диалогов
+                dialog_message = "\n".join(user_dialogs)
+                await bot.send_message(user_id, dialog_message)
+                await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
+    
         except Exception as e:
             logging.error(f"Error during analysis for user {user_id}: {e}")
             await message.answer(f"Произошла ошибка при формирование списка: {e}")
@@ -121,26 +134,25 @@ async def analitic_command(message: types.Message):
         await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
 
 
-# Обработчик сообщений, если get_private равно True
+
+# Обработчик выбора списка приватного диалого для выгрузки, если get_private равно True
 @dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('get_private', False) and
                                   message.text.isdigit() and 1 <= len(message.text) <= 4)
 async def get_private_message_from_list(message: types.Message):
     user_id = message.from_user.id
+    users_list = user_state[user_id]['users_list']
+    i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
     try:
-        g_index = int(message.text.strip())
-        if 0 <= g_index < len(users_list):
-            target_user = users_list[g_index]
+        if 0 <= g_index < i:
+            target_user = users_list[int(g_index)]
             await get_messages_for_html(client, target_user, selection)
             send_files_to_bot(bot, admin_chat_ids, user_id)
     except ValueError:
         await message.answer("Введите число от 0 до максимального индекса.")
 
 
-# Функция по формирование сообщений
-async def process_private_message(client, user_id):
-    user_dialogs, i, users_list = await get_user_dialogs(client)
-    await bot.send_message(user_id, user_dialogs)
-    await bot.send_message(user_id, 'Выберите из списка нужный диалог и введите соотвествующую функцию')
+
+
 
 
 @dp.message_handler(commands=['start'])
