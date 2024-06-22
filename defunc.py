@@ -65,9 +65,9 @@ async def get_user_dialogs(client):
                 first_name = user.first_name if user.first_name else ''
                 last_name = user.last_name if user.last_name else ''
 
+                # Используем чистый текст без ANSI escape-кодов
                 user_dialogs.append(
-                    f'{i}) *{first_name} {last_name}* {username} {user.id} ' +
-                    f'/ [{count_messages}]'
+                    f'{i}) {first_name} {last_name} {username} {user.id} / [{count_messages}]'
                 )
 
                 users_list.append(dialog.entity.id)
