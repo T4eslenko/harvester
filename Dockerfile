@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libfontconfig1 \
     libx11-6 \
+    pysftp \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
