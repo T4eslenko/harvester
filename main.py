@@ -90,8 +90,6 @@ async def private_command(callback_query: AiogramCallbackQuery):
     logging.info(f"Callback query data: {callback_query.data}")
     await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {callback_query.data}")
     user_id = callback_query.from_user.id
-    #if user_state[user_id]['get_private']:
-    await bot.answer_callback_query(callback_query.id)
     code = callback_query.data
     if code == 'withoutall':
         selection = '40'
@@ -102,8 +100,8 @@ async def private_command(callback_query: AiogramCallbackQuery):
     elif code == 'get_media':
         selection = '450'
         selection_alias = 'Отчет с фото + скачивание всех медиа'
-    user_id = message.from_user.id
-  
+    #user_id = message.from_user.id
+    await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}")
     # Сохраняем значение selection в user_state
     if user_id in user_state:
         user_state[user_id]['selection'] = selection
