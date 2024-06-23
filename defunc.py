@@ -387,31 +387,25 @@ async def get_forwarded_info(client, message):
 
 
 #Вспомогательная функция по скачиванию медиа
-# Предположим, что target_user_id уже определен ранее
-media_folder = f"/app/files_from_svarog/{target_user_id}_media_files"
-os.makedirs(media_folder, exist_ok=True)
+async def download_media_files(client, target_user, mounted_folder):
+    try:
+        async for message in client.iter_messages(target_user):
+            if message.media is not None:
+                if isinstance(message.media, (types.MessageMediaPhoto, types.MessageMediaDocument)):
+                    try:
+                        # Скачивание медиафайла
+                        media_path = await client.download_media(message.media, file=mounted_folder)
 
-try:
-    async for message in client.iter_messages(target_user):
-        if message.media is not None:
-            if isinstance(message.media, (types.MessageMediaPhoto, types.MessageMediaDocument)):
-                try:
-                    media_path = await client.download_media(message.media, file=media_folder)
-                    if media_path:
-                        media_files.append(media_path)
-                        print(f"Скачан медиафайл: {media_path}")
-                except Exception as e:
-                    print(f"Ошибка при скачивании медиафайла: {e}")
-except Exception as e:
-    print(f"Ошибка при получении сообщений: {e}")
+                        if media_path:
+                            print(f"Скачан медиафайл: {media_path}")
 
+                    except Exception as e:
+                        print(f"Ошибка при скачивании медиафайла: {e}")
 
+        print(f"Скачивание и сохранение медиафайлов для {target_user} завершено")
 
-
-
-
-
-
+    except Exception as e:
+        print(f"Ошибка при получении сообщений: {e}")
 
 
 
