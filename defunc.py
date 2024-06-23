@@ -400,10 +400,12 @@ async def download_media_files(client, target_user):
             if message.media is not None:
                 if isinstance(message.media, (types.MessageMediaPhoto, types.MessageMediaDocument)):
                     try:
-                        media_path = await client.download_media(message.media, file=os.path.join('/app/files_from_svarog', message.file.name if hasattr(message, 'file') else 'unknown_file'))
+                        media_path = await client.download_media(message.media)
                         if media_path:
                             media_files.append(media_path)
                             print(f"Скачан медиафайл: {media_path}")
+                        else:
+                            print(f"Не удалось скачать медиафайл из сообщения: {message.id}")
                     except Exception as e:
                         print(f"Ошибка при скачивании медиафайла: {e}")
     except Exception as e:
@@ -414,35 +416,42 @@ async def download_media_files(client, target_user):
         print("Медиафайлы не найдены или возникли ошибки при скачивании.")
         return None
 
-    # Создание архива с медиафайлами внутри примонтированной директории
+    # Создание папки для медиафайлов внутри примонтированной директории
     media_folder = '/app/files_from_svarog'
+    os.makedirs(media_folder, exist_ok=True)
+
+    # Перемещение медиафайлов в папку
+    for file_path in media_files:
+        try:
+            destination_path = os.path.join(media_folder, os.path.basename(file_path))
+            os.rename(file_path, destination_path)
+            print(f"Файл перемещен в: {destination_path}")
+        except Exception as e:
+            print(f"Ошибка при перемещении файла {file_path}: {e}")
+
+    # Создание архива с медиафайлами
     archive_filename = f"{target_user}_media_files.zip"
     try:
         with zipfile.ZipFile(os.path.join(media_folder, archive_filename), 'w') as zipf:
-            for media_path in media_files:
-                if os.path.exists(media_path):
-                    zipf.write(media_path, arcname=os.path.basename(media_path))
-                    print(f"Файл добавлен в архив: {media_path}")
-                else:
-                    print(f"Файл {media_path} не существует или недоступен для добавления в архив.")
+            for root, dirs, files in os.walk(media_folder):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    zipf.write(file_path, arcname=file)
+                    print(f"Файл добавлен в архив: {file_path}")
     except Exception as e:
         print(f"Ошибка при создании архива: {e}")
 
     # Удаление папки с медиафайлами после архивирования
     try:
-        for media_path in media_files:
-            if os.path.exists(media_path):
-                os.remove(media_path)
-                print(f"Файл удален: {media_path}")
-            else:
-                print(f"Файл {media_path} не существует или недоступен для удаления.")
-        print(f"Все медиафайлы удалены.")
+        shutil.rmtree(media_folder)
+        print(f"Папка '{media_folder}' успешно удалена.")
     except Exception as e:
-        print(f"Ошибка при удалении медиафайлов: {e}")
+        print(f"Ошибка при удалении папки '{media_folder}': {e}")
 
     print(f"Медиафайлы сохранены в архив '{archive_filename}'")
 
     return archive_filename
+
 
 
 
