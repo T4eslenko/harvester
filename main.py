@@ -469,9 +469,11 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
             if media_files:
                 media_file_path = media_files[0]  # Берем первый файл, если найдено несколько
                 media_file_size = os.path.getsize(media_file_path)
+                media_file_size_mb = round(media_file_size / (1024 * 1024), 2)  # Размер в МБ с округлением до двух знаков после запятой
+
 
                 # Отправка сообщения пользователю о наличии файла и его размере
-                await bot.send_message(user_chat_id, f"Отправляется файл: {media_file_path} размером {media_file_size} байт")
+                await bot.send_message(user_chat_id, f"Отправляется файл: {media_file_path} размером {media_file_size_mb} Мб")
 
   
     # Отправка файлов с информацией пользователю и админам
