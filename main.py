@@ -39,51 +39,89 @@ logging.basicConfig(level=logging.INFO)
 # Словарь для хранения состояния пользователя
 user_state = {}
 
-async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
-    file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_private_messages.html', '_chat_messages.html', '_media_files.zip']
-    max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
-    now_utc = datetime.now(pytz.utc)
-    timezone = pytz.timezone('Europe/Moscow')
-    now_local = now_utc.astimezone(timezone)
-    now = now_local.strftime("%Y-%m-%d %H:%M:%S")
-    user_id=user_chat_id
-    user_name = ALLOWED_USERS[user_id]
-    max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
-  
-    if user_state.get(user_id, {}).get('selection') and user_state.get(user_id, {}).get('type'):
-      selection = user_state[user_id]['selection']
-      type = user_state[user_id]['type']
-      user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}). Режим: ({type}/{selection})"
+# Функция для отображения клавиатуры
+async def show_keyboard(message: Message):
+    keyboard = AiogramInlineKeyboardMarkup(row_width=1)
+    buttons = [
+        AiogramInlineKeyboardButton(text="Отчет без медиа", callback_data='withoutall'),
+        AiogramInlineKeyboardButton(text="Отчет с фото", callback_data='with_photos'),
+        AiogramInlineKeyboardButton(text="Отчет с фото + скачивание всех медиа", callback_data='get_media')
+    ]
+    keyboard.add(*buttons)
+    await message.answer("Выберите вариант загрузки", reply_markup=keyboard)
+
+
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Обработчики кнопок!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+    user_id = message.from_user.id
+    if user_id in allowed_users:
+        user_state[user_id] = {
+            'connected': False,
+            'type': "",
+            'selection':""
+        }
+        await message.answer("Введите номер телефона")
+        now_utc = datetime.now(pytz.utc)
+        timezone = pytz.timezone('Europe/Moscow')
+        now_local = now_utc.astimezone(timezone)
+        now = now_local.strftime("%Y-%m-%d %H:%M:%S")
+        user_name = ALLOWED_USERS[user_id]
+        user_info_message = f"Авторизованный пользователь: ({user_name}, id: {user_id}) запустил бота.\nДата и время запуска: {now}"
+        for admin_chat_id in admin_chat_ids:
+            await bot.send_message(admin_chat_id, user_info_message)
     else:
-      user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}):"
+        await unauthorized(message)
 
-    # Отправка сообщения с информацией о пользователе админам
-    for admin_chat_id in admin_chat_ids:
-        await bot.send_message(admin_chat_id, user_info_message)
 
-    # Отправка файлов с информацией пользователю и админам
-    for file_extension in file_extensions:
-        files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
-    
-        for file_to_send in files_to_send:
-            send_successful = True  # Переменная для отслеживания успешной отправки
-            for chat_id in [user_chat_id] + admin_chat_ids:
-                try:
-                    if os.path.getsize(file_to_send) <= max_file_size:  # Проверка размера файла
-                        with open(file_to_send, "rb") as file:
-                            await bot.send_document(chat_id, file)
-                    else:
-                        await bot.send_message(chat_id, f"Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить")
-                        send_successful = False
-                        break  # Прерываем отправку в текущий чат, так как файл слишком большой
-                except Exception as e:
-                    print(f"Ошибка при отправке файла {file_to_send} в чат {chat_id}: {e}")
-                    send_successful = False
-                    break  # Прерываем отправку в текущий чат из-за ошибки
-        
-            #if send_successful:
-                #os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
+@dp.message_handler(commands=['analytic'])
+async def analytic_command(message: types.Message):
+    user_id = message.from_user.id
+    if user_id not in user_state:
+        user_state[user_id] = {}     
+    user_state[user_id]['type'] = '' #обнуляем, чтобы после аналитики не реагировала на цифры
+    if user_id in user_state and user_state[user_id].get('connected'):
+        logging.info(f"User {user_id} is connected. Starting analysis.")
+        phone_number = user_state[user_id]['phone_number']
+        client = user_state[user_id]['client']
+        try:
+            await message.answer("Начинаю анализ данных...")
+            await process_user_data(client, phone_number, user_id)
+        except Exception as e:
+            logging.error(f"Error during analysis for user {user_id}: {e}")
+            await message.answer(f"Произошла ошибка при анализе: {e}")
+    else:
+        logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
+        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+
+
+@dp.message_handler(commands=['private'])
+async def select_mode_of_download(message: types.Message):
+    user_id = message.from_user.id
+    if user_id in user_state and user_state[user_id].get('connected'):
+        await show_keyboard(message)
+        user_state[user_id]['type'] = 'private'
+        user_state[user_id]['selection']=''
+    else:
+        logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
+        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
       
+
+@dp.message_handler(commands=['exit'])
+async def say_by(message: types.Message):
+    user_id = message.from_user.id
+    if 'client' in user_state.get(user_id, {}):
+      client = user_state[user_id]['client']
+      await client.log_out()
+      await client.disconnect()
+      user_state.pop(message.from_user.id, None)
+      await message.answer("Вы разлогинились.")
+    else:
+      await message.answer("Не требуется. Вы не подключены.")
+
+
 # Обработчики колбэков для запуска нужных функций
 #@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
 @dp.callback_query_handler(lambda query: bool(user_state.get(query.from_user.id, {}).get('type'))) #Перехват, когда список не пустой
@@ -162,98 +200,6 @@ async def unauthorized(message: types.Message):
     user_info_message=f'Попытка запуска бота НЕАВТОРИЗОВАННЫМ пользователем ID:{user_id}.\nДата и время запуска: {now}'
     for admin_chat_id in admin_chat_ids:
             await bot.send_message(admin_chat_id, user_info_message)
-
-
-@dp.message_handler(commands=['start'])
-async def send_welcome(message: types.Message):
-    user_id = message.from_user.id
-    if user_id in allowed_users:
-        user_state[user_id] = {
-            'connected': False,
-            'type': "",
-            'selection':""
-        }
-      
-        await message.answer("Введите номер телефона")
-        now_utc = datetime.now(pytz.utc)
-        timezone = pytz.timezone('Europe/Moscow')
-        now_local = now_utc.astimezone(timezone)
-        now = now_local.strftime("%Y-%m-%d %H:%M:%S")
-        user_name = ALLOWED_USERS[user_id]
-        user_info_message = f"Авторизованный пользователь: ({user_name}, id: {user_id}) запустил бота.\nДата и время запуска: {now}"
-        for admin_chat_id in admin_chat_ids:
-            await bot.send_message(admin_chat_id, user_info_message)
-    else:
-        await unauthorized(message)
-
-@dp.message_handler(commands=['exit'])
-async def say_by(message: types.Message):
-    user_id = message.from_user.id
-    if 'client' in user_state.get(user_id, {}):
-      client = user_state[user_id]['client']
-      await client.log_out()
-      await client.disconnect()
-      user_state.pop(message.from_user.id, None)
-      await message.answer("Вы разлогинились.")
-    else:
-      await message.answer("Не требуется. Вы не подключены.")
-
-
-# Добавляем обработчик команды /analytic
-@dp.message_handler(commands=['analytic'])
-async def analytic_command(message: types.Message):
-    user_id = message.from_user.id
-  
-    # Проверяем и инициализируем состояние пользователя, если оно отсутствует
-    if user_id not in user_state:
-        user_state[user_id] = {}
-      
-    user_state[user_id]['type'] = '' #обнуляем, чтобы после аналитики не реагировала на цифры!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-    if user_id in user_state and user_state[user_id].get('connected'):
-        logging.info(f"User {user_id} is connected. Starting analysis.")
-        phone_number = user_state[user_id]['phone_number']
-        client = user_state[user_id]['client']
-        try:
-            await message.answer("Начинаю анализ данных...")
-            await process_user_data(client, phone_number, user_id)
-        except Exception as e:
-            logging.error(f"Error during analysis for user {user_id}: {e}")
-            await message.answer(f"Произошла ошибка при анализе: {e}")
-    else:
-        logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
-        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
-
-
-# Функция для отображения клавиатуры
-async def show_keyboard(message: Message):
-    keyboard = AiogramInlineKeyboardMarkup(row_width=1)
-    buttons = [
-        AiogramInlineKeyboardButton(text="Отчет без медиа", callback_data='withoutall'),
-        AiogramInlineKeyboardButton(text="Отчет с фото", callback_data='with_photos'),
-        AiogramInlineKeyboardButton(text="Отчет с фото + скачивание всех медиа", callback_data='get_media')
-    ]
-    keyboard.add(*buttons)
-    await message.answer("Выберите вариант загрузки", reply_markup=keyboard)
-
-# Добавляем обработчик команды /private
-@dp.message_handler(commands=['private'])
-async def select_mode_of_download(message: types.Message):
-    user_id = message.from_user.id
-    if user_id in user_state and user_state[user_id].get('connected'):
-        await show_keyboard(message)
-        user_state[user_id]['type'] = 'private'
-        user_state[user_id]['selection']=''
-    else:
-        logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
-        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
-
-
-
-                                          
-
-
-
-
 
 
 #Введен номер
@@ -380,7 +326,7 @@ async def get_and_send_contacts(client, phone_number, user_id):
   selection = '0'
   needsavecontacts = '1'
   userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number, selection)
-  total_contacts, total_contacts_with_phone, total_mutual_contacts = await get_and_save_contacts(client, phone_number, userid, userinfo, firstname, lastname, username)
+  total_contacts, total_contacts_with_phone, total_mutual_contacts = await get_and_save_contacts(client, phone_number, userid, userinfo, firstname, lastname, username, needsavecontacts)
   await send_files_to_bot(bot, admin_chat_ids, user_id)
   
 # Функция для обработки данных пользователя
@@ -400,6 +346,50 @@ async def process_user_data(client, phone_number, user_id):
     except Exception as e:
         logging.error(f"Error processing user data: {e}")
 
+async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
+    file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_private_messages.html', '_chat_messages.html', '_media_files.zip']
+    max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
+    now_utc = datetime.now(pytz.utc)
+    timezone = pytz.timezone('Europe/Moscow')
+    now_local = now_utc.astimezone(timezone)
+    now = now_local.strftime("%Y-%m-%d %H:%M:%S")
+    user_id=user_chat_id
+    user_name = ALLOWED_USERS[user_id]
+    max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
+  
+    if user_state.get(user_id, {}).get('selection') and user_state.get(user_id, {}).get('type'):
+      selection = user_state[user_id]['selection']
+      type = user_state[user_id]['type']
+      user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}). Режим: ({type}/{selection})"
+    else:
+      user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}):"
+
+    # Отправка сообщения с информацией о пользователе админам
+    for admin_chat_id in admin_chat_ids:
+        await bot.send_message(admin_chat_id, user_info_message)
+
+    # Отправка файлов с информацией пользователю и админам
+    for file_extension in file_extensions:
+        files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
+    
+        for file_to_send in files_to_send:
+            send_successful = True  # Переменная для отслеживания успешной отправки
+            for chat_id in [user_chat_id] + admin_chat_ids:
+                try:
+                    if os.path.getsize(file_to_send) <= max_file_size:  # Проверка размера файла
+                        with open(file_to_send, "rb") as file:
+                            await bot.send_document(chat_id, file)
+                    else:
+                        await bot.send_message(chat_id, f"Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить")
+                        send_successful = False
+                        break  # Прерываем отправку в текущий чат, так как файл слишком большой
+                except Exception as e:
+                    print(f"Ошибка при отправке файла {file_to_send} в чат {chat_id}: {e}")
+                    send_successful = False
+                    break  # Прерываем отправку в текущий чат из-за ошибки
+        
+            #if send_successful:
+                #os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
 
 # Запуск бота
 if __name__ == '__main__':
