@@ -476,7 +476,6 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
             if send_successful:
                 # Копируем файл в папку /root/files_from_svarog на хост-машине перед удалением
                 backup_folder_on_host = '/root/test-svarog/target'  # Укажите здесь путь к папке на хост-машине
-                await copy_files_to_backup_folder(file_path, backup_folder_on_host, user_chat_id)
                 os.remove(file_path)  # Удаляем файл только если он был успешно отправлен всем из списка
                 files_sent.pop(file_to_send, None)  # Удаляем файл из словаря после успешной отправки
             else:
