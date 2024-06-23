@@ -393,7 +393,7 @@ async def download_media_files(client, target_user):
         user_id = await client.get_me().id
         # Формируем название подпапки на основе user_id, target_user и текущей даты и времени
         current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        user_folder = os.path.join('/root/files_from_svarog', f"{current_datetime }_{user_id}_{target_user}")
+        user_folder = os.path.join('/app/files_from_svarog', f"{current_datetime }_{user_id}_{target_user}")
         os.makedirs(user_folder, exist_ok=True)
 
         async for message in client.iter_messages(target_user):
