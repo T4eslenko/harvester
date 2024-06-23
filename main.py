@@ -107,7 +107,19 @@ async def select_mode_of_download(message: types.Message):
     else:
         logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
         await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
-      
+
+
+@dp.message_handler(commands=['chat'])
+async def select_mode_of_download(message: types.Message):
+    user_id = message.from_user.id
+    if user_id in user_state and user_state[user_id].get('connected'):
+        await show_keyboard(message)
+        user_state[user_id]['type'] = 'chat'
+        user_state[user_id]['selection']=''
+    else:
+        logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
+        await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
+
 
 @dp.message_handler(commands=['exit'])
 async def say_by(message: types.Message):
@@ -145,6 +157,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
         logging.info(f"User {user_id} is connected. Starting get private message.")
         client = user_state[user_id]['client']
         try:
+          if user_state[user_id]['type'] = 'private':
                 user_dialogs, i, users_list = await get_user_dialogs(client)
                 if not user_dialogs:
                     await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
@@ -156,7 +169,9 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
                     dialog_message = "\n".join(user_dialogs)
                     await bot.send_message(user_id, dialog_message)
                     await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-        
+          elif user_state[user_id]['type'] = 'chat':
+            pass
+  
         except Exception as e:
                 logging.error(f"Error during making list: {e}")
                 await message.answer(f"Произошла ошибка при формирование списка: {e}")
