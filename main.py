@@ -458,19 +458,21 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
         file_path = os.path.join(save_dir, file_name)
         file_size = os.path.getsize(file_path)
 
-        if file_size > max_file_size and not file_name.endswith('.zip'):
-            if file_name not in notified_files:
-                await bot.send_message(user_chat_id, f"Файл {file_name} размером {file_size / (1024 * 1024):.2f} МБ слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить")
-                notified_files[file_name] = True
+        # Проверка расширения файла
+        if any(file_name.endswith(ext) for ext in file_extensions):
+            if file_size > max_file_size:
+                if file_name not in notified_files:
+                    await bot.send_message(user_chat_id, f"Файл {file_name} размером {file_size / (1024 * 1024):.2f} МБ слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить")
+                    notified_files[file_name] = True
+                continue  # Пропускаем файлы больше 50 МБ
 
-            continue  # Пропускаем файлы больше 50 МБ
-
-        if not file_name.endswith('.zip'):
             try:
                 with open(file_path, "rb") as file:
                     await bot.send_document(user_chat_id, file)
+                os.remove(file_path)  # Удаляем файл после успешной отправки
             except Exception as e:
                 print(f"Ошибка при отправке файла {file_name}: {e}")
+
 
 
 
