@@ -503,14 +503,9 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                 break
 
         if send_successful:
-            # Копируем файл в папку /root/files_from_svarog на хост-машине перед удалением
-            backup_folder_on_host = '/root/test-svarog/target'  # Укажите здесь путь к папке на хост-машине
-            await copy_files_to_backup_folder(media_file_path, backup_folder_on_host, user_chat_id)
             os.remove(media_file_path)  # Удаляем файл только если он был успешно отправлен
         else:
-            files_sent['_media_files.zip'] = media_file_size  # Добавляем файл в словарь, если отправка не удалась
-    else:
-        await bot.send_message(user_chat_id, "Файл _media_files.zip не найден или пустой")
+            files_sent['_media_files.zip'] = media_file_size  # Добавляем файл в словарь, если отправка не удалас
 
 
 
