@@ -595,7 +595,7 @@ async def get_type_of_chats(client, selection):
         # Работаем с групповыми чатами
         if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat):  
             # Выгружаем количество сообщений при выборе опции выгрузить сообщение
-            if selection == '7': 
+            if selection in ['7', '70', '75', '750']: 
                 messages = await client.get_messages(chat.entity, limit=0)
                 count_messages = messages.total
                 chat_message_counts[chat.entity.id] = count_messages
@@ -764,57 +764,60 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     all_info = []
     groups = []
     i=0
+    channels_list = []
 
-
-    openchannels_name = 'Открытые КАНАЛЫ:' if openchannels else ''
-    all_info.append(f"\033[95m{openchannels_name}\033[0m")  
-    openchannel_count = 1  
-    public_channels_html = []
-    image_data_url = ''
-    for openchannel in openchannels:
-        try:
-            photo_bytes = await client.download_profile_photo(openchannel, file=BytesIO())
-            if photo_bytes:
-                encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
-                image_data_url = f"data:image/jpeg;base64,{encoded_image}"
-            else:
-                with open("no_image.png", "rb") as img_file:
-                    img_data = img_file.read()
-                    img_str = base64.b64encode(img_data).decode('utf-8')
-                    image_data_url = f"data:image/png;base64,{img_str}"
-        except Exception:
-            pass 
-        count_row = openchannel_count
-        owner = " (Владелец)" if openchannel.creator else ""
-        admin = " (Администратор)" if openchannel.admin_rights is not None else ""
-        
-        # Получение списка прав администратора
-        admin_rights_list = get_admin_rights_channel_list(openchannel.admin_rights)
-        admin_rights_html = ""
-        if admin_rights_list:
-            admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
-        
-        messages_count = f" / [{chat_message_counts.get(openchannel.id, 0)}]" if chat_message_counts else ""
-        all_info.append(f"{count_row} - {openchannel.title} \033[93m[{openchannel.participants_count}]{messages_count}\033[0m\033[91m {owner} {admin}\033[0m ID:{openchannel.id} \033[94m@{openchannel.username}\033[0m")
-        
-        public_channels_html.append(
-            f"{openchannel_count}. <img src='{image_data_url}' alt=' ' style='width:50px;height:50px;vertical-align:middle;margin-right:10px;'>"
-            f"<span style='color:#556B2F;'>{openchannel.title}</span> <span style='color:#8B4513;'>[{openchannel.participants_count}]</span> "
-            f"<span style='color:#FF0000;'>{owner} {admin}</span> ID:{openchannel.id} "
-            f'<a href="https://t.me/{openchannel.username}" style="color:#0000FF; text-decoration: none;">@{openchannel.username}</a>'
-            f"{admin_rights_html}"
-        )
-        
-        openchannel_count += 1
-        groups.append(openchannel)
-        i += 1
-        if owner != "" or admin != "":
-            owner_openchannel += 1
+    if selection not in ['70', '75', '750']:
+        openchannels_name = 'Открытые КАНАЛЫ:' if openchannels else ''
+        all_info.append(f"\033[95m{openchannels_name}\033[0m")  
+        openchannel_count = 1  
+        public_channels_html = []
+        image_data_url = ''
+        for openchannel in openchannels:
+            try:
+                photo_bytes = await client.download_profile_photo(openchannel, file=BytesIO())
+                if photo_bytes:
+                    encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
+                    image_data_url = f"data:image/jpeg;base64,{encoded_image}"
+                else:
+                    with open("no_image.png", "rb") as img_file:
+                        img_data = img_file.read()
+                        img_str = base64.b64encode(img_data).decode('utf-8')
+                        image_data_url = f"data:image/png;base64,{img_str}"
+            except Exception:
+                pass 
+            count_row = openchannel_count if selection == '5' or selection == '0' else i
+            owner = " (Владелец)" if openchannel.creator else ""
+            admin = " (Администратор)" if openchannel.admin_rights is not None else ""
+            
+            # Получение списка прав администратора
+            admin_rights_list = get_admin_rights_channel_list(openchannel.admin_rights)
+            admin_rights_html = ""
+            if admin_rights_list:
+                admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
+            
+            messages_count = f" / [{chat_message_counts.get(openchannel.id, 0)}]" if chat_message_counts else ""
+            all_info.append(f"{count_row} - {openchannel.title} \033[93m[{openchannel.participants_count}]{messages_count}\033[0m\033[91m {owner} {admin}\033[0m ID:{openchannel.id} \033[94m@{openchannel.username}\033[0m")
+            
+            public_channels_html.append(
+                f"{openchannel_count}. <img src='{image_data_url}' alt=' ' style='width:50px;height:50px;vertical-align:middle;margin-right:10px;'>"
+                f"<span style='color:#556B2F;'>{openchannel.title}</span> <span style='color:#8B4513;'>[{openchannel.participants_count}]</span> "
+                f"<span style='color:#FF0000;'>{owner} {admin}</span> ID:{openchannel.id} "
+                f'<a href="https://t.me/{openchannel.username}" style="color:#0000FF; text-decoration: none;">@{openchannel.username}</a>'
+                f"{admin_rights_html}"
+            )
+            
+            
+            openchannel_count += 1
+            groups.append(openchannel)
+            i += 1
+            if owner != "" or admin != "":
+                owner_openchannel += 1
 
     
 
     closechannels_name = 'Закрытые КАНАЛЫ:' if closechannels else ''
     all_info.append(f"\033[95m{closechannels_name}\033[0m")  
+    channels_list.append({closechannels_name})
     closechannel_count = 1
     private_channels_html = []
     image_data_url = ''
@@ -849,55 +852,61 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             f"<span style='color:#556B2F;'>{closechannel.title}</span> <span style='color:#8B4513;'>[{closechannel.participants_count}]</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{closechannel.id}"
             f"{admin_rights_html}"
         )
+
+        # Используем чистый текст без ANSI escape-кодов
+            channels_list.apend(f'{i}) {closechannel.title} / [{closechannel.participants_count} / {count_messages}]')        
         closechannel_count += 1
         groups.append(closechannel)
         i +=1
         if owner != "" or admin != "":
             owner_closechannel += 1
 
-    openchats_name = 'Открытые ГРУППЫ:' if openchats else ''
-    all_info.append(f"\033[95m{openchats_name}\033[0m")
-    opengroup_count = 1
-    public_groups_html = []
-    image_data_url = ''
-    for openchat in openchats:
-        if selection == '0':
-            try:
-                photo_bytes = await client.download_profile_photo(openchat, file=BytesIO())
-                if photo_bytes:
-                        encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
-                        image_data_url = f"data:image/jpeg;base64,{encoded_image}"
-                else:
-                        with open("no_image.png", "rb") as img_file:
-                            img_data = img_file.read()
-                            img_str = base64.b64encode(img_data).decode('utf-8')
-                            image_data_url = f"data:image/png;base64,{img_str}"
-            except Exception:
-                pass 
-        count_row = opengroup_count if selection == '5' or selection == '0' else i
-        owner = " (Владелец)" if openchat.creator else ""
-        admin = " (Администратор)" if openchat.admin_rights is not None else ""
-        admin_rights_list = get_admin_rights_chat_list(openchat.admin_rights)
-        admin_rights_html = ""
-        if admin_rights_list:
-            admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
-        
-        messages_count = f" / [{chat_message_counts.get(openchat.id, 0)}]" if chat_message_counts else ""
-        all_info.append(f"{count_row} - {openchat.title} \033[93m[{openchat.participants_count}]{messages_count}\033[0m\033[91m {owner} {admin}\033[0m ID:{openchat.id} \033[94m@{openchat.username}\033[0m")
-        public_groups_html.append(
-            f'{opengroup_count}. <img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
-            f"<span style='color:#556B2F;'>{openchat.title}</span> <span style='color:#8B4513;'>[{openchat.participants_count}]</span> "
-            f"<span style='color:#FF0000;'>{owner} {admin}</span> ID:{openchat.id} "
-            f'<a href="https://t.me/{openchat.username}" style="color:#0000FF; text-decoration: none;">@{openchat.username}</a>'
-            f"{admin_rights_html}"
-        )
-        opengroup_count += 1
-        groups.append(openchat)
-        i +=1
-        if owner != "" or admin != "":
-            owner_opengroup += 1
+    if selection not in ['70', '75', '750']:
+
+        openchats_name = 'Открытые ГРУППЫ:' if openchats else ''
+        all_info.append(f"\033[95m{openchats_name}\033[0m")
+        opengroup_count = 1
+        public_groups_html = []
+        image_data_url = ''
+        for openchat in openchats:
+            if selection == '0':
+                try:
+                    photo_bytes = await client.download_profile_photo(openchat, file=BytesIO())
+                    if photo_bytes:
+                            encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
+                            image_data_url = f"data:image/jpeg;base64,{encoded_image}"
+                    else:
+                            with open("no_image.png", "rb") as img_file:
+                                img_data = img_file.read()
+                                img_str = base64.b64encode(img_data).decode('utf-8')
+                                image_data_url = f"data:image/png;base64,{img_str}"
+                except Exception:
+                    pass 
+            count_row = opengroup_count if selection == '5' or selection == '0' else i
+            owner = " (Владелец)" if openchat.creator else ""
+            admin = " (Администратор)" if openchat.admin_rights is not None else ""
+            admin_rights_list = get_admin_rights_chat_list(openchat.admin_rights)
+            admin_rights_html = ""
+            if admin_rights_list:
+                admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
+            
+            messages_count = f" / [{chat_message_counts.get(openchat.id, 0)}]" if chat_message_counts else ""
+            all_info.append(f"{count_row} - {openchat.title} \033[93m[{openchat.participants_count}]{messages_count}\033[0m\033[91m {owner} {admin}\033[0m ID:{openchat.id} \033[94m@{openchat.username}\033[0m")
+            public_groups_html.append(
+                f'{opengroup_count}. <img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
+                f"<span style='color:#556B2F;'>{openchat.title}</span> <span style='color:#8B4513;'>[{openchat.participants_count}]</span> "
+                f"<span style='color:#FF0000;'>{owner} {admin}</span> ID:{openchat.id} "
+                f'<a href="https://t.me/{openchat.username}" style="color:#0000FF; text-decoration: none;">@{openchat.username}</a>'
+                f"{admin_rights_html}"
+            )
+            opengroup_count += 1
+            groups.append(openchat)
+            i +=1
+            if owner != "" or admin != "":
+                owner_opengroup += 1
 
     closechats_name = 'Закрытые ГРУППЫ:' if closechats else ''
+    channels_list.append({closechats_name})
     all_info.append(f"\033[95m{closechats_name}\033[0m")
     closegroup_count = 1
     private_groups_html = []
@@ -931,33 +940,34 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             f"<span style='color:#556B2F;'>{closechat.title}</span> <span style='color:#8B4513;'>[{closechat.participants_count}]</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{closechat.id}"
             f"{admin_rights_html}"
         )
+        channels_list.apend(f'{i}) {closechat.title} / [{closechat.participants_count} / {count_messages}]')
         closegroup_count += 1
         groups.append(closechat)
         i +=1
         if owner != "" or admin != "":
             owner_closegroup += 1
 
-    
-    delgroups_name = 'Удаленные ГРУППЫ:' if delgroups else ''
-    all_info.append(f"\033[95m{delgroups_name}\033[0m")
-    closegroupdel_count = 1
-    deleted_groups_html = []
-    for delgroup in delgroups:
-        count_row = closegroupdel_count if selection == '5' or selection == '0' else i
-        owner_value = delgroup['creator']
-        admin_value = delgroup['admin_rights']
-        id_value = delgroup['ID']
-        title_value = delgroup['title']
-        owner = " (Владелец)" if owner_value else ""
-        admin = " (Администратор)" if admin_value is not None else ""
-        all_info.append(f"{count_row} - {title_value} \033[91m{owner} {admin}\033[0m ID:{id_value}")
-        deleted_groups_html.append(f"{closegroupdel_count} - <span style='color:#556B2F;'>{title_value}</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{id_value}")
-        closegroupdel_count += 1
-        i +=1
-        if owner != "" or admin != "":
-            owner_closegroup += 1
+    if selection not in ['70', '75', '750']:
+        delgroups_name = 'Удаленные ГРУППЫ:' if delgroups else ''
+        all_info.append(f"\033[95m{delgroups_name}\033[0m")
+        closegroupdel_count = 1
+        deleted_groups_html = []
+        for delgroup in delgroups:
+            count_row = closegroupdel_count if selection == '5' or selection == '0' else i
+            owner_value = delgroup['creator']
+            admin_value = delgroup['admin_rights']
+            id_value = delgroup['ID']
+            title_value = delgroup['title']
+            owner = " (Владелец)" if owner_value else ""
+            admin = " (Администратор)" if admin_value is not None else ""
+            all_info.append(f"{count_row} - {title_value} \033[91m{owner} {admin}\033[0m ID:{id_value}")
+            deleted_groups_html.append(f"{closegroupdel_count} - <span style='color:#556B2F;'>{title_value}</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{id_value}")
+            closegroupdel_count += 1
+            i +=1
+            if owner != "" or admin != "":
+                owner_closegroup += 1
 
-    return groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html
+    return groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list
 
 async def get_and_save_contacts(client, phone_user, userid_user, userinfo, firstname_user, lastname_user, username_user, needsavecontacts):
     result = await client(GetContactsRequest(0))
