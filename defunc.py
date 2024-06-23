@@ -966,7 +966,7 @@ async def get_and_save_contacts(client, phone_user, userid_user, userinfo, first
     total_contacts_with_phone = sum(bool(getattr(contact, 'phone', None)) for contact in contacts)
     total_mutual_contacts = sum(bool(getattr(contact, 'mutual_contact', None)) for contact in contacts)
 
-        if needsavecontacts == '1':
+    if needsavecontacts == '1':
         # Сохраняем информацию о контактах
         new_phone_user = phone_user[1:]  # "1234567890"
         contacts_file_name = f'{phone_user}_contacts.xlsx'
