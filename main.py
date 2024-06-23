@@ -150,7 +150,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
                 selection_alias = 'Отчет с фото'
         elif code == 'get_media':
                 selection = '450'
-                selection_alias = 'Отчет с фото + скачивание всех медиа в zip'
+                selection_alias = 'Отчет с фото + скачивание всех медиа'
         user_state[user_id]['selection'] = selection
         await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
         logging.info(f"User {user_id} is connected. Starting get private message.")
@@ -179,7 +179,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
                 selection_alias = 'Отчет с фото'
         elif code == 'get_media':
                 selection = '750'
-                selection_alias = 'Отчет с фото + скачивание всех медиа в zip'
+                selection_alias = 'Отчет с фото + скачивание всех медиа'
         user_state[user_id]['selection'] = selection
         await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
         logging.info(f"User {user_id} is connected. Starting get private message.")
