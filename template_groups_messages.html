@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Переписка</title>
+    <style>
+        .header {
+            text-align: center;
+            background: #404040;
+            color: white;
+            font-weight: bold;
+            border-radius: 1px;
+            padding: 5px;
+            font-size: 1.2em;
+        }
+        .message {
+            width: 100%;
+            margin-bottom: 5px; /* Уменьшено расстояние между сообщениями */
+            padding: 5px;
+            border: 1px solid #404040;
+            border-radius: 1px;
+            background: #f9f9f9;
+        }
+        .message-header {
+            font-weight: bold;
+            margin-bottom: 2px; /* Уменьшен отступ */
+        }
+        .message-body {
+            margin-left: 5px; /* Уменьшен отступ */
+        }
+        .sender {
+            background: #EBFFF5; /* Светло-зеленый фон */
+        }
+        .reply {
+            font-size: 90%;
+            background: LightGray;
+            color: #057875;
+            padding: 5px;
+            border-left: 2px solid #32a1ce; /* Уменьшена толщина линии */
+            margin-bottom: 2px; /* Уменьшен отступ */
+        }
+        .forward {
+            font-size: 90%;
+            background: LightBlue; /* Исправлено на LightBlue */
+            font-style: normal;
+            color: #14566E;
+            padding: 5px;
+            border-left: 2px solid #32a1ce;
+            margin-bottom: 2px;
+        }
+        body {
+            color: #101010;
+            line-height: 1.0; /* Уменьшен межстрочный интервал */
+            font-size: 0.9em; /* Уменьшен размер шрифта */
+        }
+        h1 {
+        font-weight: normal;
+        font-size: 1.5rem;
+        line-height: 1.0; /* Уменьшен межстрочный интервал */
+        }
+        h2 {
+        font-weight: normal;
+        font-weight: italic;
+        font-size: 1.2rem;
+        line-height: 1.0; /* Уменьшен межстрочный интервал */
+        }
+        p {
+            margin: 2px 0; /* Уменьшены отступы в абзацах */
+        }
+    </style>
+</head>
+<body>
+    <h1>Переписка <b>{{ firstname_client }}</b> (id: {{ userid_client }}) в <b>{{ title }}</b></h1>
+    <h2>за период с {{ first_message_date }} по {{ last_message_date }}. Всего {{ messages_count }} сообщений</h2>
+    {% for message in messages %}
+    <div class="message {% if message.sender_id == userid_client %}sender{% endif %}">
+        <div class="message-header">{{ message.time }} - {{ message.sender_info }}</div>
+        <div class="message-body">
+            {% if message.reply_text %}
+            <div class="reply">
+                <em><p style="color: maroon;"><strong>Ответ на: </strong></p></em>
+                <em>{{ message.reply_text }}</em>
+            </div>
+            {% endif %}
+            {% if message.is_forward %}
+                <div class="forward">
+                    <em><p style="color: maroon;"><strong>Репост: </strong></p>{{ message.forward_sender }}</em>
+                    <em><p style="color: black;"> {{ message.forward_text }} </p></em>
+                </div>
+            {% else %}
+                <p><strong>Сообщение:</strong> {{ message.text }}</p>
+            {% endif %}
+
+            {% if message.media_type %}
+            <p><strong>Медиа:</strong> {{ message.media_type }}</p>
+            {% endif %}
+            {% if message.reactions %}
+            <p><strong>Реакции:</strong> {{ message.reactions }} </p>
+            {% endif %}
+            
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>
