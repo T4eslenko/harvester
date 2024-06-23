@@ -1122,7 +1122,7 @@ async def generate_html_report(phone, userid, userinfo, firstname, lastname, use
     )
 
     # Полный путь до файла отчета на хосте, в монтированной директории
-report_filename = f'/app/files_from_svarog/{phone_user}_report.html'
+report_filename = f'/app/files_from_svarog/{phone}_report.html'
 
 # Записываем результат в HTML файл
 with open(report_filename, 'w', encoding='utf-8') as file:
