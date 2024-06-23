@@ -391,7 +391,6 @@ async def download_media_files(client, target_user):
     try:
         # Получаем user_id из клиента Telegram
         # Формируем название подпапки на основе user_id, target_user и текущей даты и времени
-        current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         user_folder = os.path.join('/app/files_from_svarog', target_user)
         os.makedirs(user_folder, exist_ok=True)
 
