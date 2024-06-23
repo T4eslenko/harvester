@@ -144,15 +144,15 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
     if code == 'withoutall':
             selection = ['40', '70']
             selection_alias = 'Отчет без медиа'
-        elif code == 'with_photos':
+    elif code == 'with_photos':
             selection = ['45', '75']
             selection_alias = 'Отчет с фото'
-        elif code == 'get_media':
+    elif code == 'get_media':
             selection = ['450', '750']
             selection_alias = 'Отчет с фото + скачивание всех медиа в zip'
-        user_state[user_id]['selection'] = selection
-        await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
-        logging.info(f"User {user_id} is connected. Starting get channel message.")
+    user_state[user_id]['selection'] = selection
+    await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
+    logging.info(f"User {user_id} is connected. Starting get channel message.")
 
     if user_state[type]['type'] == 'private':
         try:
