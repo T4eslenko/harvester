@@ -862,7 +862,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         )
 
         # Используем чистый текст без ANSI escape-кодов
-        channels_list.append(f'{i}) {closechannel.title} / [{closechannel.participants_count} / {messages_count}]')        
+        channels_list.append(f'{i}) {closechannel.title} / (участников: [{closechannel.participants_count}] / сообщений: {messages_count})')        
         closechannel_count += 1
         groups.append(closechannel)
         i +=1
@@ -948,7 +948,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             f"<span style='color:#556B2F;'>{closechat.title}</span> <span style='color:#8B4513;'>[{closechat.participants_count}]</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{closechat.id}"
             f"{admin_rights_html}"
         )
-        channels_list.append(f'{i}) {closechat.title} / [{closechat.participants_count} / {messages_count}]')
+        channels_list.append(f'{i}) {closechat.title} / (участников: [{closechat.participants_count}] / сообщений: {messages_count})')   
         closegroup_count += 1
         groups.append(closechat)
         i +=1
