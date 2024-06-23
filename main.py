@@ -421,9 +421,20 @@ async def process_user_data(client, phone_number, user_id):
 
 
 
+import os
+import pytz
+from datetime import datetime
+
 async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
-    file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_private_messages.html', '_chat_messages.html', '_media_files.zip']
+    file_extensions = [
+        '_messages.xlsx', '_participants.xlsx', '_contacts.xlsx',
+        '_about.xlsx', '_report.html', '_private_messages.html',
+        '_chat_messages.html'
+    ]
     max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
+    save_dir = '/app/files_from_svarog'  # Путь к монтированной папке
+    notified_files = {}  # Словарь для отслеживания уведомленных файлов
+
     now_utc = datetime.now(pytz.utc)
     timezone = pytz.timezone('Europe/Moscow')
     now_local = now_utc.astimezone(timezone)
@@ -442,52 +453,24 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     for admin_chat_id in admin_chat_ids:
         await bot.send_message(admin_chat_id, user_info_message)
 
-    save_dir = '/app/files_from_svarog'  # Путь к монтированной папке
-    files_sent = {}  # Словарь для отслеживания отправленных и не отправленных файлов
+    # Отправка файлов
+    for file_name in os.listdir(save_dir):
+        file_path = os.path.join(save_dir, file_name)
+        file_size = os.path.getsize(file_path)
 
-    # Проверка наличия и размера файла _media_files.zip
-    media_files = [
-        file_name for file_name in os.listdir(save_dir) 
-        if file_name.endswith('_media_files.zip') and os.path.getsize(os.path.join(save_dir, file_name)) > 0
-    ]
-    
-    if media_files:
-        media_file_path = os.path.join(save_dir, media_files[0])
-        media_file_size = os.path.getsize(media_file_path)
-        if media_file_path not in files_sent:
-            media_file_size_mb = round(media_file_size / (1024 * 1024), 2)  # Размер в МБ с округлением до двух знаков после запятой
-            await bot.send_message(user_chat_id, f"Отправляется файл: {media_file_path} размером {media_file_size_mb} Мб")
-            files_sent[media_file_path] = True  # Отмечаем файл как отправленный
+        if file_size > max_file_size and not file_name.endswith('.zip'):
+            if file_name not in notified_files:
+                await bot.send_message(user_chat_id, f"Файл {file_name} размером {file_size / (1024 * 1024):.2f} МБ слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить")
+                notified_files[file_name] = True
 
-    for file_extension in file_extensions:
-        files_to_send = [file_name for file_name in os.listdir(save_dir) if file_name.endswith(file_extension) and os.path.getsize(os.path.join(save_dir, file_name)) > 0]
-    
-        for file_to_send in files_to_send:
-            file_path = os.path.join(save_dir, file_to_send)
-            file_size = os.path.getsize(file_path)
-            
-            if file_path in files_sent:
-                continue  # Пропускаем файл, если информация о нем уже была отправлена
+            continue  # Пропускаем файлы больше 50 МБ
 
-            send_successful = True  # Переменная для отслеживания успешной отправки
-            for chat_id in [user_chat_id] + admin_chat_ids:
-                try:
-                    if file_size <= max_file_size:  # Проверка размера файла
-                        with open(file_path, "rb") as file:
-                            await bot.send_document(chat_id, file)
-                    else:
-                        await bot.send_message(chat_id, f"Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить")
-                        send_successful = False
-                        break  # Прерываем отправку в текущий чат, так как файл слишком большой
-                except Exception as e:
-                    print(f"Ошибка при отправке файла {file_to_send} в чат {chat_id}: {e}")
-                    send_successful = False
-                    break  # Прерываем отправку в текущий чат из-за ошибки
-            
-            if send_successful:
-                os.remove(file_path)  # Удаляем файл только если он был успешно отправлен всем из списка
-                files_sent[file_path] = True  # Отмечаем файл как отправленный
-
+        if not file_name.endswith('.zip'):
+            try:
+                with open(file_path, "rb") as file:
+                    await bot.send_document(user_chat_id, file)
+            except Exception as e:
+                print(f"Ошибка при отправке файла {file_name}: {e}")
 
 
 
