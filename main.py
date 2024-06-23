@@ -154,9 +154,8 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
     await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
     logging.info(f"User {user_id} is connected. Starting get channel message.")
 
-    if user_state[type]['type'] == 'private':
+    if user_state[user_id]['type'] == 'private':
         try:
-            if user_state[user_id]['type'] == 'private':
                     user_dialogs, i, users_list = await get_user_dialogs(client)
                     if not user_dialogs:
                         await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
@@ -172,9 +171,8 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
                     logging.error(f"Error during making list: {e}")
                     await bot.send_message(user_id, f"Произошла ошибка при формирование списка  личных сообщений: {e}")
 
-    elif user_state[type]['type'] == 'chat':
+    elif user_state[user_id]['type'] == 'chat':
         try:
-            if user_state[user_id]['type'] == 'chat':
                 delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted = await get_type_of_chats(client, selection)
                 groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
                 if not channels_list:
