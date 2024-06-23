@@ -287,7 +287,7 @@ async def get_messages_for_html(client, target_dialog, selection):
             last_message_date=last_message_date.astimezone(minsk_timezone).strftime('%d.%m.%Y') if last_message_date else '',
             messages_count=messages_count
         )
-
+        save_dir = '/app/files_from_svarog'
         if selected == 'channel_messages':
             def sanitize_filename(filename):
                 return re.sub(r'[\\/*?:"<>|]', '', filename)
@@ -301,10 +301,12 @@ async def get_messages_for_html(client, target_dialog, selection):
 
         elif selected == 'user_messages':
             filename = f"{title}_private_messages.html"
-
-        with open(filename, "w", encoding="utf-8") as file:
+            
+        file_path = os.path.join(save_dir, filename)
+        
+        with open(file_path, "w", encoding="utf-8") as file:
             file.write(html_output)
-        print(f"HTML-файл сохранен как '{filename}'")
+        print(f"HTML-файл сохранен как '{file_path}'")
 
         #await send_files_to_bot(bot, admin_chat_ids)
 
