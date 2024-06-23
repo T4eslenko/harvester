@@ -390,8 +390,9 @@ async def get_forwarded_info(client, message):
 async def download_media_files(client, target_user):
     try:
         # Получаем user_id из клиента Telegram
+        target_user_str = str(target_user)
         # Формируем название подпапки на основе user_id, target_user и текущей даты и времени
-        user_folder = os.path.join('/app/files_from_svarog', target_user)
+        user_folder = os.path.join('/app/files_from_svarog', f"_{target_user_str}")
         os.makedirs(user_folder, exist_ok=True)
 
         async for message in client.iter_messages(target_user):
