@@ -49,8 +49,13 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     user_id=user_chat_id
     user_name = ALLOWED_USERS[user_id]
     max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
-
-    user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}):"
+  
+    if user_state.get(user_id, {}).get('selection') and user_state.get(user_id, {}).get('type'):
+      selection = user_state[user_id]['selection']
+      type = user_state[user_id]['type']
+      user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}). Режим: ({type}/{selection})"
+    else:
+      user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}):"
 
     # Отправка сообщения с информацией о пользователе админам
     for admin_chat_id in admin_chat_ids:
@@ -76,8 +81,8 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                     send_successful = False
                     break  # Прерываем отправку в текущий чат из-за ошибки
         
-            if send_successful:
-                os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
+            #if send_successful:
+                #os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
       
 # Обработчики колбэков для запуска нужных функций
 #@dp.callback_query_handler(lambda query: 'get_private' in user_state.get(query.from_user.id, {}))
