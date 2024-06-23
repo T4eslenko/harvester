@@ -861,7 +861,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         )
 
         # Используем чистый текст без ANSI escape-кодов
-        channels_list.append(f'{i}) {closechannel.title} / (участников: [{closechannel.participants_count}] / сообщений: {messages_count})')        
+        channels_list.append(f'{i}) {closechannel.title} / (участников: [{closechannel.participants_count}] {messages_count} сообщений)')        
         closechannel_count += 1
         groups.append(closechannel)
         i +=1
