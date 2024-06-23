@@ -157,7 +157,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
         logging.info(f"User {user_id} is connected. Starting get private message.")
         client = user_state[user_id]['client']
         try:
-          #if 'private' in user_state.get(user_id, {}):
+          
           if user_state[user_id]['type'] == 'private':
                 user_dialogs, i, users_list = await get_user_dialogs(client)
                 if not user_dialogs:
@@ -170,9 +170,22 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
                     dialog_message = "\n".join(user_dialogs)
                     await bot.send_message(user_id, dialog_message)
                     await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-          #elif 'chat' in user_state.get(user_id, {}):
+          
           elif user_state[user_id]['type'] == 'chat':
-            pass
+            delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted = await get_type_of_chats(client, selection)
+            groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
+            if not user_dialogs:
+                    await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
+                    return
+                else:
+                    # Сохраняем user_id и users_list в user_state для дальнейшего использования
+                    user_state[user_id]['users_list'] = users_list
+                    user_state[user_id]['dialogs_count'] = i        
+                    dialog_message = "\n".join(channels_list)
+                    await bot.send_message(user_id, dialog_message)
+                    await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
+            
+            
   
         except Exception as e:
                 logging.error(f"Error during making list: {e}")
