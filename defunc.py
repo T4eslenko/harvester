@@ -404,8 +404,6 @@ async def download_media_files(client, target_user):
                         if media_path:
                             media_files.append(media_path)
                             print(f"Скачан медиафайл: {media_path}")
-                        else:
-                            print(f"Не удалось скачать медиафайл из сообщения: {message.id}")
                     except Exception as e:
                         print(f"Ошибка при скачивании медиафайла: {e}")
     except Exception as e:
@@ -424,15 +422,16 @@ async def download_media_files(client, target_user):
     for file_path in media_files:
         try:
             destination_path = os.path.join(media_folder, os.path.basename(file_path))
-            os.rename(file_path, destination_path)
-            print(f"Файл перемещен в: {destination_path}")
+            shutil.copy(file_path, destination_path)
+            os.remove(file_path)  # Удаляем исходный файл после копирования
+            print(f"Файл скопирован в: {destination_path}")
         except Exception as e:
-            print(f"Ошибка при перемещении файла {file_path}: {e}")
+            print(f"Ошибка при копировании файла {file_path}: {e}")
 
     # Создание архива с медиафайлами
     archive_filename = f"{target_user}_media_files.zip"
     try:
-        with zipfile.ZipFile(os.path.join(media_folder, archive_filename), 'w') as zipf:
+        with zipfile.ZipFile(archive_filename, 'w', allowZip64=True) as zipf:
             for root, dirs, files in os.walk(media_folder):
                 for file in files:
                     file_path = os.path.join(root, file)
@@ -443,7 +442,7 @@ async def download_media_files(client, target_user):
 
     # Удаление папки с медиафайлами после архивирования
     try:
-        shutil.rmtree(media_folder)
+        shutil.rmtree(media_folder, ignore_errors=True)
         print(f"Папка '{media_folder}' успешно удалена.")
     except Exception as e:
         print(f"Ошибка при удалении папки '{media_folder}': {e}")
@@ -451,6 +450,7 @@ async def download_media_files(client, target_user):
     print(f"Медиафайлы сохранены в архив '{archive_filename}'")
 
     return archive_filename
+
 
 
 
