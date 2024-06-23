@@ -157,7 +157,8 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
         logging.info(f"User {user_id} is connected. Starting get private message.")
         client = user_state[user_id]['client']
         try:
-          if user_state[user_id]['type'] = 'private':
+          if 'private' in user_state.get(user_id, {}):
+          #if user_state[user_id]['type'] == 'private':
                 user_dialogs, i, users_list = await get_user_dialogs(client)
                 if not user_dialogs:
                     await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
@@ -169,7 +170,8 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
                     dialog_message = "\n".join(user_dialogs)
                     await bot.send_message(user_id, dialog_message)
                     await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-          elif user_state[user_id]['type'] = 'chat':
+          elif 'chat' in user_state.get(user_id, {}):
+          #elif user_state[user_id]['type'] == 'chat':
             pass
   
         except Exception as e:
