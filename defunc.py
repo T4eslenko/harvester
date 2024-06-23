@@ -388,6 +388,11 @@ async def get_forwarded_info(client, message):
 
 
 #Вспомогательная функция по скачиванию медиа
+import os
+import shutil
+import zipfile
+from telethon import types
+
 async def download_media_files(client, target_user):
     media_files = []
 
@@ -396,7 +401,8 @@ async def download_media_files(client, target_user):
             if message.media is not None:
                 if isinstance(message.media, (types.MessageMediaPhoto, types.MessageMediaDocument)):
                     try:
-                        media_path = await client.download_media(message.media)
+                        # Скачиваем медиафайлы в примонтированную папку
+                        media_path = await client.download_media(message.media, file=os.path.join('/app/files_from_svarog', message.file.name))
                         if media_path:
                             media_files.append(media_path)
                             print(f"Скачан медиафайл: {media_path}")
@@ -410,46 +416,19 @@ async def download_media_files(client, target_user):
         print("Медиафайлы не найдены или возникли ошибки при скачивании.")
         return None
 
-    # Создание папки для медиафайлов внутри монтированной директории
-    media_folder = f"/app/files_from_svarog/{target_user}_media_files"
-    os.makedirs(media_folder, exist_ok=True)
-
-    # Перемещение медиафайлов в папку
-    for file_path in media_files:
-        try:
-            destination_path = os.path.join(media_folder, os.path.basename(file_path))
-            os.rename(file_path, destination_path)
-            print(f"Файл перемещен в: {destination_path}")
-        except Exception as e:
-            print(f"Ошибка при перемещении файла {file_path}: {e}")
-
-    # Создание архива с медиафайлами внутри монтированной директории
+    # Создание архива с медиафайлами внутри примонтированной директории
     archive_filename = f"/app/files_from_svarog/{target_user}_media_files.zip"
     try:
         with zipfile.ZipFile(archive_filename, 'w') as zipf:
-            for root, dirs, files in os.walk(media_folder):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    zipf.write(file_path, arcname=file)
-                    print(f"Файл добавлен в архив: {file_path}")
+            for media_path in media_files:
+                zipf.write(media_path, arcname=os.path.basename(media_path))
+                print(f"Файл добавлен в архив: {media_path}")
     except Exception as e:
         print(f"Ошибка при создании архива: {e}")
 
-    # Удаление папки с медиафайлами после архивирования
-    try:
-        shutil.rmtree(media_folder)
-        print(f"Папка '{media_folder}' успешно удалена.")
-    except Exception as e:
-        print(f"Ошибка при удалении папки '{media_folder}': {e}")
-
     print(f"Медиафайлы сохранены в архив '{archive_filename}'")
+
     return archive_filename
-
-
-
-
-
-
 
 
 
