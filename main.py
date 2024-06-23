@@ -142,13 +142,13 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
     code = callback_query.data
     client = user_state[user_id]['client']
     if code == 'withoutall':
-            selection = ['40']
+            selection = '40'
             selection_alias = 'Отчет без медиа'
     elif code == 'with_photos':
-            selection = ['45']
+            selection = '45'
             selection_alias = 'Отчет с фото'
     elif code == 'get_media':
-            selection = ['450']
+            selection = '450'
             selection_alias = 'Отчет с фото + скачивание всех медиа в zip'
     user_state[user_id]['selection'] = selection
     await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
