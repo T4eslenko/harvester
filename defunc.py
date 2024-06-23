@@ -377,6 +377,7 @@ async def get_forwarded_info(client, message):
         return "Источник неизвестен"
 
 
+
 # Вспомогательная асинхронная функция по скачиванию медиа
 async def download_media_files(client, target_user):
     media_files = []
