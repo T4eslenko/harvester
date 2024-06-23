@@ -959,50 +959,50 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
 
     return groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html
 
-async def get_and_save_contacts(client, phone_user, userid_user, userinfo, firstname_user, lastname_user, username_user):
+async def get_and_save_contacts(client, phone_user, userid_user, userinfo, firstname_user, lastname_user, username_user, needsavecontacts):
     result = await client(GetContactsRequest(0))
     contacts = result.users
     total_contacts = len(contacts)
     total_contacts_with_phone = sum(bool(getattr(contact, 'phone', None)) for contact in contacts)
     total_mutual_contacts = sum(bool(getattr(contact, 'mutual_contact', None)) for contact in contacts)
 
+        if needsavecontacts == '1':
+        # Сохраняем информацию о контактах
+        new_phone_user = phone_user[1:]  # "1234567890"
+        contacts_file_name = f'{phone_user}_contacts.xlsx'
+        print(f"Контакты сохранены в файл {phone_user}_contacts.xlsx")
     
-    # Сохраняем информацию о контактах
-    new_phone_user = phone_user[1:]  # "1234567890"
-    contacts_file_name = f'{phone_user}_contacts.xlsx'
-    print(f"Контакты сохранены в файл {phone_user}_contacts.xlsx")
-
-    wb = openpyxl.Workbook()
-    sheet = wb.active
-    headers = ['ID контакта', 'First name контакта', 'Last name контакта', 'Username контакта', 'Телефон контакта', 'Взаимный контакт', 'Дата внесения в базу', 'First name объекта', 'Last name объекта', 'Username объекта', 'Телефон объекта', 'ID_объекта']
-    for col, header in enumerate(headers, start=1):
-        sheet.cell(row=1, column=col, value=header)
-        
-    row_num = 2
-    for contact in contacts:
-        if hasattr(contact, 'id'):
-            sheet.cell(row=row_num, column=1, value=contact.id)
-        if hasattr(contact, 'first_name'):
-            sheet.cell(row=row_num, column=2, value=contact.first_name)
-        if hasattr(contact, 'last_name'):
-            sheet.cell(row=row_num, column=3, value=contact.last_name)
-        if hasattr(contact, 'username') and contact.username is not None:
-            username_with_at = f"@{contact.username}"
-            sheet.cell(row=row_num, column=4, value=username_with_at)
-        if hasattr(contact, 'phone'):
-            sheet.cell(row=row_num, column=5, value=contact.phone)
-        if hasattr(contact, 'mutual_contact') and contact.mutual_contact:
-            sheet.cell(row=row_num, column=6, value='взаимный')
-        sheet.cell(row=row_num, column=7, value=datetime.now().strftime('%d.%m.%Y %H:%M:%S'))
-        sheet.cell(row=row_num, column=8, value=firstname_user)
-        sheet.cell(row=row_num, column=9, value=lastname_user)
-        sheet.cell(row=row_num, column=10, value=username_user)
-        sheet.cell(row=row_num, column=11, value=new_phone_user)
-        sheet.cell(row=row_num, column=12, value=userid_user)
-     
-        row_num += 1
-
-    wb.save(contacts_file_name)
+        wb = openpyxl.Workbook()
+        sheet = wb.active
+        headers = ['ID контакта', 'First name контакта', 'Last name контакта', 'Username контакта', 'Телефон контакта', 'Взаимный контакт', 'Дата внесения в базу', 'First name объекта', 'Last name объекта', 'Username объекта', 'Телефон объекта', 'ID_объекта']
+        for col, header in enumerate(headers, start=1):
+            sheet.cell(row=1, column=col, value=header)
+            
+        row_num = 2
+        for contact in contacts:
+            if hasattr(contact, 'id'):
+                sheet.cell(row=row_num, column=1, value=contact.id)
+            if hasattr(contact, 'first_name'):
+                sheet.cell(row=row_num, column=2, value=contact.first_name)
+            if hasattr(contact, 'last_name'):
+                sheet.cell(row=row_num, column=3, value=contact.last_name)
+            if hasattr(contact, 'username') and contact.username is not None:
+                username_with_at = f"@{contact.username}"
+                sheet.cell(row=row_num, column=4, value=username_with_at)
+            if hasattr(contact, 'phone'):
+                sheet.cell(row=row_num, column=5, value=contact.phone)
+            if hasattr(contact, 'mutual_contact') and contact.mutual_contact:
+                sheet.cell(row=row_num, column=6, value='взаимный')
+            sheet.cell(row=row_num, column=7, value=datetime.now().strftime('%d.%m.%Y %H:%M:%S'))
+            sheet.cell(row=row_num, column=8, value=firstname_user)
+            sheet.cell(row=row_num, column=9, value=lastname_user)
+            sheet.cell(row=row_num, column=10, value=username_user)
+            sheet.cell(row=row_num, column=11, value=new_phone_user)
+            sheet.cell(row=row_num, column=12, value=userid_user)
+         
+            row_num += 1
+    
+        wb.save(contacts_file_name)
     return total_contacts, total_contacts_with_phone, total_mutual_contacts
 
 async def save_about_channels(phone, userid, firstname, lastname, username, openchannel_count, opengroup_count, closechannel_count, closegroup_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, openchannels, closechannels, openchats, closechats, delgroups, closegroupdel_count):
