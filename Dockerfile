@@ -29,5 +29,10 @@ COPY . /app
 # Создаем папку /app/data и устанавливаем права доступа
 RUN mkdir -p /app/data && chown -R root:root /app/data && chmod -R 755 /app/data
 
-# Запускаем приложение при старте контейнера
+# Копируем скрипт entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Указываем entrypoint и команду для выполнения при запуске контейнера
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python3", "main.py"]
