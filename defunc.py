@@ -388,15 +388,20 @@ async def get_forwarded_info(client, message):
 
 #Вспомогательная функция по скачиванию медиа
 async def download_media_files(client, target_user):
-    mounted_folder = '/app/files_from_svarog'  # Укажите здесь путь к примонтированной папке
-
     try:
+        # Получаем user_id из клиента Telegram
+        user_id = await client.get_me().id
+        # Формируем название подпапки на основе user_id, target_user и текущей даты и времени
+        current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        user_folder = os.path.join('/root/files_from_svarog', f"{current_datetime }_{user_id}_{target_user}")
+        os.makedirs(user_folder, exist_ok=True)
+
         async for message in client.iter_messages(target_user):
             if message.media is not None:
                 if isinstance(message.media, (types.MessageMediaPhoto, types.MessageMediaDocument)):
                     try:
-                        # Скачивание медиафайла в примонтированную папку
-                        media_path = await client.download_media(message.media, file=mounted_folder)
+                        # Скачивание медиафайла в подпапку пользователя
+                        media_path = await client.download_media(message.media, file=user_folder)
 
                         if media_path:
                             print(f"Скачан медиафайл: {media_path}")
@@ -408,7 +413,6 @@ async def download_media_files(client, target_user):
 
     except Exception as e:
         print(f"Ошибка при получении сообщений: {e}")
-
 
 
 
