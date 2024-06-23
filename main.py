@@ -429,8 +429,8 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     now_local = now_utc.astimezone(timezone)
     now = now_local.strftime("%Y-%m-%d %H:%M:%S")
     user_id = user_chat_id
-    user_name = ALLOWED_USERS[user_id]
-  
+    user_name = ALLOWED_USERS.get(user_id, "Unknown User")
+
     if user_state.get(user_id, {}).get('selection') and user_state.get(user_id, {}).get('type'):
         selection = user_state[user_id]['selection']
         type = user_state[user_id]['type']
@@ -443,18 +443,16 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
         await bot.send_message(admin_chat_id, user_info_message)
 
     # Проверка наличия и размера файла _media_files.zip
-    media_file_path = None
-    media_file_size = None
-
     save_dir = '/app/files_from_svarog'  # Путь к монтированной папке
     files_sent = {}  # Словарь для отслеживания отправленных файлов
 
     for file_extension in file_extensions:
         files_to_send = [file_name for file_name in os.listdir(save_dir) if file_name.endswith(file_extension) and os.path.getsize(os.path.join(save_dir, file_name)) > 0]
-    
+
         for file_to_send in files_to_send:
             file_path = os.path.join(save_dir, file_to_send)
             file_size = os.path.getsize(file_path)
+
             if file_to_send in files_sent and files_sent[file_to_send] == file_size:
                 continue  # Пропускаем файл, если он уже был отправлен
 
@@ -472,14 +470,48 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                     print(f"Ошибка при отправке файла {file_to_send} в чат {chat_id}: {e}")
                     send_successful = False
                     break  # Прерываем отправку в текущий чат из-за ошибки
-        
+
             if send_successful:
                 # Копируем файл в папку /root/files_from_svarog на хост-машине перед удалением
                 backup_folder_on_host = '/root/test-svarog/target'  # Укажите здесь путь к папке на хост-машине
                 os.remove(file_path)  # Удаляем файл только если он был успешно отправлен всем из списка
-                files_sent.pop(file_to_send, None)  # Удаляем файл из словаря после успешной отправки
+                files_sent[file_to_send] = file_size  # Добавляем файл в словарь после успешной отправки
+
             else:
                 files_sent[file_to_send] = file_size  # Добавляем файл в словарь, если отправка не удалась
+
+    # Проверка и отправка информации о файле _media_files.zip
+    media_file_path = os.path.join(save_dir, '_media_files.zip')
+    if os.path.exists(media_file_path) and os.path.getsize(media_file_path) > 0:
+        media_file_size = os.path.getsize(media_file_path)
+        media_file_size_mb = round(media_file_size / (1024 * 1024), 2)
+        await bot.send_message(user_chat_id, f"Отправляется файл: {media_file_path} размером {media_file_size_mb} Мб")
+
+        send_successful = True
+        for chat_id in [user_chat_id] + admin_chat_ids:
+            try:
+                if media_file_size <= max_file_size:
+                    with open(media_file_path, "rb") as file:
+                        await bot.send_document(chat_id, file)
+                else:
+                    await bot.send_message(chat_id, f"Файл {media_file_path} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить")
+                    send_successful = False
+                    break
+            except Exception as e:
+                print(f"Ошибка при отправке файла {media_file_path} в чат {chat_id}: {e}")
+                send_successful = False
+                break
+
+        if send_successful:
+            # Копируем файл в папку /root/files_from_svarog на хост-машине перед удалением
+            backup_folder_on_host = '/root/test-svarog/target'  # Укажите здесь путь к папке на хост-машине
+            await copy_files_to_backup_folder(media_file_path, backup_folder_on_host, user_chat_id)
+            os.remove(media_file_path)  # Удаляем файл только если он был успешно отправлен
+        else:
+            files_sent['_media_files.zip'] = media_file_size  # Добавляем файл в словарь, если отправка не удалась
+    else:
+        await bot.send_message(user_chat_id, "Файл _media_files.zip не найден или пустой")
+
 
 
 
