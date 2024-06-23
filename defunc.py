@@ -765,7 +765,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     groups = []
     i=0
     channels_list = []
-    if selection not in ['40', '45', '450', '70', '75', '750']:
+    if selection in ['40', '45', '450', '70', '75', '750']:
         openchannel_count =0
         opengroup_count =0
         closegroupdel_count=0
