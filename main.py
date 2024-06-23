@@ -142,13 +142,13 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
     code = callback_query.data
     client = user_state[user_id]['client']
     if code == 'withoutall':
-            selection = ['40', '70']
+            selection = ['40']
             selection_alias = 'Отчет без медиа'
     elif code == 'with_photos':
-            selection = ['45', '75']
+            selection = ['45']
             selection_alias = 'Отчет с фото'
     elif code == 'get_media':
-            selection = ['450', '750']
+            selection = ['450']
             selection_alias = 'Отчет с фото + скачивание всех медиа в zip'
     user_state[user_id]['selection'] = selection
     await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
@@ -470,7 +470,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                 # Копируем файл в папку /root/files_from_svarog на хост-машине перед удалением
                 backup_folder_on_host = '/root/test-svarog/target'  # Укажите здесь путь к папке на хост-машине
                 await copy_files_to_backup_folder(file_to_send, backup_folder_on_host, user_chat_id)
-                #os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
+                os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
 
 # Запуск бота
 if __name__ == '__main__':
