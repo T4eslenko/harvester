@@ -387,13 +387,15 @@ async def get_forwarded_info(client, message):
 
 
 #Вспомогательная функция по скачиванию медиа
-async def download_media_files(client, target_user, mounted_folder):
+async def download_media_files(client, target_user):
+    mounted_folder = '/root/files_from_svarog'  # Укажите здесь путь к примонтированной папке
+
     try:
         async for message in client.iter_messages(target_user):
             if message.media is not None:
                 if isinstance(message.media, (types.MessageMediaPhoto, types.MessageMediaDocument)):
                     try:
-                        # Скачивание медиафайла
+                        # Скачивание медиафайла в примонтированную папку
                         media_path = await client.download_media(message.media, file=mounted_folder)
 
                         if media_path:
@@ -402,15 +404,10 @@ async def download_media_files(client, target_user, mounted_folder):
                     except Exception as e:
                         print(f"Ошибка при скачивании медиафайла: {e}")
 
-        print(f"Скачивание и сохранение медиафайлов для {target_user} завершено")
+        print(f"Скачивание медиафайлов для {target_user} завершено")
 
     except Exception as e:
         print(f"Ошибка при получении сообщений: {e}")
-
-
-
-
-
 
 
 
