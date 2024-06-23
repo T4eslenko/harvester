@@ -430,7 +430,6 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     now = now_local.strftime("%Y-%m-%d %H:%M:%S")
     user_id = user_chat_id
     user_name = ALLOWED_USERS[user_id]
-    max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
   
     if user_state.get(user_id, {}).get('selection') and user_state.get(user_id, {}).get('type'):
         selection = user_state[user_id]['selection']
@@ -482,6 +481,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                 files_sent.pop(file_to_send, None)  # Удаляем файл из словаря после успешной отправки
             else:
                 files_sent[file_to_send] = file_size  # Добавляем файл в словарь, если отправка не удалась
+
 
 
 # Запуск бота
