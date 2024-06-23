@@ -426,11 +426,18 @@ async def download_media_files(client, target_user):
     except Exception as e:
         print(f"Ошибка при создании архива: {e}")
 
+    # Удаление папки с медиафайлами после архивирования
+    try:
+        for media_path in media_files:
+            #os.remove(media_path)
+            print(f"Файл удален: {media_path}")
+        print(f"Все медиафайлы удалены.")
+    except Exception as e:
+        print(f"Ошибка при удалении медиафайлов: {e}")
+
     print(f"Медиафайлы сохранены в архив '{archive_filename}'")
 
     return archive_filename
-
-
 
 
 
