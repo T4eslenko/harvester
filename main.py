@@ -352,7 +352,7 @@ import shutil
 from datetime import datetime
 
 # Определяем функцию для копирования файлов в папку files_from_svarog
-def copy_files_to_backup_folder(file_to_copy, backup_folder):
+async def copy_files_to_backup_folder(file_to_copy, backup_folder, user_chat_id):
     # Создаем подпапку с именем текущей даты и user_id, если ее нет
     current_date = datetime.now().strftime('%d.%m.%Y')
     backup_subfolder = os.path.join(backup_folder, f'{current_date}_{user_chat_id}')
