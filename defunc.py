@@ -764,15 +764,14 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     all_info = []
     groups = []
     i=0
-    channels_list = []
-    openchannel_count =''
-    opengroup_count =''
-    closegroupdel_count=''
-    owner_openchannel=''
-    owner_opengroup=''
-    public_channels_html=[]
-    public_groups_html=[]
-    deleted_groups_html=[]
+    if selection not in ['40', '45', '450', '70', '75', '750']:
+        channels_list = []
+        openchannel_count =0
+        opengroup_count =0
+        closegroupdel_count=0
+        public_channels_html=[]
+        public_groups_html=[]
+        deleted_groups_html=[]
 
     if selection not in ['70', '75', '750']:
         openchannels_name = 'Открытые КАНАЛЫ:' if openchannels else ''
