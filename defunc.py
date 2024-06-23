@@ -101,15 +101,13 @@ async def get_messages_for_html(client, target_dialog, selection):
         return
 
     try:
-       # if selection in ['70', '75', '750']:  # если выгрузка из канала
-        if any(item in ['70', '75', '750'] for item in selection):
+        if selection in ['70', '75', '750']:  # если выгрузка из канала
             target_dialog_id = target_dialog.id
             title = target_dialog.title 
             
             selected = 'channel_messages'
             template_file = 'template_groups_messages.html'
-        #elif selection in ['40', '45', '450']:
-        elif any(item in ['40', '45', '450'] for item in selection):
+        elif selection in ['40', '45', '450']:
             target_dialog_id = target_dialog  # в этом случае target_dialog - это ид пользователя
             title = target_dialog_id
             # Информация о собеседнике
@@ -202,8 +200,7 @@ async def get_messages_for_html(client, target_dialog, selection):
             if message.media is not None:
                 try:
                     if isinstance(message.media, types.MessageMediaPhoto):
-                        #if selection in ['45', '450', '75', '750']:
-                        if any(item in ['45', '450', '75', '750'] for item in selection):
+                        if selection in ['45', '450', '75', '750']:
                             # Загрузка фото в формате base64
                             photo_bytes = await client.download_media(message.media.photo, file=BytesIO())
                             if photo_bytes:
@@ -314,8 +311,7 @@ async def get_messages_for_html(client, target_dialog, selection):
     except Exception as e:
         print(f"Ошибка при сохранении медиафайлов: {e}")
 
-    #if selection in ['450', '750']:
-    if any(item in ['450', '750'] for item in selection):
+    if selection in ['450', '750']:
         try:
             print()
             print("\033[35mСкачиваю медиа, завари кофе...\033[0m")
@@ -599,8 +595,7 @@ async def get_type_of_chats(client, selection):
         # Работаем с групповыми чатами
         if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat):  
             # Выгружаем количество сообщений при выборе опции выгрузить сообщение
-            #if selection in ['7', '70', '75', '750']: 
-            if any(item in ['7', '70', '75', '750'] for item in selection):
+            if selection in ['7', '70', '75', '750']: 
                 messages = await client.get_messages(chat.entity, limit=0)
                 count_messages = messages.total
                 chat_message_counts[chat.entity.id] = count_messages
