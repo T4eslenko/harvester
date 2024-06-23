@@ -387,8 +387,7 @@ async def get_forwarded_info(client, message):
         return "Источник неизвестен"
 
 
-
-# Вспомогательная асинхронная функция по скачиванию медиа
+#Вспомогательная функция по скачиванию медиа
 async def download_media_files(client, target_user):
     media_files = []
 
@@ -408,8 +407,8 @@ async def download_media_files(client, target_user):
 
     # Проверка скачанных медиафайлов
     if not media_files:
-        print("Медиафайлы не найдены.")
-        return
+        print("Медиафайлы не найдены или возникли ошибки при скачивании.")
+        return None
 
     # Создание папки для медиафайлов внутри монтированной директории
     media_folder = f"/app/files_from_svarog/{target_user}_media_files"
@@ -444,6 +443,8 @@ async def download_media_files(client, target_user):
         print(f"Ошибка при удалении папки '{media_folder}': {e}")
 
     print(f"Медиафайлы сохранены в архив '{archive_filename}'")
+    return archive_filename
+
 
 
 
