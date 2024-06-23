@@ -420,19 +420,6 @@ async def process_user_data(client, phone_number, user_id):
         logging.error(f"Error processing user data: {e}")
 
 
-import os
-import shutil
-from datetime import datetime
-
-# Определяем функцию для копирования файлов в папку files_from_svarog
-async def copy_files_to_backup_folder(file_to_copy, backup_folder, user_chat_id):
-    # Создаем подпапку с именем текущей даты и user_id, если ее нет
-    current_date = datetime.now().strftime('%d.%m.%Y')
-    backup_subfolder = os.path.join(backup_folder, f'{current_date}_{user_chat_id}')
-    os.makedirs(backup_subfolder, exist_ok=True)
-    
-    # Копируем файл в созданную подпапку
-    shutil.copy(file_to_copy, backup_subfolder)
 
 async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_private_messages.html', '_chat_messages.html', '_media_files.zip']
@@ -441,16 +428,16 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     timezone = pytz.timezone('Europe/Moscow')
     now_local = now_utc.astimezone(timezone)
     now = now_local.strftime("%Y-%m-%d %H:%M:%S")
-    user_id=user_chat_id
+    user_id = user_chat_id
     user_name = ALLOWED_USERS[user_id]
     max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
   
     if user_state.get(user_id, {}).get('selection') and user_state.get(user_id, {}).get('type'):
-      selection = user_state[user_id]['selection']
-      type = user_state[user_id]['type']
-      user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена ({user_name}, {user_id}). Режим: ({type}/{selection})"
+        selection = user_state[user_id]['selection']
+        type = user_state[user_id]['type']
+        user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена ({user_name}, {user_id}). Режим: ({type}/{selection})"
     else:
-      user_info_message = f"Дата и время выгрузки: {now} \nАнализ осуществлен ({user_name}, {user_id}):"
+        user_info_message = f"Дата и время выгрузки: {now} \nАнализ осуществлен ({user_name}, {user_id}):"
 
     # Отправка сообщения с информацией о пользователе админам
     for admin_chat_id in admin_chat_ids:
@@ -460,32 +447,23 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     media_file_path = None
     media_file_size = None
 
+    save_dir = '/app/files_from_svarog'  # Путь к монтированной папке
+    files_sent = {}  # Словарь для отслеживания отправленных файлов
+
     for file_extension in file_extensions:
-        if file_extension == '_media_files.zip':
-            media_files = [
-                file_name for file_name in os.listdir('.') 
-                if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0
-            ]
-            if media_files:
-                media_file_path = media_files[0]  # Берем первый файл, если найдено несколько
-                media_file_size = os.path.getsize(media_file_path)
-                media_file_size_mb = round(media_file_size / (1024 * 1024), 2)  # Размер в МБ с округлением до двух знаков после запятой
-
-
-                # Отправка сообщения пользователю о наличии файла и его размере
-                await bot.send_message(user_chat_id, f"Отправляется файл: {media_file_path} размером {media_file_size_mb} Мб")
-
-  
-    # Отправка файлов с информацией пользователю и админам
-    for file_extension in file_extensions:
-        files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
+        files_to_send = [file_name for file_name in os.listdir(save_dir) if file_name.endswith(file_extension) and os.path.getsize(os.path.join(save_dir, file_name)) > 0]
     
         for file_to_send in files_to_send:
+            file_path = os.path.join(save_dir, file_to_send)
+            file_size = os.path.getsize(file_path)
+            if file_to_send in files_sent and files_sent[file_to_send] == file_size:
+                continue  # Пропускаем файл, если он уже был отправлен
+
             send_successful = True  # Переменная для отслеживания успешной отправки
             for chat_id in [user_chat_id] + admin_chat_ids:
                 try:
-                    if os.path.getsize(file_to_send) <= max_file_size:  # Проверка размера файла
-                        with open(file_to_send, "rb") as file:
+                    if file_size <= max_file_size:  # Проверка размера файла
+                        with open(file_path, "rb") as file:
                             await bot.send_document(chat_id, file)
                     else:
                         await bot.send_message(chat_id, f"Файл {file_to_send} слишком большой и не будет отправлен. Обратитесь к администратору, чтобы его получить")
@@ -499,8 +477,12 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
             if send_successful:
                 # Копируем файл в папку /root/files_from_svarog на хост-машине перед удалением
                 backup_folder_on_host = '/root/test-svarog/target'  # Укажите здесь путь к папке на хост-машине
-                await copy_files_to_backup_folder(file_to_send, backup_folder_on_host, user_chat_id)
-                os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
+                await copy_files_to_backup_folder(file_path, backup_folder_on_host, user_chat_id)
+                os.remove(file_path)  # Удаляем файл только если он был успешно отправлен всем из списка
+                files_sent.pop(file_to_send, None)  # Удаляем файл из словаря после успешной отправки
+            else:
+                files_sent[file_to_send] = file_size  # Добавляем файл в словарь, если отправка не удалась
+
 
 # Запуск бота
 if __name__ == '__main__':
