@@ -27,11 +27,5 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Копируем исходный код в рабочую директорию контейнера
 COPY . /app
 
-# Создаем папку /app/data и устанавливаем права доступа
-RUN mkdir -p /app/data && chown -R root:root /app/data && chmod -R 755 /app/data
-
-# Создаем папку /app/files_from_svarog и устанавливаем права доступа
-RUN mkdir -p /app/files_from_svarog && chown -R root:root /app/files_from_svarog && chmod -R 755 /app/files_from_svarog
-
 # Указываем команду для выполнения при запуске контейнера
 CMD ["python3", "main.py"]
