@@ -346,6 +346,21 @@ async def process_user_data(client, phone_number, user_id):
     except Exception as e:
         logging.error(f"Error processing user data: {e}")
 
+
+import os
+import shutil
+from datetime import datetime
+
+# Определяем функцию для копирования файлов в папку files_from_svarog
+def copy_files_to_backup_folder(file_to_copy, backup_folder):
+    # Создаем подпапку с именем текущей даты и user_id, если ее нет
+    current_date = datetime.now().strftime('%d.%m.%Y')
+    backup_subfolder = os.path.join(backup_folder, f'{current_date}_{user_chat_id}')
+    os.makedirs(backup_subfolder, exist_ok=True)
+    
+    # Копируем файл в созданную подпапку
+    shutil.copy(file_to_copy, backup_subfolder)
+
 async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     file_extensions = ['_messages.xlsx', '_participants.xlsx', '_contacts.xlsx', '_about.xlsx', '_report.html', '_private_messages.html', '_chat_messages.html', '_media_files.zip']
     max_file_size = 49 * 1024 * 1024  # 49 MB в байтах
@@ -368,6 +383,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     for admin_chat_id in admin_chat_ids:
         await bot.send_message(admin_chat_id, user_info_message)
 
+  
     # Отправка файлов с информацией пользователю и админам
     for file_extension in file_extensions:
         files_to_send = [file_name for file_name in os.listdir('.') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
@@ -388,8 +404,10 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
                     send_successful = False
                     break  # Прерываем отправку в текущий чат из-за ошибки
         
-            #if send_successful:
-                #os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
+            if send_successful:
+                 # Копируем файл в папку files_from_svarog перед удалением
+                await copy_files_to_backup_folder(file_to_send, '/app/data')
+                os.remove(file_to_send)  # Удаляем файл только если он был успешно отправлен всем из списка
 
 # Запуск бота
 if __name__ == '__main__':
