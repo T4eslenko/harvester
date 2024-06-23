@@ -411,73 +411,39 @@ async def download_media_files(client, target_user):
 
     # Проверка скачанных медиафайлов
     if not media_files:
-        print("Медиафайлы не найдены или возникли ошибки при скачивании.")
-        return None
+        print("Медиафайлы не найдены.")
+        return
 
-    # Создание папки для медиафайлов внутри примонтированной директории
-    media_folder = '/app/files_from_svarog'
+    # Получение user_id из клиента Telethon
+    user_id = None
+    try:
+        me = await client.get_me()
+        user_id = me.id
+    except Exception as e:
+        print(f"Ошибка при получении user_id из клиента: {e}")
+
+    if not user_id:
+        print("Не удалось получить user_id из клиента.")
+        return
+
+    # Создание папки для медиафайлов, если она не существует
+    media_folder = f"{user_id}_{target_user}_media_files"
     os.makedirs(media_folder, exist_ok=True)
 
     # Перемещение медиафайлов в папку
-import os
-import shutil
-import zipfile
-from telethon import types
-
-async def download_media_files(client, target_user):
-    media_files = []
-
-    try:
-        async for message in client.iter_messages(target_user):
-            if message.media is not None:
-                if isinstance(message.media, (types.MessageMediaPhoto, types.MessageMediaDocument)):
-                    try:
-                        media_path = await client.download_media(message.media)
-                        if media_path:
-                            media_files.append(media_path)
-                            print(f"Скачан медиафайл: {media_path}")
-                    except Exception as e:
-                        print(f"Ошибка при скачивании медиафайла: {e}")
-    except Exception as e:
-        print(f"Ошибка при получении сообщений: {e}")
-
-    # Проверка скачанных медиафайлов
-    if not media_files:
-        print("Медиафайлы не найдены или возникли ошибки при скачивании.")
-        return None
-
-    # Создание папки для медиафайлов внутри временной директории
-    temp_media_folder = '/tmp/media_files'
-    os.makedirs(temp_media_folder, exist_ok=True)
-
-    # Перемещение медиафайлов во временную папку
     for file_path in media_files:
         try:
-            destination_path = os.path.join(temp_media_folder, os.path.basename(file_path))
-            shutil.move(file_path, destination_path)
-            print(f"Файл перемещен во временную папку: {destination_path}")
+            destination_path = os.path.join(media_folder, os.path.basename(file_path))
+            os.rename(file_path, destination_path)
+            print(f"Файл перемещен в: {destination_path}")
         except Exception as e:
             print(f"Ошибка при перемещении файла {file_path}: {e}")
 
-    # Создание папки для медиафайлов внутри примонтированной директории
-    mounted_media_folder = '/app/files_from_svarog'
-    os.makedirs(mounted_media_folder, exist_ok=True)
-
-    # Копирование медиафайлов из временной папки в примонтированную
-    for root, dirs, files in os.walk(temp_media_folder):
-        for file in files:
-            file_path = os.path.join(root, file)
-            try:
-                shutil.copy(file_path, mounted_media_folder)
-                print(f"Файл скопирован в примонтированную папку: {file_path}")
-            except Exception as e:
-                print(f"Ошибка при копировании файла {file_path}: {e}")
-
-    # Создание архива с медиафайлами в примонтированной директории
-    archive_filename = f"{target_user}_media_files.zip"
+    # Создание архива с медиафайлами
+    archive_filename = f"{user_id}_{target_user}_media_files.zip"
     try:
-        with zipfile.ZipFile(os.path.join(mounted_media_folder, archive_filename), 'w', allowZip64=True) as zipf:
-            for root, dirs, files in os.walk(mounted_media_folder):
+        with zipfile.ZipFile(archive_filename, 'w') as zipf:
+            for root, dirs, files in os.walk(media_folder):
                 for file in files:
                     file_path = os.path.join(root, file)
                     zipf.write(file_path, arcname=file)
@@ -485,16 +451,23 @@ async def download_media_files(client, target_user):
     except Exception as e:
         print(f"Ошибка при создании архива: {e}")
 
-    # Удаление временной папки с медиафайлами
+    # Папка с медиафайлами уже не нужна, удаляем ее
     try:
-        shutil.rmtree(temp_media_folder, ignore_errors=True)
-        print(f"Временная папка '{temp_media_folder}' успешно удалена.")
+        shutil.rmtree(media_folder)
+        print(f"Папка '{media_folder}' успешно удалена.")
     except Exception as e:
-        print(f"Ошибка при удалении временной папки '{temp_media_folder}': {e}")
+        print(f"Ошибка при удалении папки '{media_folder}': {e}")
+
+    # Перемещение архива в примонтированную папку
+    mounted_folder = "/path/to/root/files_from_svarog"
+    try:
+        shutil.move(archive_filename, os.path.join(mounted_folder, os.path.basename(archive_filename)))
+        print(f"Архив успешно перемещен в примонтированную папку: {mounted_folder}")
+    except Exception as e:
+        print(f"Ошибка при перемещении архива: {e}")
 
     print(f"Медиафайлы сохранены в архив '{archive_filename}'")
 
-    return archive_filename
 
 
 
