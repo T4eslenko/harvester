@@ -179,7 +179,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
                     return
                 else:
                     # Сохраняем user_id и users_list в user_state для дальнейшего использования
-                    user_state[user_id]['users_list'] = channels_list
+                    user_state[user_id]['users_list'] = groups
                     user_state[user_id]['dialogs_count'] = i        
                     dialog_message = "\n".join(channels_list)
                     await bot.send_message(user_id, dialog_message)
@@ -216,6 +216,38 @@ async def get_private_message_from_list(message: types.Message):
               await message.answer(f"Введите число от 0 до {i-1}, соотвествующее номеру диалога.")
         except ValueError:
             await message.answer("Введите число, соотвествующее диалогу.")
+
+
+
+
+# Обработчик выбора списка приватного диалого для выгрузки, если chat равно True
+@dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('type') == 'chat' and
+                                  message.text.isdigit() and 1 <= len(message.text) <= 4)
+async def get_private_message_from_list(message: types.Message):
+    user_id = message.from_user.id
+    
+    client = user_state[user_id]['client']
+    users_list = user_state[user_id]['users_list']
+    i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
+    g_index = int(message.text.strip()) 
+    if user_id in user_state and 'selection' in user_state[user_id]:
+        selection = user_state[user_id]['selection']
+        try:
+            if 0 <= g_index < i:
+                target_group = users_list[g_index]
+                await message.answer(f"начинаю выгрузку чата под номеом: {g_index}. Дождись сообщение о завершении")
+                await get_messages_for_html(client, target_group, selection)
+                await message.answer("Выгрузка завершена. Отправляю файлы")
+                await send_files_to_bot(bot, admin_chat_ids, user_id)
+            else:
+              await message.answer(f"Введите число от 0 до {i-1}, соотвествующее номеру диалога.")
+        except ValueError:
+            await message.answer("Введите число, соотвествующее диалогу.")
+
+
+
+
+
 
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
