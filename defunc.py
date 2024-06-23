@@ -288,9 +288,6 @@ async def get_messages_for_html(client, target_dialog, selection):
             messages_count=messages_count
         )
 
-        # Путь к монтированной папке
-        save_dir = '/app/files_from_svarog'
-
         if selected == 'channel_messages':
             def sanitize_filename(filename):
                 return re.sub(r'[\\/*?:"<>|]', '', filename)
@@ -305,12 +302,23 @@ async def get_messages_for_html(client, target_dialog, selection):
         elif selected == 'user_messages':
             filename = f"{title}_private_messages.html"
 
-        file_path = os.path.join(save_dir, filename)
-        
-        with open(file_path, "w", encoding="utf-8") as file:
+        with open(filename, "w", encoding="utf-8") as file:
             file.write(html_output)
-        print(f"HTML-файл сохранен как '{file_path}'")
+        print(f"HTML-файл сохранен как '{filename}'")
 
+        #await send_files_to_bot(bot, admin_chat_ids)
+
+    except Exception as e:
+        print(f"Ошибка при сохранении медиафайлов: {e}")
+
+    if selection in ['450', '750']:
+        try:
+            print()
+            print("\033[35mСкачиваю медиа, завари кофе...\033[0m")
+            await download_media_files(client, target_dialog_id)
+            await send_files_to_bot(bot, admin_chat_ids)
+        except Exception as e:
+            print(f"Ошибка при скачивании медиафайлов: {e}")
 
 # Вспомогательная асинхронная функция
 async def get_forwarded_info(client, message):
