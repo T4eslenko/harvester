@@ -30,6 +30,9 @@ COPY . /app
 # Создаем папку /app/data и устанавливаем права доступа
 RUN mkdir -p /app/data && chown -R root:root /app/data && chmod -R 755 /app/data
 
+# Добавляем создание папки /app/files_from_svarog и устанавливаем права доступа
+RUN mkdir -p /app/files_from_svarog && chown -R root:root /app/files_from_svarog && chmod -R 755 /app/files_from_svarog
+
 # Копируем скрипт entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
