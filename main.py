@@ -448,13 +448,30 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     if user_state.get(user_id, {}).get('selection') and user_state.get(user_id, {}).get('type'):
       selection = user_state[user_id]['selection']
       type = user_state[user_id]['type']
-      user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}). Режим: ({type}/{selection})"
+      user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена ({user_name}, {user_id}). Режим: ({type}/{selection})"
     else:
-      user_info_message = f"Дата и время выгрузки: {now} \nВыгрузка осуществлена: ({user_name}, {user_id}):"
+      user_info_message = f"Дата и время выгрузки: {now} \nАнализ осуществлен ({user_name}, {user_id}):"
 
     # Отправка сообщения с информацией о пользователе админам
     for admin_chat_id in admin_chat_ids:
         await bot.send_message(admin_chat_id, user_info_message)
+
+    # Проверка наличия и размера файла _media_files.zip
+    media_file_path = None
+    media_file_size = None
+
+    for file_extension in file_extensions:
+        if file_extension == '_media_files.zip':
+            media_files = [
+                file_name for file_name in os.listdir('.') 
+                if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0
+            ]
+            if media_files:
+                media_file_path = media_files[0]  # Берем первый файл, если найдено несколько
+                media_file_size = os.path.getsize(media_file_path)
+
+                # Отправка сообщения пользователю о наличии файла и его размере
+                await bot.send_message(user_chat_id, f"Отправляется файл: {media_file_path} размером {media_file_size} байт")
 
   
     # Отправка файлов с информацией пользователю и админам
