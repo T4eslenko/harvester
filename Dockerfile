@@ -27,5 +27,8 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Копируем исходный код в рабочую директорию контейнера
 COPY . /app
 
+# Указываем папку, в которую будут сохраняться файлы на хост-машине
+ENV HOST_FILES_DIR /root/files_from_svarog
+
 # Указываем команду для выполнения при запуске контейнера
 CMD ["python3", "main.py"]
