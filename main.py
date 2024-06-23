@@ -367,7 +367,7 @@ async def process_password(message: types.Message):
             await client.connect()
             await client.sign_in(password=password)
             user_state[user_id]['connected'] = True  # Обновляем состояние
-            await message.answer("Подключено! Выбери в меню бота одну из опций")
+            await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
             phone_number = user_state[user_id]['phone_number']
             await get_and_send_contacts(client, phone_number, user_id)
         except PasswordHashInvalidError:
