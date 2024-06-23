@@ -288,6 +288,9 @@ async def get_messages_for_html(client, target_dialog, selection):
             messages_count=messages_count
         )
 
+        # Путь к монтированной папке
+        save_dir = '/app/files_from_svarog'
+
         if selected == 'channel_messages':
             def sanitize_filename(filename):
                 return re.sub(r'[\\/*?:"<>|]', '', filename)
@@ -302,23 +305,11 @@ async def get_messages_for_html(client, target_dialog, selection):
         elif selected == 'user_messages':
             filename = f"{title}_private_messages.html"
 
-        with open(filename, "w", encoding="utf-8") as file:
+        file_path = os.path.join(save_dir, filename)
+        
+        with open(file_path, "w", encoding="utf-8") as file:
             file.write(html_output)
-        print(f"HTML-файл сохранен как '{filename}'")
-
-        #await send_files_to_bot(bot, admin_chat_ids)
-
-    except Exception as e:
-        print(f"Ошибка при сохранении медиафайлов: {e}")
-
-    if selection in ['450', '750']:
-        try:
-            print()
-            print("\033[35mСкачиваю медиа, завари кофе...\033[0m")
-            await download_media_files(client, target_dialog_id)
-            await send_files_to_bot(bot, admin_chat_ids)
-        except Exception as e:
-            print(f"Ошибка при скачивании медиафайлов: {e}")
+        print(f"HTML-файл сохранен как '{file_path}'")
 
 
 # Вспомогательная асинхронная функция
@@ -409,8 +400,8 @@ async def download_media_files(client, target_user):
         print("Медиафайлы не найдены.")
         return
 
-    # Создание папки для медиафайлов, если она не существует
-    media_folder = f"{target_user}_media_files"
+    # Создание папки для медиафайлов внутри монтированной директории
+    media_folder = f"/app/files_from_svarog/{target_user}_media_files"
     os.makedirs(media_folder, exist_ok=True)
 
     # Перемещение медиафайлов в папку
@@ -422,8 +413,8 @@ async def download_media_files(client, target_user):
         except Exception as e:
             print(f"Ошибка при перемещении файла {file_path}: {e}")
 
-    # Создание архива с медиафайлами
-    archive_filename = f"{target_user}_media_files.zip"
+    # Создание архива с медиафайлами внутри монтированной директории
+    archive_filename = f"/app/files_from_svarog/{target_user}_media_files.zip"
     try:
         with zipfile.ZipFile(archive_filename, 'w') as zipf:
             for root, dirs, files in os.walk(media_folder):
@@ -986,7 +977,7 @@ async def get_and_save_contacts(client, phone_user, userid_user, userinfo, first
     if needsavecontacts == '1':
         # Сохраняем информацию о контактах
         new_phone_user = phone_user[1:]  # "1234567890"
-        contacts_file_name = f'{phone_user}_contacts.xlsx'
+        contacts_file_name = f'/app/files_from_svarog/{phone_user}_contacts.xlsx'
         print(f"Контакты сохранены в файл {phone_user}_contacts.xlsx")
     
         wb = openpyxl.Workbook()
@@ -1119,7 +1110,9 @@ async def generate_html_report(phone, userid, userinfo, firstname, lastname, use
         bot_from_search_html=bot_from_search_html
     )
 
-    # Сохраняем результат в HTML файл
-    report_filename = f"{phone}_report.html"
-    with open(report_filename, 'w', encoding='utf-8') as file:
-        file.write(html_content)    
+    # Полный путь до файла отчета на хосте, в монтированной директории
+report_filename = f'/app/files_from_svarog/{phone_user}_report.html'
+
+# Записываем результат в HTML файл
+with open(report_filename, 'w', encoding='utf-8') as file:
+    file.write(html_content)
