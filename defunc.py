@@ -387,90 +387,23 @@ async def get_forwarded_info(client, message):
 
 
 #Вспомогательная функция по скачиванию медиа
-import os
-import shutil
-import zipfile
-from telethon import types
+# Предположим, что target_user_id уже определен ранее
+media_folder = f"/app/files_from_svarog/{target_user_id}_media_files"
+os.makedirs(media_folder, exist_ok=True)
 
-async def download_media_files(client, target_user):
-    media_files = []
-
-    try:
-        async for message in client.iter_messages(target_user):
-            if message.media is not None:
-                if isinstance(message.media, (types.MessageMediaPhoto, types.MessageMediaDocument)):
-                    try:
-                        media_path = await client.download_media(message.media)
-                        if media_path:
-                            media_files.append(media_path)
-                            print(f"Скачан медиафайл: {media_path}")
-                    except Exception as e:
-                        print(f"Ошибка при скачивании медиафайла: {e}")
-    except Exception as e:
-        print(f"Ошибка при получении сообщений: {e}")
-
-    # Проверка скачанных медиафайлов
-    if not media_files:
-        print("Медиафайлы не найдены.")
-        return
-
-    # Получение user_id из клиента Telethon
-    user_id = None
-    try:
-        me = await client.get_me()
-        user_id = me.id
-    except Exception as e:
-        print(f"Ошибка при получении user_id из клиента: {e}")
-
-    if not user_id:
-        print("Не удалось получить user_id из клиента.")
-        return
-
-    # Создание папки для медиафайлов, если она не существует
-    media_folder = f"{user_id}_{target_user}_media_files"
-    os.makedirs(media_folder, exist_ok=True)
-
-    # Перемещение медиафайлов в папку
-    for file_path in media_files:
-        try:
-            destination_path = os.path.join(media_folder, os.path.basename(file_path))
-            os.rename(file_path, destination_path)
-            print(f"Файл перемещен в: {destination_path}")
-        except Exception as e:
-            print(f"Ошибка при перемещении файла {file_path}: {e}")
-
-    # Создание архива с медиафайлами
-    archive_filename = f"{user_id}_{target_user}_media_files.zip"
-    try:
-        with zipfile.ZipFile(archive_filename, 'w') as zipf:
-            for root, dirs, files in os.walk(media_folder):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    zipf.write(file_path, arcname=file)
-                    print(f"Файл добавлен в архив: {file_path}")
-    except Exception as e:
-        print(f"Ошибка при создании архива: {e}")
-
-    # Папка с медиафайлами уже не нужна, удаляем ее
-    try:
-        shutil.rmtree(media_folder)
-        print(f"Папка '{media_folder}' успешно удалена.")
-    except Exception as e:
-        print(f"Ошибка при удалении папки '{media_folder}': {e}")
-
-    # Перемещение архива в примонтированную папку
-    mounted_folder = "/root/files_from_svarog"
-    try:
-        # Проверяем наличие примонтированной папки и создаем ее, если она не существует
-        if not os.path.exists(mounted_folder):
-            os.makedirs(mounted_folder)
-
-        shutil.move(archive_filename, os.path.join(mounted_folder, os.path.basename(archive_filename)))
-        print(f"Архив успешно перемещен в примонтированную папку: {mounted_folder}")
-    except Exception as e:
-        print(f"Ошибка при перемещении архива: {e}")
-
-    print(f"Медиафайлы сохранены в архив '{archive_filename}'")
+try:
+    async for message in client.iter_messages(target_user):
+        if message.media is not None:
+            if isinstance(message.media, (types.MessageMediaPhoto, types.MessageMediaDocument)):
+                try:
+                    media_path = await client.download_media(message.media, file=media_folder)
+                    if media_path:
+                        media_files.append(media_path)
+                        print(f"Скачан медиафайл: {media_path}")
+                except Exception as e:
+                    print(f"Ошибка при скачивании медиафайла: {e}")
+except Exception as e:
+    print(f"Ошибка при получении сообщений: {e}")
 
 
 
