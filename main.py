@@ -141,20 +141,19 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
     user_id = callback_query.from_user.id
     code = callback_query.data
     client = user_state[user_id]['client']
-    if code == 'withoutall':
+    if user_state[user_id]['type'] == 'private':
+        if code == 'withoutall':
             selection = '40'
             selection_alias = 'Отчет без медиа'
-    elif code == 'with_photos':
-            selection = '45'
-            selection_alias = 'Отчет с фото'
-    elif code == 'get_media':
-            selection = '450'
-            selection_alias = 'Отчет с фото + скачивание всех медиа в zip'
-    user_state[user_id]['selection'] = selection
-    await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
-    logging.info(f"User {user_id} is connected. Starting get channel message.")
-
-    if user_state[user_id]['type'] == 'private':
+        elif code == 'with_photos':
+                selection = '45'
+                selection_alias = 'Отчет с фото'
+        elif code == 'get_media':
+                selection = '450'
+                selection_alias = 'Отчет с фото + скачивание всех медиа в zip'
+        user_state[user_id]['selection'] = selection
+        await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
+        logging.info(f"User {user_id} is connected. Starting get private message.")
         try:
                     user_dialogs, i, users_list = await get_user_dialogs(client)
                     if not user_dialogs:
@@ -172,6 +171,18 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
                     await bot.send_message(user_id, f"Произошла ошибка при формирование списка  личных сообщений: {e}")
 
     elif user_state[user_id]['type'] == 'chat':
+        if code == 'withoutall':
+            selection = '70'
+            selection_alias = 'Отчет без медиа'
+        elif code == 'with_photos':
+                selection = '75'
+                selection_alias = 'Отчет с фото'
+        elif code == 'get_media':
+                selection = '750'
+                selection_alias = 'Отчет с фото + скачивание всех медиа в zip'
+        user_state[user_id]['selection'] = selection
+        await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
+        logging.info(f"User {user_id} is connected. Starting get private message.")
         try:
                 delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted = await get_type_of_chats(client, selection)
                 groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
