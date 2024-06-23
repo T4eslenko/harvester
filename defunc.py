@@ -459,14 +459,19 @@ async def download_media_files(client, target_user):
         print(f"Ошибка при удалении папки '{media_folder}': {e}")
 
     # Перемещение архива в примонтированную папку
-    mounted_folder = "/path/to/root/files_from_svarog"
+    mounted_folder = "/root/files_from_svarog"
     try:
+        # Проверяем наличие примонтированной папки и создаем ее, если она не существует
+        if not os.path.exists(mounted_folder):
+            os.makedirs(mounted_folder)
+
         shutil.move(archive_filename, os.path.join(mounted_folder, os.path.basename(archive_filename)))
         print(f"Архив успешно перемещен в примонтированную папку: {mounted_folder}")
     except Exception as e:
         print(f"Ошибка при перемещении архива: {e}")
 
     print(f"Медиафайлы сохранены в архив '{archive_filename}'")
+
 
 
 
