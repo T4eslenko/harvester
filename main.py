@@ -222,7 +222,7 @@ async def get_private_message_from_list(message: types.Message):
                 await message.answer(f"начинаю выгрузку диалога под номеом: {g_index}. Дождись сообщение о завершении")
                 await get_messages_for_html(client, target_user, selection, user_id)
                 await message.answer("Выгрузка завершена. Отправляю файлы")
-                await send_files_to_bot(bot, admin_chat_ids, user_id)
+                await send_files_to_bot(bot, admin_chat_ids, user_id, parse_mode='Markdown')
             else:
               await message.answer(f"Введите число от 0 до {i-1}, соотвествующее номеру диалога.")
         except ValueError:
@@ -249,7 +249,7 @@ async def get_private_message_from_list(message: types.Message):
                 await message.answer(f"начинаю выгрузку чата под номеом: {g_index}. Дождись сообщение о завершении")
                 await get_messages_for_html(client, target_group, selection, user_id)
                 await message.answer("Выгрузка завершена. Отправляю файлы")
-                await send_files_to_bot(bot, admin_chat_ids, user_id)
+                await send_files_to_bot(bot, admin_chat_ids, user_id, parse_mode='Markdown')
             else:
               await message.answer(f"Введите число от 0 до {i-1}, соотвествующее номеру диалога.")
         except ValueError:
