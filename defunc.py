@@ -80,7 +80,7 @@ async def get_user_dialogs(client):
 
 
 # Выгрузка самих сообщений
-async def get_messages_for_html(client, target_dialog, selection, user_id):
+async def get_messages_for_html(client, target_dialog, selection, host_bot_id):
     minsk_timezone = timezone('Europe/Minsk')
     messages = []
     messages_count = 0
@@ -317,7 +317,7 @@ async def get_messages_for_html(client, target_dialog, selection, user_id):
         try:
             print()
             print("\033[35mСкачиваю медиа, завари кофе...\033[0m")
-            await download_media_files(client, target_dialog_id, user_id)
+            await download_media_files(client, target_dialog_id, host_bot_id)
         except Exception as e:
             print(f"Ошибка при скачивании медиафайлов: {e}")
 
@@ -391,15 +391,14 @@ import os
 from datetime import datetime
 from telethon import types
 
-async def download_media_files(client, target_user, user_id):
+async def download_media_files(client, target_user, host_bot_id):
     try:
-        # Получаем user_id из клиента Telegram
-        user_id_str = str(user_id)
+        host_bot_id_str = str(host_bot_id)
         target_user_str = str(target_user)
         
         # Формируем название подпапки на основе user_id, target_user и текущей даты и времени
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        user_folder = os.path.join('/app/files_from_svarog', f"{user_id_str}_{target_user_str}_{current_time}")
+        user_folder = os.path.join('/app/files_from_svarog', f"{host_bot_id_str}_{target_user_str}_{current_time}")
         os.makedirs(user_folder, exist_ok=True)
 
         async for message in client.iter_messages(target_user):
