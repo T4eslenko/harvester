@@ -730,6 +730,8 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         public_channels_html=[]
         public_groups_html=[]
         deleted_groups_html=[]
+        closechannel = []
+        closechat = []
 
     if selection not in ['70', '75', '750']:
         openchannels_name = 'Открытые КАНАЛЫ:' if openchannels else ''
@@ -900,7 +902,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
         
         messages_count = f" / [{chat_message_counts.get(closechat.id, 0)}]" if chat_message_counts else ""
-        messages_count_for_svarog = chat_message_counts.get(closechannel.id, 0) if chat_message_counts else ""
+        messages_count_for_svarog = chat_message_counts.get(closechat.id, 0) if chat_message_counts else ""
         all_info.append(f"{count_row} - {closechat.title} \033[93m[{closechat.participants_count}]{messages_count}\033[0m \033[91m{owner} {admin}\033[0m ID:{closechat.id}")
         private_groups_html.append(
             f'{closegroup_count}. <img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
