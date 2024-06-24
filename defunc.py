@@ -811,6 +811,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
         
         messages_count = f" / [{chat_message_counts.get(closechannel.id, 0)}]" if chat_message_counts else ""
+        messages_count_for_svarog = chat_message_counts.get(closechannel.id, 0) if chat_message_counts else ""
         all_info.append(f"{count_row} - {closechannel.title} \033[93m[{closechannel.participants_count}]{messages_count}\033[0m \033[91m{owner} {admin}\033[0m ID:{closechannel.id}")
         private_channels_html.append(
             f'{closechannel_count}. <img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
@@ -819,7 +820,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         )
 
         # Используем чистый текст без ANSI escape-кодов
-        channels_list.append(f'{i}) {closechannel.title} / (участников: [{closechannel.participants_count}] {messages_count} сообщений)')        
+        channels_list.append(f'**{i}**) {closechannel.title}. Участники: [{closechannel.participants_count}], сообщения: **[{messages_count_for_svarog}]**')        
         closechannel_count += 1
         groups.append(closechannel)
         i +=1
@@ -899,13 +900,14 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
         
         messages_count = f" / [{chat_message_counts.get(closechat.id, 0)}]" if chat_message_counts else ""
+        messages_count_for_svarog = chat_message_counts.get(closechannel.id, 0) if chat_message_counts else ""
         all_info.append(f"{count_row} - {closechat.title} \033[93m[{closechat.participants_count}]{messages_count}\033[0m \033[91m{owner} {admin}\033[0m ID:{closechat.id}")
         private_groups_html.append(
             f'{closegroup_count}. <img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
             f"<span style='color:#556B2F;'>{closechat.title}</span> <span style='color:#8B4513;'>[{closechat.participants_count}]</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{closechat.id}"
             f"{admin_rights_html}"
         )
-        channels_list.append(f'{i}) {closechat.title} / (участников: [{closechat.participants_count}] / сообщений: {messages_count})')   
+        channels_list.append(f'**{i}**) {closechat.title}. Участники: [{closechat.participants_count}], сообщения: **[{messages_count_for_svarog}]**')     
         closegroup_count += 1
         groups.append(closechat)
         i +=1
