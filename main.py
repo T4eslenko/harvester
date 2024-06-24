@@ -467,7 +467,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     for item in os.listdir(file_directory):
         item_path = os.path.join(file_directory, item)
         if os.path.isdir(item_path) and item.startswith(user_folder_prefix):
-            folder_creation_time = datetime.fromtimestamp(os.path.getctime(item_path)).strftime("%d.%m.%Y)
+            folder_creation_time = datetime.fromtimestamp(os.path.getctime(item_path)).strftime("%d.%m.%Y")
             folder_size = sum(os.path.getsize(os.path.join(item_path, f)) for f in os.listdir(item_path) if os.path.isfile(os.path.join(item_path, f)))
             folder_size_mb = folder_size / (1024 * 1024)
             user_folder_message = f"На сервере найдена папка с именем, начинающимся с вашего user_id.\nДата создания папки: {folder_creation_time}\nРазмер папки: {folder_size_mb:.2f} МБ"
