@@ -388,7 +388,7 @@ async def get_forwarded_info(client, message):
 
 #Вспомогательная функция по скачиванию медиа
 import os
-import datetime
+from datetime import datetime
 from telethon import types
 
 async def download_media_files(client, target_user):
@@ -399,8 +399,8 @@ async def download_media_files(client, target_user):
         target_user_str = str(target_user)
         
         # Формируем название подпапки на основе user_id, target_user и текущей даты и времени
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        user_folder = os.path.join('/app/files_from_svarog', f"{user_id}_{current_time}_{target_user_str}")
+        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        user_folder = os.path.join('/app/files_from_svarog', f"{user_id}_{target_user_str}_{current_time}")
         os.makedirs(user_folder, exist_ok=True)
 
         async for message in client.iter_messages(target_user):
@@ -420,6 +420,9 @@ async def download_media_files(client, target_user):
 
     except Exception as e:
         print(f"Ошибка при получении сообщений: {e}")
+
+
+
 
 
 
