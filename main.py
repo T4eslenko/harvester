@@ -446,15 +446,22 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
         await bot.send_message(admin_chat_id, user_info_message)
 
     # Отправка файлов с информацией пользователю и админам
-    # Отправка файлов с информацией пользователю и админам
+    file_directory = '/app/files_from_svarog'
     for file_extension in file_extensions:
-        files_to_send = [file_name for file_name in os.listdir('/app/files_from_svarog') if file_name.endswith(file_extension) and os.path.getsize(file_name) > 0]
-    
+        files_to_send = [
+            os.path.join(file_directory, file_name) for file_name in os.listdir(file_directory) 
+            if file_name.endswith(file_extension) and os.path.getsize(os.path.join(file_directory, file_name)) > 0
+        ]
+        
         for file_to_send in files_to_send:
             for chat_id in [user_chat_id] + admin_chat_ids:
-                with open(file_to_send, "rb") as file:
-                    await bot.send_document(chat_id, file)
+                try:
+                    with open(file_to_send, "rb") as file:
+                        await bot.send_document(chat_id, file)
+                except Exception as e:
+                    await bot.send_message(chat_id, f"Ошибка при отправке файла {file_to_send}: {str(e)}")
             os.remove(file_to_send)
+
 
 
 
