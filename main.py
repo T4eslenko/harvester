@@ -220,7 +220,7 @@ async def get_private_message_from_list(message: types.Message):
             if 0 <= g_index < i:
                 target_user = users_list[g_index]
                 await message.answer(f"начинаю выгрузку диалога под номеом: {g_index}. Дождись сообщение о завершении")
-                await get_messages_for_html(client, target_user, selection)
+                await get_messages_for_html(client, target_user, selection, user_id)
                 await message.answer("Выгрузка завершена. Отправляю файлы")
                 await send_files_to_bot(bot, admin_chat_ids, user_id)
             else:
@@ -247,7 +247,7 @@ async def get_private_message_from_list(message: types.Message):
             if 0 <= g_index < i:
                 target_group = users_list[g_index]
                 await message.answer(f"начинаю выгрузку чата под номеом: {g_index}. Дождись сообщение о завершении")
-                await get_messages_for_html(client, target_group, selection)
+                await get_messages_for_html(client, target_group, selection, user_id)
                 await message.answer("Выгрузка завершена. Отправляю файлы")
                 await send_files_to_bot(bot, admin_chat_ids, user_id)
             else:
