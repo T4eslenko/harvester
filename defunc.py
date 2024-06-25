@@ -783,7 +783,8 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
 
     closechannels_name = 'Закрытые КАНАЛЫ:' if closechannels else ''
     all_info.append(f"\033[95m{closechannels_name}\033[0m")  
-    channels_list.append(closechannels_name)
+    if closechannels_name:
+        channels_list.append(closechannels_name)
     closechannel_count = 1
     private_channels_html = []
     image_data_url = ''
@@ -873,7 +874,8 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
                 owner_opengroup += 1
 
     closechats_name = 'Закрытые ГРУППЫ:' if closechats else ''
-    channels_list.append(closechats_name)
+    if closechats_name:
+        channels_list.append(closechats_name)
     all_info.append(f"\033[95m{closechats_name}\033[0m")
     closegroup_count = 1
     private_groups_html = []
