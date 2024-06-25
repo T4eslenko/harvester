@@ -156,7 +156,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
         logging.info(f"User {user_id} is connected. Starting get private message.")
         try:
                     user_dialogs, i, users_list = await get_user_dialogs(client)
-                    if not user_dialogs:
+                    if not user_dialogs or user_dialogs=="":
                         await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
                         return
                     else:
