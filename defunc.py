@@ -36,6 +36,7 @@ import shutil
 from dotenv import load_dotenv
 
 load_dotenv()
+allowed_users = ALLOWED_USERS
 
 
 # Получаем сообщения пользователей и формируем нумерованный список для выбора диалога для скачивания
