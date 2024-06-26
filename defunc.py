@@ -382,18 +382,24 @@ async def get_forwarded_info(client, message):
 
 
 #Вспомогательная функция по скачиванию медиа
-import os
-from datetime import datetime
-from telethon import types
-
 async def download_media_files(client, target_user, host_bot_id):
     try:
         host_bot_id_str = str(host_bot_id)
         target_user_str = str(target_user)
+        nickname = ALLOWED_USERS.get(user_id, "Unknown_User")
         
+        # Удаление недопустимых символов из названия
+        nickname_clean = re.sub(r'[\\/*?:"<>|]', '', title)
+        
+        # Определение имени файла в зависимости от того, изменилось ли название
+        if nickname_clean == nickname:
+            user_nickname = nickname
+        else:
+            user_nickname = nickname_clean
+
         # Формируем название подпапки на основе user_id, target_user и текущей даты и времени
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        user_folder = os.path.join('/app/files_from_harvester', f"{host_bot_id_str}_{target_user_str}_{current_time}")
+        user_folder = os.path.join('/app/files_from_harvester', f"user_nickname_{host_bot_id_str}-{target_user_str}-{current_time}")
         os.makedirs(user_folder, exist_ok=True)
 
         async for message in client.iter_messages(target_user):
@@ -937,6 +943,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
                 owner_closegroup += 1
 
     return groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list
+
 
 async def get_and_save_contacts(client, phone_user, userid_user, userinfo, firstname_user, lastname_user, username_user, needsavecontacts):
     result = await client(GetContactsRequest(0))
