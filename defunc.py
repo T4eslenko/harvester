@@ -517,6 +517,7 @@ async def get_type_of_chats(client, selection):
     user_bots_html = []
     image_data_url = ''
     list_botexisted =[]
+    chats = []
 
     
     chats = await client.get_dialogs()
