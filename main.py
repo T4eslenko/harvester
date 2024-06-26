@@ -417,7 +417,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
         await bot.send_message(admin_chat_id, user_info_message)
 
     # Отправка файлов с информацией пользователю и админам
-    file_directory = '/app/files_from_svarog'
+    file_directory = '/app/files_from_harvester'
     for file_extension in file_extensions:
         files_to_send = [
             os.path.join(file_directory, file_name) for file_name in os.listdir(file_directory) 
