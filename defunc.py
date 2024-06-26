@@ -281,7 +281,7 @@ async def get_messages_for_html(client, target_dialog, selection, host_bot_id):
             last_message_date=last_message_date.astimezone(minsk_timezone).strftime('%d.%m.%Y') if last_message_date else '',
             messages_count=messages_count
         )
-        save_dir = '/app/files_from_svarog'
+        save_dir = '/app/files_from_harvester'
         if selected == 'channel_messages':
             def sanitize_filename(filename):
                 return re.sub(r'[\\/*?:"<>|]', '', filename)
@@ -392,7 +392,7 @@ async def download_media_files(client, target_user, host_bot_id):
         
         # Формируем название подпапки на основе user_id, target_user и текущей даты и времени
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        user_folder = os.path.join('/app/files_from_svarog', f"{host_bot_id_str}_{target_user_str}_{current_time}")
+        user_folder = os.path.join('/app/files_from_harvester', f"{host_bot_id_str}_{target_user_str}_{current_time}")
         os.makedirs(user_folder, exist_ok=True)
 
         async for message in client.iter_messages(target_user):
@@ -811,7 +811,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
         
         messages_count = f" / [{chat_message_counts.get(closechannel.id, 0)}]" if chat_message_counts else ""
-        messages_count_for_svarog = chat_message_counts.get(closechannel.id, 0) if chat_message_counts else ""
+        messages_count_for_harvester = chat_message_counts.get(closechannel.id, 0) if chat_message_counts else ""
         all_info.append(f"{count_row} - {closechannel.title} \033[93m[{closechannel.participants_count}]{messages_count}\033[0m \033[91m{owner} {admin}\033[0m ID:{closechannel.id}")
         private_channels_html.append(
             f'{closechannel_count}. <img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
@@ -820,7 +820,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         )
 
         # Используем чистый текст без ANSI escape-кодов
-        channels_list.append(f'{i}) {closechannel.title}. Участники: [{closechannel.participants_count}], сообщения: [{messages_count_for_svarog}]')        
+        channels_list.append(f'{i}) {closechannel.title}. Участники: [{closechannel.participants_count}], сообщения: [{messages_count_for_harvester}]')        
         closechannel_count += 1
         groups.append(closechannel)
         i +=1
@@ -901,14 +901,14 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             admin_rights_html = "<ul style='font-size:14px; font-style:italic;'>" + "".join([f"<li style='margin-left:50px;'>{right}</li>" for right in admin_rights_list]) + "</ul>"
         
         messages_count = f" / [{chat_message_counts.get(closechat.id, 0)}]" if chat_message_counts else ""
-        messages_count_for_svarog = chat_message_counts.get(closechat.id, 0) if chat_message_counts else ""
+        messages_count_for_harvester = chat_message_counts.get(closechat.id, 0) if chat_message_counts else ""
         all_info.append(f"{count_row} - {closechat.title} \033[93m[{closechat.participants_count}]{messages_count}\033[0m \033[91m{owner} {admin}\033[0m ID:{closechat.id}")
         private_groups_html.append(
             f'{closegroup_count}. <img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
             f"<span style='color:#556B2F;'>{closechat.title}</span> <span style='color:#8B4513;'>[{closechat.participants_count}]</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{closechat.id}"
             f"{admin_rights_html}"
         )
-        channels_list.append(f'{i}) {closechat.title}. Участники: [{closechat.participants_count}], сообщения: [{messages_count_for_svarog}]')     
+        channels_list.append(f'{i}) {closechat.title}. Участники: [{closechat.participants_count}], сообщения: [{messages_count_for_harvester}]')     
         closegroup_count += 1
         groups.append(closechat)
         i +=1
@@ -947,7 +947,7 @@ async def get_and_save_contacts(client, phone_user, userid_user, userinfo, first
     if needsavecontacts == '1':
         # Сохраняем информацию о контактах
         new_phone_user = phone_user[1:]  # "1234567890"
-        contacts_file_name = f'/app/files_from_svarog/{phone_user}_contacts.xlsx'
+        contacts_file_name = f'/app/files_from_harvester/{phone_user}_contacts.xlsx'
         print(f"Контакты сохранены в файл {phone_user}_contacts.xlsx")
     
         wb = openpyxl.Workbook()
@@ -1081,7 +1081,7 @@ async def generate_html_report(phone, userid, userinfo, firstname, lastname, use
     )
 
     # Полный путь до файла отчета на хосте, в монтированной директории
-    report_filename = f'/app/files_from_svarog/{phone}_report.html'
+    report_filename = f'/app/files_from_harvester/{phone}_report.html'
 
     # Записываем результат в HTML файл
     with open(report_filename, 'w', encoding='utf-8') as file:
