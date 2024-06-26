@@ -156,7 +156,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
         logging.info(f"User {user_id} is connected. Starting get private message.")
         try:
                     user_dialogs, i, users_list = await get_user_dialogs(client)
-                    if not user_dialogs or user_dialogs=="":
+                    if not user_dialogs:
                         await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
                         return
                     else:
@@ -186,7 +186,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
         try:
                 delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted = await get_type_of_chats(client, selection)
                 groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
-                if not channels_list or channels_list =="":
+                if not channels_list:
                     await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
                     return
                 else:
@@ -202,13 +202,12 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
 
 
 
-
-
-# Обработчик выбора списка приватного диалого для выгрузки, если get_private равно True
-@dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('type') == 'private' and
+# Обработчик выбора списка приватного диалога или чата для выгрузки
+@dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('type') in ['private', 'chat'] and
                                   message.text.isdigit() and 1 <= len(message.text) <= 4)
-async def get_private_message_from_list(message: types.Message):
+async def get_message_from_list(message: types.Message):
     user_id = message.from_user.id
+    user_type = user_state[user_id]['type']
     
     client = user_state[user_id]['client']
     users_list = user_state[user_id]['users_list']
@@ -218,46 +217,18 @@ async def get_private_message_from_list(message: types.Message):
         selection = user_state[user_id]['selection']
         try:
             if 0 <= g_index < i:
-                target_user = users_list[g_index]
-                await message.answer(f"начинаю выгрузку диалога под номеом: {g_index}. Дождись сообщение о завершении")
-                await get_messages_for_html(client, target_user, selection, user_id)
+                target_dialog = users_list[g_index]
+                if user_type == 'private':
+                    await message.answer(f"начинаю выгрузку диалога под номером: {g_index}. Дождись сообщения о завершении")
+                else:
+                    await message.answer(f"начинаю выгрузку чата под номером: {g_index}. Дождись сообщения о завершении")
+                await get_messages_for_html(client, target_dialog, selection, user_id)
                 await message.answer("Выгрузка завершена. Отправляю файлы")
                 await send_files_to_bot(bot, admin_chat_ids, user_id)
             else:
-              await message.answer(f"Введите число от 0 до {i-1}, соотвествующее номеру диалога.")
+                await message.answer(f"Введите число от 0 до {i-1}, соответствующее номеру диалога.")
         except ValueError:
-            await message.answer("Введите число, соотвествующее диалогу.")
-
-
-
-
-# Обработчик выбора списка приватного диалого для выгрузки, если chat равно True
-@dp.message_handler(lambda message: user_state.get(message.from_user.id, {}).get('type') == 'chat' and
-                                  message.text.isdigit() and 1 <= len(message.text) <= 4)
-async def get_private_message_from_list(message: types.Message):
-    user_id = message.from_user.id
-    
-    client = user_state[user_id]['client']
-    users_list = user_state[user_id]['users_list']
-    i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
-    g_index = int(message.text.strip()) 
-    if user_id in user_state and 'selection' in user_state[user_id]:
-        selection = user_state[user_id]['selection']
-        try:
-            if 0 <= g_index < i:
-                target_group = users_list[g_index]
-                await message.answer(f"начинаю выгрузку чата под номеом: {g_index}. Дождись сообщение о завершении")
-                await get_messages_for_html(client, target_group, selection, user_id)
-                await message.answer("Выгрузка завершена. Отправляю файлы")
-                await send_files_to_bot(bot, admin_chat_ids, user_id)
-            else:
-              await message.answer(f"Введите число от 0 до {i-1}, соотвествующее номеру диалога.")
-        except ValueError:
-            await message.answer("Введите число, соотвествующее диалогу.")
-
-
-
-
+            await message.answer("Введите число, соответствующее диалогу.")
 
 
 # Обработчики сообщений
