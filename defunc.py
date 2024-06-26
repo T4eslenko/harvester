@@ -42,40 +42,33 @@ async def get_user_dialogs(client):
     user_dialogs = []
     users_list = []
     dialogs = []
-
-    try:
-        dialogs = await client.get_dialogs()
-    except Exception as e:
-        print(f"Ошибка при получении диалогов: {e}")
-        return user_dialogs, 0, users_list
-
     i = 0
-
-    for dialog in dialogs:
-        try:
-            if isinstance(dialog.entity, User) and not dialog.entity.bot:
-                try:
-                    messages = await client.get_messages(dialog.entity, limit=0)
-                    count_messages = messages.total
-                except Exception as e:
-                    print(f"Ошибка при получении сообщений для пользователя {dialog.entity.id}: {e}")
-                    count_messages = "N/A"  # Значение по умолчанию, если сообщения не удалось получить
-
-                user = dialog.entity
-                username = f'@{user.username}' if user.username else ""
-                first_name = user.first_name if user.first_name else ''
-                last_name = user.last_name if user.last_name else ''
-
-                # Используем чистый текст без ANSI escape-кодов
-                user_dialogs.append(
-                    f'{i}) {first_name} {last_name} {username} (id: {user.id}). Сообщений: [{count_messages}]'
-                )
-
-                users_list.append(dialog.entity.id)
-                i += 1
-        except Exception as e:
-            print(f"Ошибка при обработке диалога {dialog.id}: {e}")
-
+    dialogs = await client.get_dialogs()
+    if dialogs:
+        for dialog in dialogs:
+            try:
+                if isinstance(dialog.entity, User) and not dialog.entity.bot:
+                    try:
+                        messages = await client.get_messages(dialog.entity, limit=0)
+                        count_messages = messages.total
+                    except Exception as e:
+                        print(f"Ошибка при получении сообщений для пользователя {dialog.entity.id}: {e}")
+                        count_messages = "N/A"  # Значение по умолчанию, если сообщения не удалось получить
+    
+                    user = dialog.entity
+                    username = f'@{user.username}' if user.username else ""
+                    first_name = user.first_name if user.first_name else ''
+                    last_name = user.last_name if user.last_name else ''
+    
+                    # Используем чистый текст без ANSI escape-кодов
+                    user_dialogs.append(
+                        f'{i}) {first_name} {last_name} {username} (id: {user.id}). Сообщений: [{count_messages}]'
+                    )
+    
+                    users_list.append(dialog.entity.id)
+                    i += 1
+            except Exception as e:
+                print(f"Ошибка при обработке диалога {dialog.id}: {e}")
     return user_dialogs, i, users_list
 
 
