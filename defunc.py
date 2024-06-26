@@ -391,7 +391,7 @@ async def download_media_files(client, target_user, host_bot_id):
         nickname = ALLOWED_USERS.get(host_bot_id, "Unknown_User")
         
         # Удаление недопустимых символов из названия
-        nickname_clean = re.sub(r'[\\/*?:"<>|]', '', user_nickname)
+        nickname_clean = re.sub(r'[\\/*?:"<>|]', '', nickname)
         
         # Определение имени файла в зависимости от того, изменилось ли название
         if nickname_clean == nickname:
