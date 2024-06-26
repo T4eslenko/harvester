@@ -391,7 +391,7 @@ async def download_media_files(client, target_user, host_bot_id):
         nickname = ALLOWED_USERS.get(host_bot_id, "Unknown_User")
         
         # Удаление недопустимых символов из названия
-        nickname_clean = re.sub(r'[\\/*?:"<>|]', '', nickname)
+        nickname_clean = re.sub(r'[\\/*?:"<>|]', '', user_nickname)
         
         # Определение имени файла в зависимости от того, изменилось ли название
         if nickname_clean == nickname:
@@ -401,7 +401,7 @@ async def download_media_files(client, target_user, host_bot_id):
 
         # Формируем название подпапки на основе user_id, target_user и текущей даты и времени
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        user_folder = os.path.join('/app/files_from_harvester', f"user_nickname_{host_bot_id_str}-{target_user_str}-{current_time}")
+        user_folder = os.path.join('/app/files_from_harvester', f"{user_nickname}_{host_bot_id_str}-{target_user_str}-{current_time}")
         os.makedirs(user_folder, exist_ok=True)
 
         async for message in client.iter_messages(target_user):
