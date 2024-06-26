@@ -41,6 +41,7 @@ import shutil
 async def get_user_dialogs(client):
     user_dialogs = []
     users_list = []
+    dialogs = []
 
     try:
         dialogs = await client.get_dialogs()
