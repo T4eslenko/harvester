@@ -517,12 +517,14 @@ async def get_type_of_chats(client, selection):
     deactivated_chats = []
     all_chats_ids = []
     delgroups = []
+    chats = []
     chats = await client.get_dialogs()
     admin_id = [] 
     user_bots = []
     user_bots_html = []
     image_data_url = ''
     list_botexisted =[]
+
     
     for chat in chats:   
         # Получаем данные о ботах
