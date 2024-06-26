@@ -34,7 +34,7 @@ from telethon.tl.types import PeerChannel, PeerUser, User, Channel, MessageFwdHe
 import zipfile
 import shutil
 
-
+load_dotenv()
 
 
 # Получаем сообщения пользователей и формируем нумерованный список для выбора диалога для скачивания
