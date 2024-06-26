@@ -34,6 +34,7 @@ from telethon.tl.types import PeerChannel, PeerUser, User, Channel, MessageFwdHe
 import zipfile
 import shutil
 from dotenv import load_dotenv
+from allowed_users import ALLOWED_USERS  # Импортируем словарь из отдельного файла
 
 load_dotenv()
 allowed_users = ALLOWED_USERS
