@@ -33,6 +33,7 @@ from telethon.sync import TelegramClient
 from telethon.tl.types import PeerChannel, PeerUser, User, Channel, MessageFwdHeader
 import zipfile
 import shutil
+from dotenv import load_dotenv
 
 load_dotenv()
 
