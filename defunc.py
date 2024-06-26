@@ -519,7 +519,6 @@ async def get_type_of_chats(client, selection):
     all_chats_ids = []
     delgroups = []
     chats = []
-    chats = await client.get_dialogs()
     admin_id = [] 
     user_bots = []
     user_bots_html = []
@@ -527,107 +526,109 @@ async def get_type_of_chats(client, selection):
     list_botexisted =[]
 
     
-    for chat in chats:   
-        # Получаем данные о ботах
-        if isinstance(chat.entity, User) and chat.entity.bot: 
-            if selection == '0':
-                try:
-                    photo_bytes = await client.download_profile_photo(chat.entity, file=BytesIO())
-                    if photo_bytes:
-                        encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
-                        image_data_url = f"data:image/jpeg;base64,{encoded_image}"
-                    else:
-                        with open("no_image.png", "rb") as img_file:
-                            img_data = img_file.read()
-                            img_str = base64.b64encode(img_data).decode('utf-8')
-                            image_data_url = f"data:image/png;base64,{img_str}"
-                except Exception:
-                    pass
-            user_bots_html.append(
-                f'<img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
-                f'<a href="https://t.me/{chat.entity.username}" style="color:#0000FF; text-decoration: none;vertical-align:middle;">@{chat.entity.username}</a> '
-                f'<span style="color:#556B2F;vertical-align:middle;">{chat.entity.first_name}</span>'
-            )
-            
-            user_bots.append(f"{chat.entity.first_name}, @{chat.entity.username}")
-            list_botexisted.append(chat.entity.id)
-
-        # Работаем с групповыми чатами
-        if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat):  
-            # Выгружаем количество сообщений при выборе опции выгрузить сообщение
-            if selection in ['7', '70', '75', '750']: 
-                messages = await client.get_messages(chat.entity, limit=0)
-                count_messages = messages.total
-                chat_message_counts[chat.entity.id] = count_messages
-
-            # Определяем открытый канал
-            if isinstance(chat.entity, Channel) and hasattr(chat.entity, 'broadcast') and chat.entity.participants_count is not None:
-                if chat.entity.broadcast and chat.entity.username:
-                    if selection == '6':
-                        if chat.entity.admin_rights or chat.entity.creator:
+    chats = await client.get_dialogs()
+    if chats:
+        for chat in chats:   
+            # Получаем данные о ботах
+            if isinstance(chat.entity, User) and chat.entity.bot: 
+                if selection == '0':
+                    try:
+                        photo_bytes = await client.download_profile_photo(chat.entity, file=BytesIO())
+                        if photo_bytes:
+                            encoded_image = base64.b64encode(photo_bytes.getvalue()).decode('utf-8')
+                            image_data_url = f"data:image/jpeg;base64,{encoded_image}"
+                        else:
+                            with open("no_image.png", "rb") as img_file:
+                                img_data = img_file.read()
+                                img_str = base64.b64encode(img_data).decode('utf-8')
+                                image_data_url = f"data:image/png;base64,{img_str}"
+                    except Exception:
+                        pass
+                user_bots_html.append(
+                    f'<img src="{image_data_url}" alt=" " style="width:50px;height:50px;vertical-align:middle;margin-right:10px;">'
+                    f'<a href="https://t.me/{chat.entity.username}" style="color:#0000FF; text-decoration: none;vertical-align:middle;">@{chat.entity.username}</a> '
+                    f'<span style="color:#556B2F;vertical-align:middle;">{chat.entity.first_name}</span>'
+                )
+                
+                user_bots.append(f"{chat.entity.first_name}, @{chat.entity.username}")
+                list_botexisted.append(chat.entity.id)
+    
+            # Работаем с групповыми чатами
+            if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat):  
+                # Выгружаем количество сообщений при выборе опции выгрузить сообщение
+                if selection in ['7', '70', '75', '750']: 
+                    messages = await client.get_messages(chat.entity, limit=0)
+                    count_messages = messages.total
+                    chat_message_counts[chat.entity.id] = count_messages
+    
+                # Определяем открытый канал
+                if isinstance(chat.entity, Channel) and hasattr(chat.entity, 'broadcast') and chat.entity.participants_count is not None:
+                    if chat.entity.broadcast and chat.entity.username:
+                        if selection == '6':
+                            if chat.entity.admin_rights or chat.entity.creator:
+                                openchannels.append(chat.entity)
+                                all_chats_ids.append(chat.entity.id)
+                                admin_id.append(chat.entity.id)
+                        
+                        if selection != '6':
                             openchannels.append(chat.entity)
                             all_chats_ids.append(chat.entity.id)
-                            admin_id.append(chat.entity.id)
-                    
-                    if selection != '6':
-                        openchannels.append(chat.entity)
-                        all_chats_ids.append(chat.entity.id)
-                        if chat.entity.admin_rights or chat.entity.creator:
-                            admin_id.append(chat.entity.id)
-
-            # Определяем закрытый канал
-            if isinstance(chat.entity, Channel) and hasattr(chat.entity, 'broadcast'):
-                if chat.entity.broadcast and chat.entity.username is None and chat.entity.title != 'Unsupported Chat':
-                    if selection == '6':
-                        if chat.entity.admin_rights or chat.entity.creator:
+                            if chat.entity.admin_rights or chat.entity.creator:
+                                admin_id.append(chat.entity.id)
+    
+                # Определяем закрытый канал
+                if isinstance(chat.entity, Channel) and hasattr(chat.entity, 'broadcast'):
+                    if chat.entity.broadcast and chat.entity.username is None and chat.entity.title != 'Unsupported Chat':
+                        if selection == '6':
+                            if chat.entity.admin_rights or chat.entity.creator:
+                                closechannels.append(chat.entity)
+                                all_chats_ids.append(chat.entity.id)
+                                admin_id.append(chat.entity.id)
+                        
+                        if selection != '6':
                             closechannels.append(chat.entity)
                             all_chats_ids.append(chat.entity.id)
-                            admin_id.append(chat.entity.id)
-                    
-                    if selection != '6':
-                        closechannels.append(chat.entity)
+                            if chat.entity.admin_rights or chat.entity.creator:
+                                admin_id.append(chat.entity.id)
+    
+                # Определяем открытый чат
+                if isinstance(chat.entity, Channel) and hasattr(chat.entity, 'broadcast'):
+                    if not chat.entity.broadcast and chat.entity.username:
+                        openchats.append(chat.entity)
                         all_chats_ids.append(chat.entity.id)
-                        if chat.entity.admin_rights or chat.entity.creator:
-                            admin_id.append(chat.entity.id)
-
-            # Определяем открытый чат
-            if isinstance(chat.entity, Channel) and hasattr(chat.entity, 'broadcast'):
-                if not chat.entity.broadcast and chat.entity.username:
-                    openchats.append(chat.entity)
-                    all_chats_ids.append(chat.entity.id)
-                    admin_id.append(chat.entity.id)
-
-            # Определяем закрытый чат
-            if isinstance(chat.entity, Channel) and hasattr(chat.entity, 'broadcast'):
-               if chat.entity.broadcast == False and chat.entity.username == None:
-                  closechats.append(chat.entity)
-                  all_chats_ids.append(chat.entity.id)
-                  admin_id.append(chat.entity.id)
-
-            if isinstance(chat.entity, Chat) and chat.entity.migrated_to is None:
-               closechats.append(chat.entity)
-               all_chats_ids.append(chat.entity.id)
-               admin_id.append(chat.entity.id)
-
-                
-            if selection == '5' or selection == '0': # Добавляем нулевые чаты только для общей информации
-                if isinstance(chat.entity, Chat) and hasattr(chat.entity, 'participants_count') and chat.entity.participants_count == 0:
-                   if chat.entity.migrated_to is not None and isinstance(chat.entity.migrated_to, InputChannel):
-                      deactivated_chats_all = {
-                         'ID_migrated': chat.entity.migrated_to.channel_id,
-                         'ID': chat.entity.id,
-                         'title': chat.entity.title,
-                         'creator': chat.entity.creator,
-                         'admin_rights': chat.entity.admin_rights,
-                      }
-                      deactivated_chats.append(deactivated_chats_all)
-   
-    if selection == '5' or selection == '0': # Добавляем нулевые чаты для общей информации
-       if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat): # Проверяем, является ли чат групповым
-          for current_deleted_chat in deactivated_chats:
-                 ID_migrated_values = current_deleted_chat['ID_migrated']
-                 if ID_migrated_values not in all_chats_ids:
-                      delgroups.append(current_deleted_chat)
+                        admin_id.append(chat.entity.id)
+    
+                # Определяем закрытый чат
+                if isinstance(chat.entity, Channel) and hasattr(chat.entity, 'broadcast'):
+                   if chat.entity.broadcast == False and chat.entity.username == None:
+                      closechats.append(chat.entity)
+                      all_chats_ids.append(chat.entity.id)
+                      admin_id.append(chat.entity.id)
+    
+                if isinstance(chat.entity, Chat) and chat.entity.migrated_to is None:
+                   closechats.append(chat.entity)
+                   all_chats_ids.append(chat.entity.id)
+                   admin_id.append(chat.entity.id)
+    
+                    
+                if selection == '5' or selection == '0': # Добавляем нулевые чаты только для общей информации
+                    if isinstance(chat.entity, Chat) and hasattr(chat.entity, 'participants_count') and chat.entity.participants_count == 0:
+                       if chat.entity.migrated_to is not None and isinstance(chat.entity.migrated_to, InputChannel):
+                          deactivated_chats_all = {
+                             'ID_migrated': chat.entity.migrated_to.channel_id,
+                             'ID': chat.entity.id,
+                             'title': chat.entity.title,
+                             'creator': chat.entity.creator,
+                             'admin_rights': chat.entity.admin_rights,
+                          }
+                          deactivated_chats.append(deactivated_chats_all)
+       
+        if selection == '5' or selection == '0': # Добавляем нулевые чаты для общей информации
+           if isinstance(chat.entity, Channel) or isinstance(chat.entity, Chat): # Проверяем, является ли чат групповым
+              for current_deleted_chat in deactivated_chats:
+                     ID_migrated_values = current_deleted_chat['ID_migrated']
+                     if ID_migrated_values not in all_chats_ids:
+                          delgroups.append(current_deleted_chat)
 
 
     return delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted
