@@ -35,7 +35,7 @@ import zipfile
 import shutil
 from dotenv import load_dotenv
 from allowed_users import ALLOWED_USERS  # Импортируем словарь из отдельного файла
-
+import html
 load_dotenv()
 allowed_users = ALLOWED_USERS
 
@@ -62,10 +62,13 @@ async def get_user_dialogs(client):
                     username = f'@{user.username}' if user.username else ""
                     first_name = user.first_name if user.first_name else ''
                     last_name = user.last_name if user.last_name else ''
+                    first_name_safe = html.escape(first_name)
+                    last_name_safe = html.escape(last_name)
+
     
                     # Используем чистый текст без ANSI escape-кодов
                     user_dialogs.append(
-                        f'👉{i}) {first_name} {last_name} {username} (id: {user.id}) [💬 <b>{count_messages}</b>]')
+                        f'👉{i}) {first_name_safe} {last_name_safe} {username} (id: {user.id}) [💬 <b>{count_messages}</b>]')
     
                     users_list.append(dialog.entity.id)
                     i += 1
@@ -828,7 +831,9 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         )
 
         # Используем чистый текст без ANSI escape-кодов
-        channels_list.append(f'👉{i}) {closechannel.title} [🧍 {closechannel.participants_count}, 💬 <b>{messages_count_for_harvester}</b>')        
+        closechannel_safe = html.escape(closechannel.title)
+        
+        channels_list.append(f'👉{i}) {closechannel_safe} [🧍 {closechannel.participants_count}, 💬 <b>{messages_count_for_harvester}</b>')        
         closechannel_count += 1
         groups.append(closechannel)
         i +=1
@@ -916,7 +921,9 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             f"<span style='color:#556B2F;'>{closechat.title}</span> <span style='color:#8B4513;'>[{closechat.participants_count}]</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{closechat.id}"
             f"{admin_rights_html}"
         )
-        channels_list.append(f'👉{i}) {closechat.title} [🧍 {closechat.participants_count}, 💬 <b>{messages_count_for_harvester}</b>]')     
+        closechat_safe = html.escape(closechat.title)
+        
+        channels_list.append(f'👉{i}) {closechat_safe} [🧍 {closechat.participants_count}, 💬 <b>{messages_count_for_harvester}</b>]')     
         closegroup_count += 1
         groups.append(closechat)
         i +=1
