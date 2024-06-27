@@ -65,7 +65,7 @@ async def get_user_dialogs(client):
     
                     # Используем чистый текст без ANSI escape-кодов
                     user_dialogs.append(
-                        f'👉{i}) {first_name} {last_name} {username} (id: {user.id}) [💬 **{count_messages}**]')
+                        f'👉{i}) {first_name} {last_name} {username} (id: {user.id}) [💬 *{count_messages}*]')
     
                     users_list.append(dialog.entity.id)
                     i += 1
@@ -790,7 +790,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     closechannels_name = 'Закрытые КАНАЛЫ:' if closechannels else ''
     all_info.append(f"\033[95m{closechannels_name}\033[0m")  
     if closechannels_name:
-        channels_list.append(f"💥💥💥 **{closechannels_name}** 💥💥💥")
+        channels_list.append(f"💥💥💥 *{closechannels_name}* 💥💥💥")
     closechannel_count = 1
     private_channels_html = []
     image_data_url = ''
@@ -828,7 +828,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         )
 
         # Используем чистый текст без ANSI escape-кодов
-        channels_list.append(f'👉{i}) {closechannel.title} [🧍 {closechannel.participants_count}, 💬 **{messages_count_for_harvester}**')        
+        channels_list.append(f'👉{i}) {closechannel.title} [🧍 {closechannel.participants_count}, 💬 *{messages_count_for_harvester}*')        
         closechannel_count += 1
         groups.append(closechannel)
         i +=1
@@ -881,7 +881,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
 
     closechats_name = 'Закрытые ГРУППЫ:' if closechats else ''
     if closechats_name:
-        channels_list.append(f"\n\n💥💥💥 **{closechats_name}** 💥💥💥")
+        channels_list.append(f"\n\n💥💥💥 *{closechats_name}* 💥💥💥")
     all_info.append(f"\033[95m{closechats_name}\033[0m")
     closegroup_count = 1
     private_groups_html = []
@@ -916,7 +916,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             f"<span style='color:#556B2F;'>{closechat.title}</span> <span style='color:#8B4513;'>[{closechat.participants_count}]</span> <span style='color:#FF0000;'>{owner} {admin}</span> ID:{closechat.id}"
             f"{admin_rights_html}"
         )
-        channels_list.append(f'👉{i}) {closechat.title} [🧍 {closechat.participants_count}, 💬 **{messages_count_for_harvester}**]')     
+        channels_list.append(f'👉{i}) {closechat.title} [🧍 {closechat.participants_count}, 💬 *{messages_count_for_harvester}*]')     
         closegroup_count += 1
         groups.append(closechat)
         i +=1
