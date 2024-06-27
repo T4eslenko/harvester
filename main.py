@@ -165,7 +165,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
                         user_state[user_id]['users_list'] = users_list
                         user_state[user_id]['dialogs_count'] = i        
                         dialog_message = "\n".join(user_dialogs)
-                        await bot.send_message(user_id, dialog_message, parse_mode=ParseMode.HTML)
+                        await bot.send_message(user_id, dialog_message, parse_mode=types.ParseMode.MARKDOWN)
                         await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
         except Exception as e:
                     logging.error(f"Error during making list: {e}")
@@ -195,7 +195,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
                     user_state[user_id]['users_list'] = groups
                     user_state[user_id]['dialogs_count'] = i        
                     dialog_message = "\n".join(channels_list)
-                    await bot.send_message(user_id, dialog_message, parse_mode=ParseMode.HTML)
+                    await bot.send_message(user_id, dialog_message, parse_mode=types.ParseMode.MARKDOWN)
                     await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
         except Exception as e:
                 logging.error(f"Error during making list: {e}")
