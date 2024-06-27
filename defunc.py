@@ -68,7 +68,7 @@ async def get_user_dialogs(client):
     
                     # Используем чистый текст без ANSI escape-кодов
                     user_dialogs.append(
-                        f'👉{i}) {first_name_safe} {last_name_safe} {username} (id: {user.id}) [💬 <b>{count_messages}</b>]')
+                        f'👉<b>{i})</b> {first_name_safe} {last_name_safe} {username} (id: {user.id}) [💬 <b>{count_messages}</b>]')
     
                     users_list.append(dialog.entity.id)
                     i += 1
@@ -833,7 +833,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         # Используем чистый текст без ANSI escape-кодов
         closechannel_safe = html.escape(closechannel.title)
         
-        channels_list.append(f'👉{i}) {closechannel_safe} [🧍 {closechannel.participants_count}, 💬 <b>{messages_count_for_harvester}</b>')        
+        channels_list.append(f'👉<b>{i})</b> {closechannel_safe} [🧍 {closechannel.participants_count}, 💬 <b>{messages_count_for_harvester}</b>')        
         closechannel_count += 1
         groups.append(closechannel)
         i +=1
@@ -923,7 +923,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         )
         closechat_safe = html.escape(closechat.title)
         
-        channels_list.append(f'👉{i}) {closechat_safe} [🧍 {closechat.participants_count}, 💬 <b>{messages_count_for_harvester}</b>]')     
+        channels_list.append(f'👉<b>{i})</b> {closechat_safe} [🧍 {closechat.participants_count}, 💬 <b>{messages_count_for_harvester}</b>]')     
         closegroup_count += 1
         groups.append(closechat)
         i +=1
