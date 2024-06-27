@@ -881,7 +881,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
 
     closechats_name = 'Закрытые ГРУППЫ:' if closechats else ''
     if closechats_name:
-        channels_list.append(f"💥💥💥 {closechats_name} 💥💥💥")
+        channels_list.append(f"\n\n💥💥💥 {closechats_name} 💥💥💥")
     all_info.append(f"\033[95m{closechats_name}\033[0m")
     closegroup_count = 1
     private_groups_html = []
