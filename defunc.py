@@ -65,8 +65,7 @@ async def get_user_dialogs(client):
     
                     # Используем чистый текст без ANSI escape-кодов
                     user_dialogs.append(
-                        f'📌{i}) {first_name} {last_name} {username} (id: {user.id}). Сообщений: [{count_messages}]'
-                    )
+                        f'📌{i}) {first_name} {last_name} {username} (id: {user.id}). 💬:{count_messages}')
     
                     users_list.append(dialog.entity.id)
                     i += 1
