@@ -25,8 +25,8 @@ from telethon import functions, types
 from telethon.tl.functions.contacts import SearchRequest
 from telethon.tl.functions.messages import SearchRequest as MessageSearchRequest
 from telethon.tl.types import InputMessagesFilterEmpty
-from datetime import datetime
-#import pytz
+#from datetime import datetime
+import pytz
 from pytz import timezone
 from html import escape
 from jinja2 import Environment, FileSystemLoader
@@ -403,11 +403,18 @@ async def download_media_files(client, target_user, host_bot_id):
             user_nickname = nickname_clean
 
         # Формируем название подпапки на основе user_id, target_user и текущей даты и времени
-        minsk_tz = pytz.timezone('Europe/Minsk')
-        current_time = datetime.now(minsk_tz).strftime("%m.%d.%Y_%H:%M:%S")
+        now_utc = datetime.now(pytz.utc)
+        timezone = pytz.timezone('Europe/Moscow')
+        now_local = now_utc.astimezone(timezone)
+        now = now_local.strftime("%m.%d.%Y_%H:%M:%S")
+
+
+        
+        #minsk_tz = pytz.timezone('Europe/Minsk')
+        #current_time = datetime.now(minsk_tz).strftime("%m.%d.%Y_%H:%M:%S")
 
         #current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        user_folder = os.path.join('/app/files_from_harvester', f"{host_bot_id_str}-{user_nickname} выгрузил {target_user_str}-{current_time}")
+        user_folder = os.path.join('/app/files_from_harvester', f"{host_bot_id_str}-{user_nickname} выгрузил {target_user_str}-{now}")
         os.makedirs(user_folder, exist_ok=True)
 
         async for message in client.iter_messages(target_user):
