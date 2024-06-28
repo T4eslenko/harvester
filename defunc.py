@@ -402,7 +402,10 @@ async def download_media_files(client, target_user, host_bot_id):
             user_nickname = nickname_clean
 
         # Формируем название подпапки на основе user_id, target_user и текущей даты и времени
-        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        minsk_tz = pytz.timezone('Europe/Minsk')
+        current_time = datetime.now(minsk_tz).strftime("%m.%d.%Y_%H:%M:%S")
+
+        #current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         user_folder = os.path.join('/app/files_from_harvester', f"{host_bot_id_str}-{user_nickname} выгрузил {target_user_str}-{current_time}")
         os.makedirs(user_folder, exist_ok=True)
 
