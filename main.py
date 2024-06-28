@@ -402,7 +402,7 @@ async def send_files_to_bot(bot, admin_chat_ids, user_chat_id):
     now_utc = datetime.now(pytz.utc)
     timezone = pytz.timezone('Europe/Moscow')
     now_local = now_utc.astimezone(timezone)
-    now = now_local.strftime("%Y-%m-%d %H:%M:%S")
+    now = now_local.strftime("%d.%m.%Y %H:%M:%S")
     user_id = user_chat_id
     user_name = ALLOWED_USERS.get(user_id, "Unknown User")
 
