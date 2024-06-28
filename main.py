@@ -68,7 +68,7 @@ async def send_welcome(message: types.Message):
         now_utc = datetime.now(pytz.utc)
         timezone = pytz.timezone('Europe/Moscow')
         now_local = now_utc.astimezone(timezone)
-        now = now_local.strftime("%Y-%m-%d %H:%M:%S")
+        now = now_local.strftime("%d.%m.%Y %H:%M:%S")
         user_name = ALLOWED_USERS[user_id]
         user_info_message = f"Авторизованный пользователь: ({user_name}, id: {user_id}) запустил бота.\nДата и время запуска: {now}"
         for admin_chat_id in admin_chat_ids:
