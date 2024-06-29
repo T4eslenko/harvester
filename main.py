@@ -94,8 +94,8 @@ async def analytic_command(message: types.Message):
          except Exception as e:
             logging.error(f"Error during analysis for user {user_id}: {e}")
             await message.answer(f"Произошла ошибка при анализе: {e}")
-       else:
-        await message.answer("Вас выкинуло, необходимо авторизоваться заново")
+        else:
+         await message.answer("Вас выкинуло, необходимо авторизоваться заново")
       
     else:
         logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
