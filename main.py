@@ -84,10 +84,10 @@ async def analytic_command(message: types.Message):
         user_state[user_id] = {}     
     user_state[user_id]['type'] = '' #обнуляем, чтобы после аналитики не реагировала на цифры
     if user_id in user_state and user_state[user_id].get('connected'):
-      if await client.is_user_authorized():
         logging.info(f"User {user_id} is connected. Starting analysis.")
         phone_number = user_state[user_id]['phone_number']
         client = user_state[user_id]['client']
+      if await client.is_user_authorized(): 
         try:
             await message.answer("Начинаю анализ данных...")
             await process_user_data(client, phone_number, user_id)
