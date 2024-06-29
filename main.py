@@ -87,16 +87,12 @@ async def analytic_command(message: types.Message):
         logging.info(f"User {user_id} is connected. Starting analysis.")
         phone_number = user_state[user_id]['phone_number']
         client = user_state[user_id]['client']
-        if await client.is_user_authorized(): 
-         try:
+        try:
             await message.answer("Начинаю анализ данных...")
             await process_user_data(client, phone_number, user_id)
-         except Exception as e:
+        except Exception as e:
             logging.error(f"Error during analysis for user {user_id}: {e}")
             await message.answer(f"Произошла ошибка при анализе: {e}")
-        else:
-         await message.answer("Вас выкинуло, необходимо авторизоваться заново")
-      
     else:
         logging.info(f"User {user_id} is not connected. Cannot perform analysis.")
         await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
