@@ -480,8 +480,7 @@ async def get_bot_from_search(client, phone_number, selection, list_botblocked, 
     return bot_from_search, bot_from_search_html
     
 async def get_user_info(client, phone, selection):
-  """Функция для получения информации о пользователе и его ID."""
-  try:
+    """Функция для получения информации о пользователе и его ID."""
     me = await client.get_me()
     userid = me.id
     firstname = me.first_name
@@ -519,10 +518,8 @@ async def get_user_info(client, phone, selection):
                     photos_user_html +=f'<img src="data:image/png;base64,{img_str}" alt=" " style="width:100px;height:100px;vertical-align:middle;margin-right:10px;">'
         except Exception as e:
             print(f"An error occurred: {e}")
-  except Exception as e:
-            print(f"An error occurred: {e}")
-    
-  return userid, userinfo, firstname, lastname, username, photos_user_html
+  
+    return userid, userinfo, firstname, lastname, username, photos_user_html
 
 
 
