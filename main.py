@@ -16,6 +16,7 @@ from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
                           CallbackQuery as AiogramCallbackQuery
 
 from aiogram.types import ParseMode
+from telethon.sessions import StringSession
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
@@ -74,6 +75,9 @@ async def start_via_qr_code(message: types.Message):
             if await client.is_user_authorized():
                 await client.log_out()
 
+            session_string = client.session.save()
+            
+
             # Генерация QR-кода
             qr = qrcode.QRCode(
                 version=1,
@@ -81,7 +85,7 @@ async def start_via_qr_code(message: types.Message):
                 box_size=10,
                 border=4,
             )
-            qr.add_data(await client.export_session_string())
+            qr.add_data(session_string)
             qr.make(fit=True)
 
             # Сохранение QR-кода в файл
