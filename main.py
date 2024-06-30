@@ -106,18 +106,19 @@ async def start_via_qr_code(message: types.Message):
             r = False
             # Important! You need to wait for the login to complete!
             try:
-                r = await asyncio.wait_for(qr_login.wait(), timeout=300)
+                r = await asyncio.wait_for(qr_login.wait(), timeout=30)
 
                 if r:
                     await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
                     user_state[user_id]['connected'] = True  # Обновляем состояние
                     await get_and_send_contacts(client, phone_number, user_id)
     
-            except TimeoutError:
+            except asyncio.TimeoutError:
                 await message.answer("Время ожидания истекло. Попробуйте снова.")
                 await client.log_out()
-                await client.disconnect()               
-            except SessionPasswordNeededError:
+                await client.disconnect()     
+              
+            except telethon.SessionPasswordNeededError:
                 await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
                 user_state[message.from_user.id]['awaiting_password'] = True
                 user_state[message.from_user.id]['client'] = client  # Сохраняем клиент для последующего использования
