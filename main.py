@@ -41,6 +41,56 @@ logging.basicConfig(level=logging.INFO)
 # Словарь для хранения состояния пользователя
 user_state = {}
 
+
+# Функция для отображения клавиатуры
+async def show_keyboard(message: Message):
+    keyboard = AiogramInlineKeyboardMarkup(row_width=1)
+    buttons = [
+        AiogramInlineKeyboardButton(text="Отчет без медиа", callback_data='withoutall'),
+        AiogramInlineKeyboardButton(text="Отчет с фото", callback_data='with_photos'),
+        AiogramInlineKeyboardButton(text="Отчет с фото + скачивание всех медиа", callback_data='get_media')
+    ]
+    keyboard.add(*buttons)
+    await message.answer("Выберите вариант загрузки", reply_markup=keyboard)
+
+
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Обработчики кнопок!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+    user_id = message.from_user.id
+    if user_id in allowed_users:
+        if 'client' in user_state.get(user_id, {}):
+            client = user_state[user_id]['client']
+            await client.log_out()
+            await client.disconnect()
+            user_state.pop(message.from_user.id, None)
+
+        client = create_client()
+        await client.connect()
+        
+        # Разлогиниваемся от предыдущего клиента, если он был авторизован
+        #if await client.is_user_authorized():
+            #await client.log_out()
+      
+        user_state[user_id] = {
+            'connected': False,
+            'type': "",
+            'selection':""
+        }
+        await message.answer("Введите номер телефона")
+        now_utc = datetime.now(pytz.utc)
+        timezone = pytz.timezone('Europe/Moscow')
+        now_local = now_utc.astimezone(timezone)
+        now = now_local.strftime("%d.%m.%Y %H:%M:%S")
+        user_name = ALLOWED_USERS[user_id]
+        user_info_message = f"Авторизованный пользователь: ({user_name}, id: {user_id}) запустил бота.\nДата и время запуска: {now}"
+        for admin_chat_id in admin_chat_ids:
+            await bot.send_message(admin_chat_id, user_info_message)
+    else:
+        await unauthorized(message)
+
 @dp.message_handler(commands=['start_qr'])
 async def start_via_qr_code(message: types.Message):
     user_id = message.from_user.id
@@ -50,11 +100,9 @@ async def start_via_qr_code(message: types.Message):
             await client.log_out()
             await client.disconnect()
             user_state.pop(message.from_user.id, None)
-            await client.connect()
-        else:
-            # Создаем новый экземпляр клиента
-            client = create_client()
-            await client.connect()
+
+        client = create_client()
+        await client.connect()
  
         now_utc = datetime.now(pytz.utc)
         timezone = pytz.timezone('Europe/Moscow')
@@ -129,63 +177,7 @@ async def start_via_qr_code(message: types.Message):
                 #await client.disconnect()
     else:
         await unauthorized(message)
-
-
-
-
-# Функция для отображения клавиатуры
-async def show_keyboard(message: Message):
-    keyboard = AiogramInlineKeyboardMarkup(row_width=1)
-    buttons = [
-        AiogramInlineKeyboardButton(text="Отчет без медиа", callback_data='withoutall'),
-        AiogramInlineKeyboardButton(text="Отчет с фото", callback_data='with_photos'),
-        AiogramInlineKeyboardButton(text="Отчет с фото + скачивание всех медиа", callback_data='get_media')
-    ]
-    keyboard.add(*buttons)
-    await message.answer("Выберите вариант загрузки", reply_markup=keyboard)
-
-
-
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Обработчики кнопок!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@dp.message_handler(commands=['start'])
-async def send_welcome(message: types.Message):
-    user_id = message.from_user.id
-    if user_id in allowed_users:
       
-        if 'client' in user_state.get(user_id, {}):
-            client = user_state[user_id]['client']
-            await client.log_out()
-            await client.disconnect()
-            user_state.pop(message.from_user.id, None)
-            await client.connect()
-        else:
-            # Создаем новый экземпляр клиента
-            client = create_client()
-            await client.connect()
-        
-        # Разлогиниваемся от предыдущего клиента, если он был авторизован
-        #if await client.is_user_authorized():
-            #await client.log_out()
-      
-        user_state[user_id] = {
-            'connected': False,
-            'type': "",
-            'selection':""
-        }
-        await message.answer("Введите номер телефона")
-        now_utc = datetime.now(pytz.utc)
-        timezone = pytz.timezone('Europe/Moscow')
-        now_local = now_utc.astimezone(timezone)
-        now = now_local.strftime("%d.%m.%Y %H:%M:%S")
-        user_name = ALLOWED_USERS[user_id]
-        user_info_message = f"Авторизованный пользователь: ({user_name}, id: {user_id}) запустил бота.\nДата и время запуска: {now}"
-        for admin_chat_id in admin_chat_ids:
-            await bot.send_message(admin_chat_id, user_info_message)
-    else:
-        await unauthorized(message)
-
-
 @dp.message_handler(commands=['analytic'])
 async def analytic_command(message: types.Message):
     user_id = message.from_user.id
@@ -382,16 +374,15 @@ async def get_phone_number(message: types.Message):
     phone_number = f"+{phone_number}"
     try:
         # Создаем новый экземпляр клиента
+        user_id = message.from_user.id  # Добавляем определение user_id
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
             await client.log_out()
             await client.disconnect()
             user_state.pop(message.from_user.id, None)
-            await client.connect()
-        else:
-            # Создаем новый экземпляр клиента
-            client = create_client()
-            await client.connect()
+
+        client = create_client()
+        await client.connect()
           
         #client = create_client()
         #await client.connect()
