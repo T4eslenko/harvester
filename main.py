@@ -124,6 +124,10 @@ async def start_via_qr_code(message: types.Message):
                 password_info = await client(functions.account.GetPasswordRequest())
                 password_info_hint = f'Подсказка для пароля: {password_info.hint}'
                 await message.answer(password_info_hint)
+            except Exception as e:
+                # Обрабатываем ошибку
+                await message.reply(f"Произошла при работе с qr: {e}")
+
 
         except Exception as e:
             # Обрабатываем ошибку
