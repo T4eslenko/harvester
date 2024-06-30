@@ -105,11 +105,12 @@ async def select_mode_of_download(message: types.Message):
         try:
           if await client.get_me() is None:
             raise ValueError("Failed to retrieve user information.")
+            await bot.send_message(user_id, 'Объект заметил активность и "выкинул" бота')
+            user_state.pop(user_id, None)
         except Exception as e:
           logging.error(f"Error during GetDialogsRequest: {e}")
-          await bot.send_message(user_id, 'Объект заметил активность и "выкинул" бота')
-          user_state.pop(user_id, None)
-      
+          return
+          
         await show_keyboard(message)
         user_state[user_id]['type'] = 'private'
         user_state[user_id]['selection']=''
