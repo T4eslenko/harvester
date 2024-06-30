@@ -16,7 +16,7 @@ from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
                           CallbackQuery as AiogramCallbackQuery
 
 from aiogram.types import ParseMode
-
+import qrcode
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
@@ -41,16 +41,18 @@ logging.basicConfig(level=logging.INFO)
 # Словарь для хранения состояния пользователя
 user_state = {}
 
-
-
-import qrcode  # Импорт библиотеки для работы с QR-кодами
-
-# Ваши другие импорты и инициализация...
-
 @dp.message_handler(commands=['start_qr'])
 async def start_via_qr_code(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
+        # Создаем новый экземпляр клиента
+        client = create_client()
+        await client.connect()
+        
+        # Разлогиниваемся от предыдущего клиента, если он был авторизован
+        if await client.is_user_authorized():
+            await client.log_out()
+          
         now_utc = datetime.now(pytz.utc)
         timezone = pytz.timezone('Europe/Moscow')
         now_local = now_utc.astimezone(timezone)
@@ -60,14 +62,6 @@ async def start_via_qr_code(message: types.Message):
         for admin_chat_id in admin_chat_ids:
             await bot.send_message(admin_chat_id, user_info_message)
         try:
-            # Создаем новый экземпляр клиента
-            client = create_client()
-            await client.connect()
-            
-            # Разлогиниваемся от предыдущего клиента, если он был авторизован
-            if await client.is_user_authorized():
-                await client.log_out()
-
             qr_login = await client.qr_login()
             qr_url = qr_login.url
 
@@ -155,6 +149,13 @@ async def show_keyboard(message: Message):
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
+      # Создаем новый экземпляр клиента
+        client = create_client()
+        await client.connect()
+        
+        # Разлогиниваемся от предыдущего клиента, если он был авторизован
+        if await client.is_user_authorized():
+            await client.log_out()
         user_state[user_id] = {
             'connected': False,
             'type': "",
