@@ -96,7 +96,7 @@ async def start_via_qr_code(message: types.Message):
 
             # Отправка QR-кода пользователю
             with open(qr_filename, 'rb') as qr_file:
-                await message.reply_photo(qr_file, caption="Отсканируйте этот QR-код в приложении Telegram для входа")
+                await message.answer_photo(qr_file, caption="Отсканируйте этот QR-код в приложении Telegram для входа")
             
             # Сохраняем состояние пользователя
             
@@ -126,11 +126,7 @@ async def start_via_qr_code(message: types.Message):
                 password_info = await client(functions.account.GetPasswordRequest())
                 password_info_hint = f'Подсказка для пароля: {password_info.hint}'
                 await message.answer(password_info_hint)
-            except Exception as e:
-                # Обрабатываем ошибку работы с QR-кодом
-                error_message = f"Произошла ошибка при работе с QR-кодом ({e.__class__.__name__}): {e}"
-                await message.reply(error_message)
-
+            
 
         except Exception as e:
             # Обрабатываем ошибку
