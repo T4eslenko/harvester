@@ -102,6 +102,14 @@ async def analytic_command(message: types.Message):
 async def select_mode_of_download(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_state and user_state[user_id].get('connected'):
+        try:
+          if await client.get_me() is None:
+            raise ValueError("Failed to retrieve user information.")
+        except Exception as e:
+          logging.error(f"Error during GetDialogsRequest: {e}")
+          await bot.send_message(user_id, 'Объект заметил активность и "выкинул" бота')
+          user_state.pop(user_id, None)
+      
         await show_keyboard(message)
         user_state[user_id]['type'] = 'private'
         user_state[user_id]['selection']=''
