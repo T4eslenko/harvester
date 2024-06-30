@@ -48,10 +48,19 @@ async def start_via_qr_code(message: types.Message):
             
             # Сохраняем состояние пользователя
             
-            
-            qr_login = await client.qr_login()
-  
+            try:
+                qr_login = await client.qr_login()
+            except SessionPasswordNeededError:
+              await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
+              user_state[message.from_user.id]['awaiting_password'] = True
+              user_state[message.from_user.id]['client'] = client  # Сохраняем клиент для последующего использования
+              user_state[message.from_user.id]['password_attempts'] = 0  # Инициализируем попытки ввода пароля
+              password_info = await client(functions.account.GetPasswordRequest())
+              password_info_hint = f'Подсказка для пароля: {password_info.hint}'
+              await message.answer(password_info_hint)
 
+  
+     
         except Exception as e:
             # Обрабатываем ошибку
             await message.reply(f"Произошла ошибка: {e}")
