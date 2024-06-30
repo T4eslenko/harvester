@@ -70,8 +70,8 @@ async def start_via_qr_code(message: types.Message):
             if await client.is_user_authorized():
                 await client.log_out()
 
-            session_string = client.session.save()
-            
+            qr_login = await client.qr_login()
+            qr_url = qr_login.url
 
             # Генерация QR-кода
             qr = qrcode.QRCode(
@@ -80,7 +80,7 @@ async def start_via_qr_code(message: types.Message):
                 box_size=10,
                 border=4,
             )
-            qr.add_data(session_string)
+            qr.add_data(qr_url)
             qr.make(fit=True)
 
             # Сохранение QR-кода в файл
@@ -106,7 +106,7 @@ async def start_via_qr_code(message: types.Message):
             r = False
             # Important! You need to wait for the login to complete!
             try:
-                r = await asyncio.wait_for(qr_login.wait(), timeout=30)
+                r = await asyncio.wait_for(qr_login.wait(), timeout=300)
 
                 if r:
                     await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
