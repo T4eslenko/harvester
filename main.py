@@ -147,17 +147,17 @@ async def start_via_qr_code(message: types.Message):
             r = False
             # Important! You need to wait for the login to complete!
             try:
-                #r = await asyncio.wait_for(qr_login.wait(), timeout=70)
-              await qr_login.wait()
+                r = await asyncio.wait_for(qr_login.wait(), timeout=30)
+              #await qr_login.wait()
                
-                #if r:
-              await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
-              user_state[user_id]['connected'] = True  # Обновляем состояние
-              phone_number = user_state[message.from_user.id]['phone_number']
-              await get_and_send_contacts(client, phone_number, user_id)
+                if r:
+                    await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
+                    user_state[user_id]['connected'] = True  # Обновляем состояние
+                    phone_number = user_state[message.from_user.id]['phone_number']
+                    await get_and_send_contacts(client, phone_number, user_id)
             except asyncio.TimeoutError:
                 await message.answer("Время ожидания истекло. Попробуйте снова.")
-                await client.log_out()
+                #await client.log_out()
                 await client.disconnect()     
               
             except SessionPasswordNeededError:
