@@ -750,8 +750,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     groups = []
     i=0
     channels_list = []
-    list_private_channels = [] 
-    list_private_groups = [] 
+    
     if selection in ['40', '45', '450', '70', '75', '750']:
         openchannel_count =0
         opengroup_count =0
@@ -815,7 +814,6 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     all_info.append(f"\033[95m{closechannels_name}\033[0m")  
     if closechannels_name:
         channels_list.append(f"💥💥💥 <b>{closechannels_name}</b> 💥💥💥")
-        list_private_channels.appendappend(f"💥💥💥 <b>{closechannels_name}</b> 💥💥💥")
     closechannel_count = 1
     private_channels_html = []
     image_data_url = ''
@@ -856,7 +854,6 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         closechannel_safe = html.escape(closechannel.title)
         
         channels_list.append(f'✔️<b>{i})</b> {closechannel_safe} [🧍 {closechannel.participants_count}, 💬 <b>{messages_count_for_harvester}</b>')
-        list_private_channels.append(f'✔️<b>{i})</b> {closechannel_safe} [🧍 {closechannel.participants_count}, 💬 <b>{messages_count_for_harvester}</b>')
         closechannel_count += 1
         groups.append(closechannel)
         i +=1
@@ -910,7 +907,6 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
     closechats_name = 'Закрытые ГРУППЫ:' if closechats else ''
     if closechats_name:
         channels_list.append(f"\n\n💥💥💥 <b>{closechats_name}</b> 💥💥💥")
-        list_private_groups.append(f"💥💥💥 <b>{closechats_name}</b> 💥💥💥")
     all_info.append(f"\033[95m{closechats_name}\033[0m")
     closegroup_count = 1
     private_groups_html = []
@@ -948,7 +944,6 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
         closechat_safe = html.escape(closechat.title)
         
         channels_list.append(f'✔️<b>{i})</b> {closechat_safe} [🧍 {closechat.participants_count}, 💬 <b>{messages_count_for_harvester}</b>]')    
-        list_private_groups.append(f'✔️<b>{i})</b> {closechat_safe} [🧍 {closechat.participants_count}, 💬 <b>{messages_count_for_harvester}</b>]')
         closegroup_count += 1
         groups.append(closechat)
         i +=1
@@ -975,7 +970,7 @@ async def make_list_of_channels(delgroups, chat_message_counts, openchannels, cl
             if owner != "" or admin != "":
                 owner_closegroup += 1
 
-    return groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list, list_private_channels, list_private_groups
+    return groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list
 
 async def get_and_save_contacts(client, phone_user, userid_user, userinfo, firstname_user, lastname_user, username_user, needsavecontacts):
     result = await client(GetContactsRequest(0))
