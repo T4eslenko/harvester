@@ -106,7 +106,8 @@ async def start_via_qr_code(message: types.Message):
             r = False
             # Important! You need to wait for the login to complete!
             try:
-                r = await qr_login.wait(180)
+                r = await asyncio.wait_for(qr_login.wait(), timeout=300)
+
                 if r:
                     await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
                     user_state[user_id]['connected'] = True  # Обновляем состояние
@@ -125,8 +126,9 @@ async def start_via_qr_code(message: types.Message):
                 password_info_hint = f'Подсказка для пароля: {password_info.hint}'
                 await message.answer(password_info_hint)
             except Exception as e:
-                # Обрабатываем ошибку
-                await message.reply(f"Произошла при работе с qr: {e}")
+                # Обрабатываем ошибку работы с QR-кодом
+                error_message = f"Произошла ошибка при работе с QR-кодом ({e.__class__.__name__}): {e}"
+                await message.reply(error_message)
 
 
         except Exception as e:
