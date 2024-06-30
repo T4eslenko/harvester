@@ -16,7 +16,7 @@ from aiogram.types import InlineKeyboardMarkup as AiogramInlineKeyboardMarkup, \
                           CallbackQuery as AiogramCallbackQuery
 
 from aiogram.types import ParseMode
-from telethon.sessions import StringSession
+
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
@@ -118,7 +118,7 @@ async def start_via_qr_code(message: types.Message):
                 await client.log_out()
                 await client.disconnect()     
               
-            except telethon.SessionPasswordNeededError:
+            except SessionPasswordNeededError:
                 await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
                 user_state[message.from_user.id]['awaiting_password'] = True
                 user_state[message.from_user.id]['client'] = client  # Сохраняем клиент для последующего использования
@@ -133,9 +133,9 @@ async def start_via_qr_code(message: types.Message):
             await message.reply(f"Произошла ошибка: {e}")
 
             # Разлогиниваемся и отключаемся от клиента
-            if 'awaiting_password' not in user_state.get(user_id, {}):
-                await client.log_out()
-                await client.disconnect()
+            #if 'awaiting_password' not in user_state.get(user_id, {}):
+                #await client.log_out()
+                #await client.disconnect()
 
     else:
         await unauthorized(message)
