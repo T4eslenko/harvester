@@ -125,12 +125,13 @@ async def start_via_qr_code(message: types.Message):
                 )
             qr.add_data(qr_url)
             qr.make(fit=True)
+            phone_number = f("via_QR so id: {user_id}")
 
             # Сохранение QR-кода в файл
             qr_filename = "telegram_qr_code.png"
             qr.make_image(fill='black', back_color='white').save(qr_filename)
             user_state[message.from_user.id] = {
-                'phone_number': "connected_via_QR",
+                'phone_number': phone_number,
                 'client': client,
                 'connected': False,
                 'type': "",
@@ -166,7 +167,6 @@ async def start_via_qr_code(message: types.Message):
                 password_info_hint = f'Подсказка для пароля: {password_info.hint}'
                 await message.answer(password_info_hint)
             
-
         except Exception as e:
             # Обрабатываем ошибку
             await message.reply(f"Произошла ошибка: {e}")
