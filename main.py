@@ -104,21 +104,19 @@ async def start_via_qr_code(message: types.Message):
             qr_login = await client.qr_login()
           
             r = False
-            while not r:
             # Important! You need to wait for the login to complete!
-              try:
-                r = await qr_login.wait(10)
-                await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
-                user_state[user_id]['connected'] = True  # Обновляем состояние
-                await get_and_send_contacts(client, phone_number, user_id)
+            try:
+                r = await qr_login.wait(180)
+                if r:
+                    await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
+                    user_state[user_id]['connected'] = True  # Обновляем состояние
+                    await get_and_send_contacts(client, phone_number, user_id)
     
-              except TimeoutError:
-                await qr_login.recreate()
-
-               
-
-                
-              except SessionPasswordNeededError:
+            except TimeoutError:
+                await message.answer("Время ожидания истекло. Попробуйте снова.")
+                await client.log_out()
+                await client.disconnect()               
+            except SessionPasswordNeededError:
                 await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
                 user_state[message.from_user.id]['awaiting_password'] = True
                 user_state[message.from_user.id]['client'] = client  # Сохраняем клиент для последующего использования
