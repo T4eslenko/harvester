@@ -46,13 +46,19 @@ async def start_via_qr_code(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
         # Создаем новый экземпляр клиента
-        client = create_client()
-        await client.connect()
+        #client = create_client()
+        #await client.connect()
         
         # Разлогиниваемся от предыдущего клиента, если он был авторизован
-        if await client.is_user_authorized():
+        #if await client.is_user_authorized():
+            #await client.log_out()
+      
+        if 'client' in user_state.get(user_id, {}):
+            client = user_state[user_id]['client']
             await client.log_out()
-          
+            await client.disconnect()
+            user_state.pop(message.from_user.id, None)
+ 
         now_utc = datetime.now(pytz.utc)
         timezone = pytz.timezone('Europe/Moscow')
         now_local = now_utc.astimezone(timezone)
