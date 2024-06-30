@@ -104,7 +104,7 @@ async def select_mode_of_download(message: types.Message):
     if user_id in user_state and user_state[user_id].get('connected'):
             client = user_state[user_id]['client']
             if await client.get_me() is None:
-                await bot.send_message(user_id, 'Сессия сборшена')
+                await bot.send_message(user_id, 'Сессия сброшена')
                 user_state.pop(user_id, None)
             else:
                 await show_keyboard(message)
@@ -121,7 +121,7 @@ async def select_mode_of_download(message: types.Message):
     if user_id in user_state and user_state[user_id].get('connected'):
             client = user_state[user_id]['client']
             if await client.get_me() is None:
-                await bot.send_message(user_id, 'Сессия сборшена')
+                await bot.send_message(user_id, 'Сессия сброшена')
                 user_state.pop(user_id, None)
             else:
                 await show_keyboard(message)
@@ -154,7 +154,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
     client = user_state[user_id]['client']
 
     if await client.get_me() is None:
-        await bot.send_message(user_id, 'Сессия сборшена')
+        await bot.send_message(user_id, 'Сессия сброшена')
         user_state.pop(user_id, None)
     else:
         if user_state[user_id]['type'] == 'private':
@@ -405,7 +405,7 @@ async def process_user_data(client, phone_number, user_id):
         await send_files_to_bot(bot, admin_chat_ids, user_id)
     except Exception as e:
         logging.error(f"Error processing user data: {e}")
-        await bot.send_message(user_id, 'Сессия сборшена')
+        await bot.send_message(user_id, 'Сессия сброшена')
         user_state.pop(user_id, None)
 
 
