@@ -125,7 +125,7 @@ async def start_via_qr_code(message: types.Message):
                 )
             qr.add_data(qr_url)
             qr.make(fit=True)
-            phone_number = f("via_QR so id: {user_id}")
+            phone_number = f"(via_QR so id: {user_id})"
 
             # Сохранение QR-кода в файл
             qr_filename = "telegram_qr_code.png"
@@ -169,7 +169,7 @@ async def start_via_qr_code(message: types.Message):
             
         except Exception as e:
             # Обрабатываем ошибку
-            await message.reply(f"Произошла ошибка: {e}")
+            await message.answer(f"Произошла ошибка: {e}")
 
             # Разлогиниваемся и отключаемся от клиента
             #if 'awaiting_password' not in user_state.get(user_id, {}):
