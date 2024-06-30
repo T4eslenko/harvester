@@ -334,7 +334,7 @@ async def get_code(message: types.Message):
     except Exception as e:
         await message.answer(f"Произошла ошибка: {e}")
     finally:
-        if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
+        #if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
             if 'code_attempts' not in user_state.get(message.from_user.id, {}):
                 await client.log_out()
                 await client.disconnect()
