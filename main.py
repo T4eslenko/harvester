@@ -333,11 +333,11 @@ async def get_code(message: types.Message):
             await message.answer(f"Неверный ПИН-код. Попробуйте снова. Попытка {user_state[message.from_user.id]['code_attempts']} из 3.")
     except Exception as e:
         await message.answer(f"Произошла ошибка: {e}")
-    finally:
+    #finally:
         #if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
-            if 'code_attempts' not in user_state.get(message.from_user.id, {}):
-                await client.log_out()
-                await client.disconnect()
+           # if 'code_attempts' not in user_state.get(message.from_user.id, {}):
+                #await client.log_out()
+               # await client.disconnect()
                 
 
 
