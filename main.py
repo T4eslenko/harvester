@@ -390,7 +390,7 @@ async def process_user_data(client, phone_number, user_id):
         await send_files_to_bot(bot, admin_chat_ids, user_id)
     except Exception as e:
         logging.error(f"Error processing user data: {e}")
-        await bot.send_message(user_id, "Объект заметил активность и "выкинул" бота")
+        await bot.send_message(user_id, 'Объект заметил активность и "выкинул" бота')
         user_state.pop(user_id, None)
 
 
