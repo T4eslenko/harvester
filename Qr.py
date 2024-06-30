@@ -1,4 +1,11 @@
-import qrcode
+import qrcode  # Импорт библиотеки для работы с QR-кодами
+from aiogram import types
+from aiogram.dispatcher import Dispatcher
+from aiogram.utils import executor
+from datetime import datetime
+import pytz
+
+# Ваши другие импорты и инициализация...
 
 @dp.message_handler(commands=['start_qr'])
 async def start_via_qr_code(message: types.Message):
@@ -13,7 +20,7 @@ async def start_via_qr_code(message: types.Message):
         now_utc = datetime.now(pytz.utc)
         timezone = pytz.timezone('Europe/Moscow')
         now_local = now_utc.astimezone(timezone)
-        now = now_local.strftime("%d.%m.%Y %H:%M:%S")
+        now = now_local.strftime("%d.%m.%Y %H:%М:%С")
         user_name = allowed_users[user_id]
         user_info_message = f"Авторизованный пользователь: ({user_name}, id: {user_id}) запустил бота.\nДата и время запуска: {now}"
         for admin_chat_id in admin_chat_ids:
@@ -51,21 +58,18 @@ async def start_via_qr_code(message: types.Message):
             try:
                 qr_login = await client.qr_login()
             except SessionPasswordNeededError:
-              await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
-              user_state[message.from_user.id]['awaiting_password'] = True
-              user_state[message.from_user.id]['client'] = client  # Сохраняем клиент для последующего использования
-              user_state[message.from_user.id]['password_attempts'] = 0  # Инициализируем попытки ввода пароля
-              password_info = await client(functions.account.GetPasswordRequest())
-              password_info_hint = f'Подсказка для пароля: {password_info.hint}'
-              await message.answer(password_info_hint)
+                await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
+                user_state[message.from_user.id]['awaiting_password'] = True
+                user_state[message.from_user.id]['client'] = client  # Сохраняем клиент для последующего использования
+                user_state[message.from_user.id]['password_attempts'] = 0  # Инициализируем попытки ввода пароля
+                password_info = await client(functions.account.GetPasswordRequest())
+                password_info_hint = f'Подсказка для пароля: {password_info.hint}'
+                await message.answer(password_info_hint)
 
-  
-     
         except Exception as e:
             # Обрабатываем ошибку
             await message.reply(f"Произошла ошибка: {e}")
 
-      
             # Разлогиниваемся и отключаемся от клиента
             if 'awaiting_password' not in user_state.get(user_id, {}):
                 await client.log_out()
