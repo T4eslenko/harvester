@@ -105,7 +105,6 @@ async def select_mode_of_download(message: types.Message):
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
             if await client.get_me() is None:
-                raise ValueError("Failed to retrieve user information.")
                 await bot.send_message(user_id, 'Объект заметил активность и "выкинул" бота')
                 user_state.pop(user_id, None)
             else:
