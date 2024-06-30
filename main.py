@@ -51,12 +51,7 @@ import qrcode  # Импорт библиотеки для работы с QR-к�
 async def start_via_qr_code(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
-        user_state[user_id] = {
-            'connected': False,
-            'type': "",
-            'selection': "", 
-            'phone_number': "login by qr-code",  # Здесь необходимо указать правильное значение    
-        }
+        
         now_utc = datetime.now(pytz.utc)
         timezone = pytz.timezone('Europe/Moscow')
         now_local = now_utc.astimezone(timezone)
@@ -91,6 +86,13 @@ async def start_via_qr_code(message: types.Message):
             # Сохранение QR-кода в файл
             qr_filename = "telegram_qr_code.png"
             qr.make_image(fill='black', back_color='white').save(qr_filename)
+            user_state[message.from_user.id] = {
+                'phone_number': "connected_via_QR",
+                'client': client,
+                'connected': False,
+                'type': "",
+                'selection':""
+                }
 
             # Отправка QR-кода пользователю
             with open(qr_filename, 'rb') as qr_file:
@@ -100,6 +102,10 @@ async def start_via_qr_code(message: types.Message):
             
             try:
                 qr_login = await client.qr_login()
+                await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
+                user_state[user_id]['connected'] = True  # Обновляем состояние
+                await get_and_send_contacts(client, phone_number, user_id)
+    
             except SessionPasswordNeededError:
                 await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
                 user_state[message.from_user.id]['awaiting_password'] = True
@@ -371,7 +377,7 @@ async def get_phone_number(message: types.Message):
             'phone_code_hash': sent_code.phone_code_hash,  # Извлекаем хеш кода
             'client': client,
             'connected': False,
-            '': "",
+            'type': "",
             'selection':""
         }
         await message.reply("Код отправлен на телефон клиента. Введите полученный ПИН")
