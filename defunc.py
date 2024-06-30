@@ -481,7 +481,10 @@ async def get_bot_from_search(client, phone_number, selection, list_botblocked, 
     
 async def get_user_info(client, phone, selection):
     """Функция для получения информации о пользователе и его ID."""
-    me = await client.get_me()
+    try:
+        me = await client.get_me()
+    except Exception as e:
+        return None
     userid = me.id
     firstname = me.first_name
     username = f"@{me.username}" if me.username is not None else ""
