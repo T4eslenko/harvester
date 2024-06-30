@@ -45,16 +45,12 @@ user_state = {}
 async def start_via_qr_code(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
-        
-        # Разлогиниваемся от предыдущего клиента, если он был авторизован
-        #if await client.is_user_authorized():
-            #await client.log_out()
-      
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
             await client.log_out()
             await client.disconnect()
             user_state.pop(message.from_user.id, None)
+            await client.connect()
         else:
             # Создаем новый экземпляр клиента
             client = create_client()
@@ -102,7 +98,7 @@ async def start_via_qr_code(message: types.Message):
             r = False
             # Important! You need to wait for the login to complete!
             try:
-                r = await asyncio.wait_for(qr_login.wait(), timeout=300)
+                r = await asyncio.wait_for(qr_login.wait(), timeout=70)
                 if r:
                     await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
                     user_state[user_id]['connected'] = True  # Обновляем состояние
@@ -156,13 +152,22 @@ async def show_keyboard(message: Message):
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
-      # Создаем новый экземпляр клиента
-        client = create_client()
-        await client.connect()
+      
+        if 'client' in user_state.get(user_id, {}):
+            client = user_state[user_id]['client']
+            await client.log_out()
+            await client.disconnect()
+            user_state.pop(message.from_user.id, None)
+            await client.connect()
+        else:
+            # Создаем новый экземпляр клиента
+            client = create_client()
+            await client.connect()
         
         # Разлогиниваемся от предыдущего клиента, если он был авторизован
-        if await client.is_user_authorized():
-            await client.log_out()
+        #if await client.is_user_authorized():
+            #await client.log_out()
+      
         user_state[user_id] = {
             'connected': False,
             'type': "",
@@ -377,12 +382,23 @@ async def get_phone_number(message: types.Message):
     phone_number = f"+{phone_number}"
     try:
         # Создаем новый экземпляр клиента
-        client = create_client()
-        await client.connect()
+        if 'client' in user_state.get(user_id, {}):
+            client = user_state[user_id]['client']
+            await client.log_out()
+            await client.disconnect()
+            user_state.pop(message.from_user.id, None)
+            await client.connect()
+        else:
+            # Создаем новый экземпляр клиента
+            client = create_client()
+            await client.connect()
+          
+        #client = create_client()
+        #await client.connect()
         
         # Разлогиниваемся от предыдущего клиента, если он был авторизован
-        if await client.is_user_authorized():
-            await client.log_out()
+        #if await client.is_user_authorized():
+            #await client.log_out()
         
         sent_code = await client.send_code_request(phone_number)
         user_state[message.from_user.id] = {
