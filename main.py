@@ -51,7 +51,6 @@ import qrcode  # Импорт библиотеки для работы с QR-к�
 async def start_via_qr_code(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
-        
         now_utc = datetime.now(pytz.utc)
         timezone = pytz.timezone('Europe/Moscow')
         now_local = now_utc.astimezone(timezone)
@@ -60,7 +59,6 @@ async def start_via_qr_code(message: types.Message):
         user_info_message = f"Авторизованный пользователь: ({user_name}, id: {user_id}) запустил бота.\nДата и время запуска: {now}"
         for admin_chat_id in admin_chat_ids:
             await bot.send_message(admin_chat_id, user_info_message)
-          
         try:
             # Создаем новый экземпляр клиента
             client = create_client()
@@ -79,7 +77,7 @@ async def start_via_qr_code(message: types.Message):
                 error_correction=qrcode.constants.ERROR_CORRECT_L,
                 box_size=10,
                 border=4,
-            )
+                )
             qr.add_data(qr_url)
             qr.make(fit=True)
 
@@ -97,22 +95,18 @@ async def start_via_qr_code(message: types.Message):
             # Отправка QR-кода пользователю
             with open(qr_filename, 'rb') as qr_file:
                 await message.answer_photo(qr_file, caption="Отсканируйте этот QR-код в приложении Telegram для входа")
-            
-            # Сохраняем состояние пользователя
-            
-            
-            qr_login = await client.qr_login()
-          
+              
+            # Ждем подключения
+            qr_login = await client.qr_login()       
             r = False
             # Important! You need to wait for the login to complete!
             try:
                 r = await asyncio.wait_for(qr_login.wait(), timeout=300)
-
                 if r:
                     await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
                     user_state[user_id]['connected'] = True  # Обновляем состояние
+                    phone_number = user_state[message.from_user.id]['phone_number']
                     await get_and_send_contacts(client, phone_number, user_id)
-    
             except asyncio.TimeoutError:
                 await message.answer("Время ожидания истекло. Попробуйте снова.")
                 await client.log_out()
@@ -136,7 +130,6 @@ async def start_via_qr_code(message: types.Message):
             #if 'awaiting_password' not in user_state.get(user_id, {}):
                 #await client.log_out()
                 #await client.disconnect()
-
     else:
         await unauthorized(message)
 
