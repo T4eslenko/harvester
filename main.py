@@ -258,7 +258,8 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
         code = callback_query.data
         client = user_state[user_id]['client']
     
-        if await client.get_me() is None:
+        #if await client.get_me() is None:
+        if not await client.is_user_authorized():
             await bot.send_message(user_id, 'Сессия сброшена')
             user_state.pop(user_id, None)
         else:
