@@ -78,28 +78,34 @@
     </ul>
     
     <h2>Информация о ботах</h2>
-    <h3>Действующие боты</h3>
+    {% if user_bots_html %}
+        <h3>Действующие боты</h3>
             <ul>
             {% for userbot in user_bots_html %}
                 <li>{{ userbot }}</li>
             {% endfor %}
         </ul>
+    {% endif %}
 </body>
 </html>
-    <h3>Заблокированные боты</h3>
-        <ul>
-        {% for blockedbot in blocked_bot_info_html %}
-            <li>{{ blockedbot }}</li>
-        {% endfor %}
-    </ul>
+    {% if blocked_bot_info_html %}
+        <h3>Заблокированные боты</h3>
+            <ul>
+            {% for blockedbot in blocked_bot_info_html %}
+                <li>{{ blockedbot }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 </body>
 </html>
-    <h3>Боты из истории</h3>
-        <ul>
-        {% for bot_history in bot_from_search_html %}
-            <li>{{ bot_history }}</li>
-        {% endfor %}
-    </ul>
+    {% if bot_from_search_html %}
+        <h3>Боты из истории</h3>
+            <ul>
+            {% for bot_history in bot_from_search_html %}
+                <li>{{ bot_history }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 </body>
 </html>
 <h2>Суммарная информация о каналах и группах</h2>
