@@ -64,7 +64,7 @@ async def send_welcome(message: types.Message):
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
             #if await client.is_user_authorized():
-            if await client.get_me() is None:
+            if await client.get_me() is not None:
                 await client.log_out()
                 await client.disconnect()
             user_state.pop(message.from_user.id, None)
@@ -101,7 +101,7 @@ async def start_via_qr_code(message: types.Message):
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
             #if await client.is_user_authorized():
-            if await client.get_me() is None:
+            if await client.get_me() is not None:
                 await client.log_out()
                 await client.disconnect()
             user_state.pop(message.from_user.id, None)
@@ -239,7 +239,7 @@ async def say_by(message: types.Message):
     if 'client' in user_state.get(user_id, {}):
         client = user_state[user_id]['client']
         #if await client.is_user_authorized():
-        if await client.get_me() is None:
+        if await client.get_me() is not None:
             await client.log_out()
             await client.disconnect()
             await message.answer("Вы разлогинились.")
@@ -385,7 +385,7 @@ async def get_phone_number(message: types.Message):
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
             #if await client.is_user_authorized():
-            if await client.get_me() is None:
+            if await client.get_me() is not None:
                 await client.log_out()
                 await client.disconnect()
             user_state.pop(message.from_user.id, None)
