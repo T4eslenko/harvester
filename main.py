@@ -148,10 +148,8 @@ async def start_via_qr_code(message: types.Message):
             # Ждем подключения
             qr_login = await client.qr_login()       
             r = False
-            # Important! You need to wait for the login to complete!
             try:
-                r = await asyncio.wait_for(qr_login.wait(), timeout=30)
-              #await qr_login.wait()
+                r = await asyncio.wait_for(qr_login.wait(), timeout=20)
                
                 if r:
                     await message.answer("Подключено! Вот контакты. Остальное - в меню бота")
