@@ -202,7 +202,8 @@ async def select_mode_of_download(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_state and user_state[user_id].get('connected'):
             client = user_state[user_id]['client']
-            if await client.get_me() is None:
+            #if await client.get_me() is None:
+            if not await client.is_user_authorized():
                 await bot.send_message(user_id, 'Сессия сброшена')
                 user_state.pop(user_id, None)
             else:
@@ -219,7 +220,8 @@ async def select_mode_of_download(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_state and user_state[user_id].get('connected'):
             client = user_state[user_id]['client']
-            if await client.get_me() is None:
+            #if await client.get_me() is None:
+            if not await client.is_user_authorized():
                 await bot.send_message(user_id, 'Сессия сброшена')
                 user_state.pop(user_id, None)
             else:
