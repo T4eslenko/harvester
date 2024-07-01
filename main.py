@@ -241,8 +241,10 @@ async def say_by(message: types.Message):
         if await client.is_user_authorized():
             await client.log_out()
             await client.disconnect()
+            await message.answer("Вы разлогинились.")
+        else:
+          await message.answer("Не требуется. Вы не подключены.")
         user_state.pop(message.from_user.id, None)
-        await message.answer("Вы разлогинились.")
     else:
       await message.answer("Не требуется. Вы не подключены.")
 
