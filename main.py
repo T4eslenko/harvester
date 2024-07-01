@@ -63,7 +63,8 @@ async def send_welcome(message: types.Message):
     if user_id in allowed_users:
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
-            if await client.is_user_authorized():
+            #if await client.is_user_authorized():
+            if await client.get_me() is None:
                 await client.log_out()
                 await client.disconnect()
             user_state.pop(message.from_user.id, None)
@@ -99,7 +100,8 @@ async def start_via_qr_code(message: types.Message):
     if user_id in allowed_users:
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
-            if await client.is_user_authorized():
+            #if await client.is_user_authorized():
+            if await client.get_me() is None:
                 await client.log_out()
                 await client.disconnect()
             user_state.pop(message.from_user.id, None)
@@ -202,8 +204,7 @@ async def select_mode_of_download(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_state and user_state[user_id].get('connected'):
             client = user_state[user_id]['client']
-            #if await client.get_me() is None:
-            if not await client.is_user_authorized():
+            if await client.get_me() is None:
                 await bot.send_message(user_id, 'Сессия сброшена')
                 user_state.pop(user_id, None)
             else:
@@ -220,8 +221,7 @@ async def select_mode_of_download(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_state and user_state[user_id].get('connected'):
             client = user_state[user_id]['client']
-            #if await client.get_me() is None:
-            if not await client.is_user_authorized():
+            if await client.get_me() is None:
                 await bot.send_message(user_id, 'Сессия сброшена')
                 user_state.pop(user_id, None)
             else:
@@ -238,7 +238,8 @@ async def say_by(message: types.Message):
     user_id = message.from_user.id
     if 'client' in user_state.get(user_id, {}):
         client = user_state[user_id]['client']
-        if await client.is_user_authorized():
+        #if await client.is_user_authorized():
+        if await client.get_me() is None:
             await client.log_out()
             await client.disconnect()
             await message.answer("Вы разлогинились.")
@@ -258,8 +259,7 @@ async def callback_query_handler(callback_query: AiogramCallbackQuery):
         code = callback_query.data
         client = user_state[user_id]['client']
     
-        #if await client.get_me() is None:
-        if not await client.is_user_authorized():
+        if await client.get_me() is None:
             await bot.send_message(user_id, 'Сессия сброшена')
             user_state.pop(user_id, None)
         else:
@@ -384,7 +384,8 @@ async def get_phone_number(message: types.Message):
         user_id = message.from_user.id  # Добавляем определение user_id
         if 'client' in user_state.get(user_id, {}):
             client = user_state[user_id]['client']
-            if await client.is_user_authorized():
+            #if await client.is_user_authorized():
+            if await client.get_me() is None:
                 await client.log_out()
                 await client.disconnect()
             user_state.pop(message.from_user.id, None)
